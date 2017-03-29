@@ -188,4 +188,75 @@ eg2 中
 数据类型
 
 1、布尔类型
-布尔类型的值为 true 和 false
+布尔类型的值仅为 true 和 false
+不包含 0 1 空集 等等
+
+
+2、数字类型
+
+int 根据所在系统的构架自动选择 32 位或是 64 位
+uint 无符号的 int 类型
+int8 int16 int32 int64
+byte(uint8) uint16 uint32 uint64
+
+注意1 byte 是 uint8 的别名
+注意2 上述的 10 中类型是完全不同的十种类型
+	  不可以混用，需要显事转换
+	  也就是说 int 和 int64 即使在 64 位的系统上
+	  也是完全不同的类型
+
+float32 float64
+
+注意 没有 float 浮点型 这个类型
+
+最后 即使在 32 位的系统上 64 位的类型依旧是 64 位的
+
+
+3、常量
+
+常量用关键字 const 来定义
+定义常量时，可以指明类型，也可以不指明类型
+
+const (
+	a int = 5
+	b = bool
+)
+
+常量的值和类型可以承前省略
+
+const (
+	a = 5
+	b			// b 为 int 型 值为 5
+	c			// c 同 b
+	d = true
+	e			// e 为 bool 型 值为 true
+	f			// f 同 e
+)
+
+对于未声明类型的整型常量，可以使用 iota 预声明标记 来表示续递增的整型常量
+
+const (
+	a = iota	// a int = 0
+	b			// b = iota --> b int = 1
+	c			// c = iota --> c int = 2
+)
+
+iota 永远从 const 声明之后就开始计数，直到遇见下一个 const
+但仅有继承了 iota 的值会显示 iota 表示的值
+
+const (
+	a = 6		// 手动指定
+	b = iota	// b 是这组常量的第二个 --> b int = 1
+	c			// c = iota --> c int = 2
+	d = false	// 手动指定
+	e			// e 同 d 类型为 bool 值为 false
+	f = iota	// f 是这组常量的第六个 --> f int = 5
+	g			// g = iota --> g int = 6
+	h			// h = iota --> h int 7
+)
+
+*iota 源自希腊字母 ι 读作 yota 表示微小之物
+
+注意 所有的常量必须具有明确且固定的值
+	这个值可以来自于一个常量、承前省略或者 iota
+	但不可以来自一个变量、函数的返回值等等
