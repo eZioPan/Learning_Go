@@ -1,1 +1,2 @@
-Script for Learning Go
+Go 语言学习笔记
+基于 https://mikespook.com/learning-go/
