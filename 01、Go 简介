@@ -367,3 +367,51 @@ eg1 中
 	&^	为 位清除
 
 未列出的有 非操作符 !
+
+
+
+控制语句
+
+if 语句
+
+if [初始化语句1;]<判断语句1> {
+	操作1
+} else if [初始化语句2;]<判断语句2> {
+	操作2
+} else {
+	操作3
+}
+
+其中初始化语句 常用于 设置一个作用于为 if 语句的局部变量
+
+if 的判断语句后的正括号必须写在同一行
+
+if 语句常用于查错
+
+f, err := os.Open(name, os.O_RDONLY, 0)
+if err != nil {
+	return err
+}
+d, err := f.Stat()
+if err != nil {
+	return err
+}
+
+
+goto 语句
+
+语法
+
+goto <标签>
+
+例子：用 goto 模拟的循环语句
+
+func myfunc() {
+	i := 0
+Here:		//这行声明了一个名为 Here 的标签
+	println(i)
+	i++
+	goto Here	//这行让执行语句跳转回了 Here 行
+}
+
+注意 标签是区分大小写的
