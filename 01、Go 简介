@@ -104,26 +104,26 @@ go build helloworld.go
 
 声明变量
 
-eg1:
+eg1.
 var a int
 a = 1
 
-eg2:
+eg2.
 var a int = 2
 
-eg3:
+eg3.
 a := true
 
-eg4:
+eg4.
 var (
 	a int
 	b int = 2
 )
 
-eg5:
+eg5.
 var a,b int
 
-eg6:
+eg6.
 a,b := 1,true
 
 
@@ -163,10 +163,10 @@ var(
 	b bool
 )
 
-eg1:
+eg1.
 a,b = 1,true
 
-eg2:
+eg2.
 _,b = 1,true
 
 
@@ -266,7 +266,7 @@ const (
 
 4、字符串 string
 
-eg1:
+eg1.
 s1 := "Hello, 世界！"
 s2 := `Hello
 	世界！`			// 注意这里写的是反引号
@@ -278,7 +278,7 @@ eg1 中
 反引号 表示 其中字符 不可转义（raw 字符串）
 单引号 表示 仅含有一个 Unicode 字符
 
-eg2:
+eg2.
 s := "中文字符串"
 b := s[0]				// 这样是无法取出 中 字的
 fmt.Println(b)			// 会打印出 228
@@ -289,7 +289,7 @@ eg2 中
 比如上述案例会打印出 228，转化为 16 进制则为 e4
 也就是 中 这个字的 UTF-8 编码 \xe4\xb8\xad 的第一位
 
-eg3:
+eg3.
 s1 := "Starting Part"
 	+ "Ending Part"		// 这样的两行文字会提示错误
 
@@ -299,7 +299,7 @@ s2 := "Starting Part" +
 eg3 中
 参加 Go 行尾加分号 的问题
 
-eg4:
+eg4.
 s1 := "世界"							// 字符表示
 s2 := "\u4e16\u754c"				// 四位 Unicode 表示
 s3 := "\U00004e16\U0000754c"		// 八位 Unicode 表示
@@ -315,7 +315,7 @@ eg4 中
 
 5、rune
 
-eg1:
+eg1.
 var s string = "英文字符"	// 原始字符
 var c []rune = []rune(s)	// 转换为 rune 切片（也可以转化为 int32 切片）
 c[0] = '中'					// 修改第一个切片，注意使用了单引号
@@ -330,7 +330,7 @@ eg1
 complex128	具有 64 位实部和 64 位虚部的复数
 complex64	具有 32 位实部和 32 位虚部的复数
 
-eg1:
+eg1.
 var cp1 complex128 = 1.2+5.3i
 
 注意1 复数的虚部不为 0 一定要写成 <num>i 的形式
@@ -343,7 +343,7 @@ var cp1 complex128 = 1.2+5.3i
 
 7、错误
 
-eg1:
+eg1.
 var e error = nil
 
 eg1 中
