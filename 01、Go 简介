@@ -447,7 +447,7 @@ for i<10 {
 
 eg2.
 
-var arr [4]int := [4]int{2,4,6,8}
+var arr [4]int = [4]int{2,4,6,8}
 
 for i,v := range arr {
 	println(i," ",v)
