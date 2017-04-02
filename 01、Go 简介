@@ -449,14 +449,22 @@ eg2.
 
 var arr [4]int = [4]int{2,4,6,8}
 
-for i,v := range arr {
+for i,v := range arr {				// 针对有数组具有两个返回值
 	println(i," ",v)
 }
 
 eg3.
 
+var str string = "中文字符串"
+
+for p,c := range str {				// 自动解析 Unicode 字符
+	println(p,string(c))			// 并输出每个 UTF-8 编码下的字符码点（字符起始字节位置）
+}
+
+eg4.
+
 逆序排列一个 数组 A
 
-for i,j := 0, len(A)-1; i<j; i,j = i+1, j-1 {
+for i,j := 0, len(A)-1; i<j; i,j = i+1, j-1 {		// 复杂 for 条件
 	a[i], a[j] = a[j], a[i]
 }
