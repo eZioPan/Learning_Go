@@ -468,3 +468,38 @@ eg4.
 for i,j := 0, len(A)-1; i<j; i,j = i+1, j-1 {		// 复杂 for 条件
 	a[i], a[j] = a[j], a[i]
 }
+
+
+4、break 和 continue
+
+break 可以提前退出一个循环
+
+eg1.
+
+for i := 0; i < 10; i++ {
+	if i > 5 {
+	break			// 若执行到 break，则立刻跳出本层循环体
+	}
+}
+
+eg2.
+
+J:								// 指定了一个名为 J 的标签
+for j :0; j < 5; j++ {
+	for i := 0; i < 10; i++ {
+		break J					// 执行到 break J 的时候，跳出至 J 这个循环
+	}
+}
+
+continue 可以立刻执行下一个循环
+
+eg1.
+
+for i := 0; i < 10; i++ {
+	print("loop", i)
+	if i > 5 {
+		continue
+	}
+	println(" Printed")
+
+}
