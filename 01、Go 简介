@@ -503,3 +503,78 @@ for i := 0; i < 10; i++ {
 	println(" Printed")
 
 }
+
+
+5、switch 语句
+
+Go 中的 switch 语句很灵活
+
+switch [初始化语句;][待匹配值] {
+case [值1]:
+	[操作1]
+case [值2]:
+	[操作2]
+default:
+	[默认操作]
+}
+
+其中
+
+[初始化语句]
+	常用于设置一个作用域为 switch 语句的变量
+
+[待匹配值]
+	设置为某个值，若这个值没有指定，则匹配 true
+
+case 里的 [值1] [值2]...
+	为要匹配的值，这个可以是明确指定的值
+	也可以在这里写表达式、语句，只要表达式或语句有一个返回值即可
+
+default
+	设置一个都不匹配之后的动作
+
+
+Go 中的 switch 一旦匹配到一个条目之后，就不会继续向下匹配其他条目
+若要在匹配到一个条目之后继续匹配其他条目
+请使用 fallthrough 关键字
+
+eg1.
+
+switch {
+case i<0:
+	println("negative")
+	fallthrough					// 向下判定下一个 case 语句
+caes i< -100:
+	println("very negative")
+default:
+	println("none negative")
+}
+
+
+switch 语句还可以用于类型判断
+
+eg2.
+
+const (
+	a int     = 1
+	b float64 = 0.5
+	c rune    = 's'
+	d string  = "DD"
+)
+
+func main() {
+	var typeCarrier interface{}			// switch 类型判断仅用于 interface
+	typeCarrier = b
+	switch typeCarrier.(type) {			// 关键字 .(type)
+	case int:
+		println("int")
+	case float64:
+		println("float64")
+	case rune:
+		println("rune")
+	case string:
+		println("string")
+	default:
+		println("???")
+	}
+}
