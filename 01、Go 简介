@@ -565,7 +565,7 @@ const (
 func main() {
 	var typeCarrier interface{}			// switch 类型判断仅用于 interface
 	typeCarrier = b
-	switch typeCarrier.(type) {			// 关键字 .(type)
+	switch typeCarrier.(type) {			// 关键字 <接口>.(type)
 	case int:
 		println("int")
 	case float64:
