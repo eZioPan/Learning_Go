@@ -758,3 +758,63 @@ n1 := copy(sl2,sl1)			// 返回 n1 = 3, sl2 = []int{2,4,6}
 
 len(<切片变量名>)
 cap(<切片变量名>)
+
+
+
+map 映射
+
+map 就是 Go 中的散列表类型
+
+map 的表示
+
+map[<键类型>]<值类型>
+
+eg1.
+
+map[int]string			// 以 整数 作为键 以 字符串 作为值
+map[[2]int]map[interface{}]*[3]float64	// 复杂 map 结构
+
+由于键值必须参与是否相同的比较，所以键类型不可以为 函数、映射和切片
+
+
+map 的创建
+
+eg2.
+
+map1 := map[string]int{
+	"A":1,					// 用 <键>:<值> 的方式赋值
+	"B":2,
+	"C":3,
+}
+
+map2 := make(map[string]int, 10) // 用 make 创建一个长度为 10 的 map，其中 长度可以不指定
+
+
+新增或修改 map 中的数据
+
+eg3.
+
+map1 := map[string]int{"A":1}
+
+map1["B"] = 2		// 新增一个键值对
+map1["A"] = 4		// 修改原有的键值对
+
+
+提取 map 中的数据
+
+eg4.
+
+map1 := map[string]int{
+	"A":1,
+	"B":2,
+}
+
+v,ok := map1["A"]	// v = 1, ok = true		// 成功取值，且值为 1
+v,ok := map1["C"]	// v = 0, ok = false	// 取值失败，此时 v 为默认值 0
+
+
+删除 map 中的数据
+
+delete(<map变量名>, <键名称>)
+
+若存在键名称，则删除，若不存在则不执行操作
