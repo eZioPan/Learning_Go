@@ -1,0 +1,73 @@
+A1.1
+
+package main
+
+import "fmt"
+
+func main() {
+	for i := 0; i < 10; i++ {
+		fmt.Println(i)
+	}
+}
+
+
+A1.2
+
+package main
+
+import "fmt"
+
+func main() {
+	var i int = 0
+I:
+	if i < 10 {
+		fmt.Println(i)
+		i++
+		goto I
+	}
+}
+
+
+A1.3
+
+package main
+
+import "fmt"
+
+var a [5]int = [5]int{2, 4, 6, 8, 0}
+
+func main() {
+	var i int = 0
+	var l = len(a) - 1
+I:
+	if i <= l {
+		fmt.Println(a[i])
+		i++
+		goto I
+	}
+}
+
+
+A2.1
+
+package main
+
+import "fmt"
+
+func main() {
+	for i := 1; i <= 100; i++ {
+		c1 := i % 3
+		c2 := i % 5
+		switch {
+		case c1+c2 == 0:
+			fmt.Print("FizzBuzz")
+		case c1 == 0:
+			fmt.Print("Fizz")
+		case c2 == 0:
+			fmt.Print("Buzz")
+		default:
+			fmt.Print(i)
+		}
+		fmt.Print(" ")
+	}
+}
