@@ -201,3 +201,28 @@ eg.
 
 f := func(){fmt.Println("A")}	// 匿名函数赋值
 f()								// 执行匿名函数
+
+
+
+函数的回调
+
+用调用某个指向函数的指针，来执行被指针指向的实际函数的方式，就叫函数的回调
+那个实际的函数，在这种情况下，就叫做回调函数
+
+eg.
+func add(a, b int) int {		// 定义了一个实际操作的函数
+	return a + b
+}
+
+func minus(a, b int) int {		// 定义了第二个实际操作的函数
+	return a - b
+}
+
+func run(a, b int, algorithm func(int, int) int) int {		// 定义了一个中间函数，这里类似一个接口
+	return algorithm(a, b)									// 调用（回调）那个实际操作的函数，并传入实际操作的函数所需要的值
+}
+
+func main() {
+	fmt.Println(run(1, 2, add))				// 传入 add 函数，以及 add 函数需要的两个值，你不需要管 add 是怎么操作的，只需要使用即可
+	fmt.Println(run(1, 2, minus))			// 传入 minus 函数，以及 minus 函数需要的两个值，你不需要管 minus 是怎么操作的，只需要使用即可
+}
