@@ -226,3 +226,55 @@ func main() {
 	fmt.Println(run(1, 2, add))				// 传入 add 函数，以及 add 函数需要的两个值，你不需要管 add 是怎么操作的，只需要使用即可
 	fmt.Println(run(1, 2, minus))			// 传入 minus 函数，以及 minus 函数需要的两个值，你不需要管 minus 是怎么操作的，只需要使用即可
 }
+
+
+
+恐慌（Panic）和恢复（Recover）
+
+Go 语言中没有 异常/处理机制
+转而使用的是 Panic/Recover 机制
+
+Panic
+是一个内建函数，作用是中断原有的函数执行流程，进入特殊的 Panic 流程中
+在 Panic 流程中，defer 的函数可以正常的执行
+若 Panic 没有被 Recover 处理，则原有函数会返回它被调用的地方，并像执行了 panic 函数一样
+除非被任何一个 Recover 捕获，否则，这个这个流程会一直向上层传递，直到所有的 goroutine 返回
+
+Panic 可以被 panic 函数产生，也可以由 runtime 时的错误产生
+
+
+Recover
+是一个内建函数，可以捕获 panic ，并让 recover 执行之后的流程按照正常流程执行
+
+recover() 必须在 defer 中才有用
+
+eg.
+func main() {
+	fmt.Println("Good Morning")		// 提示程序开始运行
+	test()							// panic & recover 测试函数
+	fmt.Println("All Done")			// 检查 panic 是否真的被捕获了
+}
+
+func test() {
+	fmt.Println("let's begin")		// 提示 test 函数开始执行
+	defer func() { recover() }()	// 记录一个 匿名函数，其中调用了 recover 函数
+	panic("Ouch!")					// 产生一个 panic
+	fmt.Println("Done")				// 检查执行状态
+}
+
+程序打印以下内容
+
+Good Morning
+let's begin
+All Done
+
+分析
+
+打印 Good Morning 表示程序开始执行
+打印 let's begin 表示 test 函数开始执行
+没有打印 Ouch! 由于 panic 本身并打印出任何信息
+没有打印 Done 由于 panic 让 test 函数返回了
+打印了 All Done 表示 主程序执行了最后的语句
+					也就是 panic 没有扩散至 主程序中，也就是被 recover 捕获并恢复了
+
+
