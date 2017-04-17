@@ -160,3 +160,116 @@ func main() {
 
 
 -------- Chapter 2 --------
+
+
+A5.1
+
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println(average([]float64{1.2, 3.4, 5.6}))
+}
+
+func average(s []float64) (avg float64) {
+	l := len(s)
+	var sum float64 = 0
+	for i := 0; i < l; i++ {
+		sum += s[i]
+	}
+	avg = sum / float64(l)
+	return avg
+}
+
+
+A6.1
+
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println(sort2D(4, 2))
+}
+
+func sort2D(a, b int) (smaller, bigger int) {
+	if a > b {
+		smaller, bigger = b, a
+	} else {
+		smaller, bigger = a, b
+	}
+	return
+}
+
+
+A7.1
+
+答：
+第 9 行，在 for 语句块之外调用了 作用域 仅在 for 语句块之内的 变量 i
+
+
+A8.1
+
+package main
+
+import "fmt"
+
+type Stack []interface{}
+
+func main() {
+	var s Stack = Stack{1, 2, 3, 4}
+	fmt.Println(pop(&s))
+	push(5, &s)
+	fmt.Println(pop(&s))
+	fmt.Println(pop(&s))
+}
+
+func push(item interface{}, S *Stack) {
+	*S = append(*S, item)
+}
+
+func pop(S *Stack) (item interface{}) {
+	var l int = len(*S)
+	item = (*S)[l-1]
+	*S = (*S)[0 : l-1]
+	return
+}
+
+
+A8.2_【未解决】
+
+package main
+
+import "fmt"
+
+type Stack []interface{}
+
+func main() {
+	var s Stack = Stack{1, 2, 3, 4}
+	fmt.Println(pop(&s))
+	push(5, &s)
+	fmt.Println(pop(&s))
+	fmt.Println(pop(&s))
+	fmt.Println(String(&s))
+}
+
+func push(item interface{}, S *Stack) {
+	*S = append(*S, item)
+}
+
+func pop(S *Stack) (item interface{}) {
+	var l int = len(*S)
+	item = (*S)[l-1]
+	*S = (*S)[0 : l-1]
+	return
+}
+
+func String(S *Stack) string {
+	var l int = len(*S)
+	var dataString string
+	for i := l; i >= 0; i-- {
+		dataString = "[" + string(l-i) + ":" + string((*S)[i].(int)) + "\n"
+	}
+	return dataString
+}
