@@ -273,3 +273,143 @@ func String(S *Stack) string {
 	}
 	return dataString
 }
+
+
+A9.1
+
+package main
+
+import "fmt"
+
+func main() {
+	intList(1, 2, 3, 4, 5)
+}
+
+func intList(args ...int) {
+	for _, v := range args {
+		fmt.Println(v)
+	}
+}
+
+
+A10.1
+
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	fmt.Println(Fibonacci(10, 2, 6))
+}
+
+func Fibonacci(x0, x1, length int) (seq []int) {
+
+	if x0 > x1 {
+		fmt.Println("first number is greater than second,interchanged")
+		x1, x0 = x0, x1
+	}
+	seq = append(seq, x0, x1)
+	for i := 1; i < length; i++ {
+		x0, x1 = x1, x0+x1
+		seq = append(seq, x1)
+	}
+	return seq
+}
+
+
+A11.1
+
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	fmt.Println(MyMap(plusOne, []int{1, 2, 3}))
+}
+
+func MyMap(f func(int) int, intL []int) (rIntL []int) {
+	for _, v := range intL {
+		rIntL = append(rIntL, f(v))
+	}
+	return
+}
+
+func plusOne(a int) (b int) {
+	b = a + 1
+	return
+}
+
+
+A11.2
+
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	fmt.Println(MyMap(plusOne, []string{"x", "y", "z"}))
+}
+
+func MyMap(f func(string) string, intL []string) (rIntL []string) {
+	for _, v := range intL {
+		rIntL = append(rIntL, f(v))
+	}
+	return
+}
+
+func plusOne(a string) (b string) {
+	b = a + "1"
+	return
+}
+
+
+A12.1
+
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	fmt.Println(Max([]int{1, 2, 3, 4, 5}))
+}
+
+func Max(l []int) (max int) {
+	max = l[0]
+	for _, v := range l {
+		if max < v {
+			max = v
+		}
+	}
+	return max
+}
+
+
+A12.2
+
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	fmt.Println(Min([]int{1, 2, 3, 4, 5}))
+}
+
+func Min(l []int) (min int) {
+	min = l[0]
+	for _, v := range l {
+		if min > v {
+			min = v
+		}
+	}
+	return min
+}
