@@ -413,3 +413,66 @@ func Min(l []int) (min int) {
 	}
 	return min
 }
+
+
+A13.1
+
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println(bubble([]int{9, 8, 7, 6, 5, 3, 4, 2, 1}))
+}
+
+func bubble(orignalList []int) []int {
+	l := len(orignalList)
+	for i := 0; i < l; i++ {
+		for j := 0; j < l-i-1; j++ {
+			if orignalList[j] > orignalList[j+1] {
+				orignalList[j], orignalList[j+1] = orignalList[j+1], orignalList[j]
+			}
+		}
+	}
+	return orignalList
+}
+
+
+A14.1
+
+package main
+
+import "fmt"
+
+func main() {
+	p := plusTwo()
+	fmt.Println(p(2))
+}
+
+func plusTwo() (rf func(int) int) {
+	rf = func(a int) (b int) {
+		b = a + 2
+		return
+	}
+	return
+}
+
+
+A14.2
+
+package main
+
+import "fmt"
+
+func main() {
+	p := plusX(5)
+	fmt.Println(p(2))
+}
+
+func plusX(x int) (rf func(int) int) {
+	rf = func(a int) (b int) {
+		b = a + x
+		return
+	}
+	return
+}
