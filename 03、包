@@ -1,0 +1,47 @@
+包是一系列 函数 和 值 的集合
+
+包由源码文件开始处的  package <包名称>  定义
+
+约定俗成的，包名中不出现大写字母
+
+包名 和 源码文件名 可以不同，Go 在调用包的时候，以 包名 为准
+
+一个包可以由多个源码文件组成，只要这些文件指向同一个包名
+
+一般来说，同一层目录下的源码文件指向同一个包名，且目录名也可以和包名不同
+
+使用 import <包路径> 来导入包
+
+包的起始搜索路径为 $GOROOT/src/ 和 $GOPATH/src/
+
+包路径的开头 省略起始搜索路径，结束于 指定包源码文件 所在的目录名
+
+包中的函数，只要函数名的首字母是大写的，
+就是“倒出的”（“exported”），可被其他包调用的；
+否则就是“非倒出的”（“unexported”），不可被其他包调用的
+
+包中函数的调用方法 <包名>.<函数>
+
+EG.
+
+文件 $GOPATH/src/packA/fileB.go
+
+package stringZ					// 目录在 packA 下，文件名为 fileB，包名为 stringZ
+								// 不是 main 包，没有 main 函数，不是程序的入口包
+
+func Get() string {				// 定义了一个首字母大写的 Get 函数
+	return "Z"
+}
+
+文件 $GOPATH/src/run.go
+
+package main					// main 包，程序的入口包
+
+import (
+	"fmt"
+	"packA"
+)
+
+func main() {					// main 函数，程序的入口函数
+	fmt.Println(stringZ.Get())
+}
