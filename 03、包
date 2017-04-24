@@ -100,3 +100,54 @@ import <包简称> <包路径> 另取一个包名
 3、import 要测试的包
 	或者对于单个包
 	直接 package <要测试的包名> 来测试包中包括私有函数在内的所有函数
+
+
+testing 包的三个重要的函数（名）——三个重要的测试工具
+
+
+单元测试函数：
+
+func TestXxx(*testing.T)
+
+以 Test 为函数名的开头，后面紧接非小写字母的字符（大写字母、数字、符号，等等）
+
+
+单元性能测试：
+
+func BenchmarkXxx(*testing.B)
+
+以 Test 为函数名的开头，后面紧接非小写字母的字符（大写字母、数字、符号，等等）
+
+
+单元样例测试（会出现在 GoDoc 里面）：
+
+func ExampleXxx()
+
+以 Test 为函数名的开头，后面紧接非小写字母的字符（大写字母、数字、符号，等等）
+
+
+testing 包的四个最常见的方法
+
+
+func (*testing.T) Fail() 或 func (*testing.B) Fail()
+
+若对应的对象执行了 Fail() 方法，则该对象被标记为 失败
+但剩余的测试代码会继续执行
+
+
+func (*testing.T) FailNow() 或 func (*testing.B) FailNow()
+
+若对应的对象执行了 FailNow() 方法，则该对象被标记为 失败
+并立刻中断 该对象 剩余所有的测试代码
+跳转至其他 测试对象的 代码，并执行测试
+
+
+func (*testing.T) Log(args ...interface{}) 或 func (*testing.B) Log(args ...interface{})
+
+将 传入 该方法的参数 格式化输出至 错误日志中
+错误日志在该对象测试完成后从 os.Stdout 输出
+
+
+func (*testing.T) Fatal(args ...interface{}) 或 func (*testing.B) Fatal(args ...interface{})
+
+等价于先执行 Log() 接着执行 FailNow()
