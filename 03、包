@@ -223,3 +223,5 @@ func TestMain(m *testing.M){
 	/* Blah Blah Blah */
 }
 
+常用包 builtin 的 println print 输出至 StdErr 程序结束后一并输出
+常用包 fmt 的 Print Println Printf 输出至 StdOut 程序边执行边输出
