@@ -151,3 +151,56 @@ func (*testing.T) Log(args ...interface{}) 或 func (*testing.B) Log(args ...int
 func (*testing.T) Fatal(args ...interface{}) 或 func (*testing.B) Fatal(args ...interface{})
 
 等价于先执行 Log() 接着执行 FailNow()
+
+
+EG.
+
+待测试文件 $GOPATH/src/Adder/run.go
+
+package adder
+
+func Add(a, b int) (r int) {
+	r = a + b
+	return
+}
+
+
+测试文件 $GOPATH/src/Adder/run_test.go
+
+package adder						// 直接将 *_test.go 代码插入原始的 adder 包中
+
+import (
+	"fmt"							// 若要使用 Example 请务必
+	"testing"						// 导入测试框架
+)
+
+func Test_Add(t *testing.T) {		// 使用特殊的关键字
+	if Add(1, 2) != 3 {				// 判断执行结果是否和预期相同
+		t.Log("1+2 != 3 ???")		// 写入该对象的日志信息
+		t.Fail()					// 手动标记该对象处于失败状态
+	}
+}
+
+func Example_Add() {
+	fmt.Print(Add(1, 2))			// 一定要使用 fmt 包 中的 Print/Println/Printf 函数（立刻打印数值至 StdOut）
+									// 不能使用 builtin 包中的 print/println 函数（等待程序全部执行结束才输出至 StdErr）
+	// Output:						// 该函数最后一个注释为 Output: 或者 Unorder output: 时
+	// 3							// Example 检查测试函数的打印值是否和注释的一致，若不一致则 标注 测试失败
+}
+
+func Benchmark_Add(b *testing.B) {
+	for i := 0; i < b.N; i++ {		// b.N 表示测试将执行的次数，这个数会依据被测函数的运算速度自动修改，直至获取稳定的数据
+		Add(i, i)
+	}
+}
+
+执行函数
+
+// 执行目录下所有的测试（不含 Benchmark）
+go test
+
+// 执行目录下有的测试（含有所有的 Benchmark）
+go test -bench .
+
+// 分析目录下所有测试代码的覆盖率
+go test -cover
