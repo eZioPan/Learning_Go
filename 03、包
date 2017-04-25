@@ -204,3 +204,22 @@ go test -bench .
 
 // 分析目录下所有测试代码的覆盖率
 go test -cover
+
+
+
+除了上述重要的 TestXxx BenchmarkXxx ExsampleXxx 之外，还有一个重要的方法函数为 TestMain
+
+由于 go test 会自动执行 *_test.go 文件中匹配上的函数，所以并不好 控制测试流程/执行测试初始化/执行测试结束后语句
+
+此时使用 func TestMain(*testing.M) 来引导 go test 执行 *_test.go 中的函数
+
+func TestMain(m *testing.M){
+	/* 一些额外的代码 */
+	/* Blah Blah Blah */
+
+	m.Run()			// 执行主测试
+
+	/* 一些额外的代码 */
+	/* Blah Blah Blah */
+}
+
