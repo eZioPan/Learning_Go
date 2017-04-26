@@ -210,12 +210,13 @@ A7.1
 
 
 A8.1
+## 仅针对数学意义上的数组有效
 
 package main
 
 import "fmt"
 
-type Stack []interface{}
+type Stack []int
 
 func main() {
 	var s Stack = Stack{1, 2, 3, 4}
@@ -225,11 +226,11 @@ func main() {
 	fmt.Println(pop(&s))
 }
 
-func push(item interface{}, S *Stack) {
+func push(item int, S *Stack) {
 	*S = append(*S, item)
 }
 
-func pop(S *Stack) (item interface{}) {
+func pop(S *Stack) (item int) {
 	var l int = len(*S)
 	item = (*S)[l-1]
 	*S = (*S)[0 : l-1]
@@ -237,13 +238,17 @@ func pop(S *Stack) (item interface{}) {
 }
 
 
-A8.2_【未解决】
+A8.2
+## 仅针对数学意义上的数组有效
 
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
-type Stack []interface{}
+type Stack []int
 
 func main() {
 	var s Stack = Stack{1, 2, 3, 4}
@@ -254,11 +259,11 @@ func main() {
 	fmt.Println(String(&s))
 }
 
-func push(item interface{}, S *Stack) {
+func push(item int, S *Stack) {
 	*S = append(*S, item)
 }
 
-func pop(S *Stack) (item interface{}) {
+func pop(S *Stack) (item int) {
 	var l int = len(*S)
 	item = (*S)[l-1]
 	*S = (*S)[0 : l-1]
@@ -268,8 +273,8 @@ func pop(S *Stack) (item interface{}) {
 func String(S *Stack) string {
 	var l int = len(*S)
 	var dataString string
-	for i := l; i >= 0; i-- {
-		dataString = "[" + string(l-i) + ":" + string((*S)[i].(int)) + "\n"
+	for i := l - 1; i >= 0; i-- {
+		dataString += "[" + strconv.Itoa(l-i) + ":" + strconv.Itoa((*S)[i]) + "]\n"
 	}
 	return dataString
 }
