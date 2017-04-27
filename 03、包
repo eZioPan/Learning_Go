@@ -206,7 +206,6 @@ go test -bench .
 go test -cover
 
 
-
 除了上述重要的 TestXxx BenchmarkXxx ExsampleXxx 之外，还有一个重要的方法函数为 TestMain
 
 由于 go test 会自动执行 *_test.go 文件中匹配上的函数，所以并不好 控制测试流程/执行测试初始化/执行测试结束后语句
@@ -223,5 +222,58 @@ func TestMain(m *testing.M){
 	/* Blah Blah Blah */
 }
 
-常用包 builtin 的 println print 输出至 StdErr 程序结束后一并输出
-常用包 fmt 的 Print Println Printf 输出至 StdOut 程序边执行边输出
+
+
+常见的 Go 标准包
+
+builtin
+	提供了基础的函数和数据类型
+
+	注意
+	builtin 的 println print 输出至 StdErr 程序结束后一并输出
+
+fmt
+	提供了
+	格式化 IO 的函数
+
+	注意
+	fmt 的 Print Println Printf 输出至 StdOut 程序边执行边输出
+
+io
+	基础的 IO 操作，主要是针对 os 包的封装
+
+bufio
+	带缓冲的 io，它封装了 io.Reader 和 io.Writer
+
+sort
+	提供了排序的功能
+
+strconv
+	字符串与基础类型之间的互相转换
+
+os
+	与平台无关的操作系统接口
+
+sync
+	线程/进程 同步机制
+
+flag
+	命令行参数解析
+
+encoding/json
+	JSON 对象的编解码
+
+html/template
+	数据驱动模板
+
+net/http
+	HTTP 请求、响应
+
+unsafe
+	数据类型不安全的操作（一般不需要使用）
+
+reflect
+	runtime 反射，通过抽象类型操作对象
+
+os/exec
+	执行外部命令
