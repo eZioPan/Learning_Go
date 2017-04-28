@@ -481,3 +481,78 @@ func plusX(x int) (rf func(int) int) {
 	}
 	return
 }
+
+
+
+-------- Chapter 3 --------
+
+
+A15.1
+
+package stack
+
+import "strconv"
+
+type Stack []int
+
+func (S *Stack) Push(item int) {
+	*S = append(*S, item)
+}
+
+func (S *Stack) Pop() (item int) {
+	var l int = len(*S)
+	item = (*S)[l-1]
+	*S = (*S)[0 : l-1]
+	return
+}
+
+func (S *Stack) String() string {
+	var l int = len(*S)
+	var dataString string
+	for i := l - 1; i >= 0; i-- {
+		dataString += "[" + strconv.Itoa(l-i) + ":" + strconv.Itoa((*S)[i]) + "] "
+	}
+	return dataString
+}
+
+
+A15.2
+
+package stack
+
+import (
+	"fmt"
+	"testing"
+)
+
+var s1 *Stack = &Stack{1, 2, 3, 4, 5, 6}
+
+func Test_Pop(t *testing.T) {
+	if s1.Pop() != 6 {
+		t.Fatal("Pop Error")
+	}
+}
+
+func Test_Push(t *testing.T) {
+	s1.Push(7)
+	sE := Stack{1, 2, 3, 4, 5, 7}
+	if len(*s1) != len(sE) {
+		t.Fatal("Push Falied: Wrong Stack Count")
+	} else {
+		for i := range *s1 {
+			if (*s1)[i] != sE[i] {
+				t.Fatal("Push Failed: Wrong Value")
+			}
+		}
+	}
+}
+
+func Example_Stringer() {
+	fmt.Println(s1)
+	// Output:
+	// [1:7] [2:5] [3:4] [4:3] [5:2] [6:1]
+}
+
+
+A16.1
+【做法未知，跳过】
