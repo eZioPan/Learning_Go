@@ -43,3 +43,40 @@ make 用于为 slice、map、channel 三种类型分配内存
 
 本质上来说，slice map 和 channel 在分配内存之后，都需要做初始化处理
 make 的作用就是在分配内存后，还做了一系列初始化动作
+
+
+
+定义新类型
+
+type <新类型名称> <新类型数据结构>
+
+EG.
+
+type MyInt int	// 一个底层为 int 类型的 MyInt 类型
+
+
+与新类型常连用的是称为 结构体类型，来定义复杂类型
+
+
+结构体
+
+
+结构体的声明
+
+struct {
+	[<字段名称>] <字段对应的类型>
+	...
+}
+
+eg1.
+
+type Person struct{		// 声明了一个新的类型 Person，它是一个结构体
+						// 该类型的类型名大写，是可导出新类型
+	uuid string			// 结构体里包含的字段1：uuid，类型为 string
+						// 由于首字母是小写，所以是非导出字段
+	Id int				// 以下字段都是可导出字段
+	Name string
+	Phone int
+	Address string
+	string				// 匿名字段，其类型为 string，而字段名随着类型，也叫做 string
+}						// 注意，无论是匿名字段还是非匿名字段，都不可以重名
