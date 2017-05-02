@@ -153,3 +153,7 @@ func (p *Person) ChangeName(newName string){	// 接受一个 Person 类型的指
 var p1 *Person			// 建立一个对象
 
 p1.ChangeName("AAAA")	// 调用对象的方法
+
+
+
+在 Go 中，所有的类型转换必须是显式的（必须由代码指明转换）
