@@ -1,0 +1,135 @@
+接口
+
+在 Go 语言中，接口就是 方法 的集合
+
+EG1.
+
+package main
+
+import (
+	"fmt"
+)
+
+type S struct{ i int }					// 声明的新的类型
+
+func (s *S) Get() int { return s.i }	// 对声明的新类型定义了新的方法
+
+func (s *S) Push(a int) { s.i = a }
+
+type I interface {						// 声明了一个接口
+	Get() int							// 接口里有 不含有 接受者 的方法名和类型
+	Push(int)
+}
+
+func main() {
+	var in I							// 创建了一个 接口 的对象
+	in = &S{6}							// 为该接口传入了一个类型的值
+	fmt.Printf("%v\n", in.Get())		// 使用该接口可识别的方法
+	in.Push(1)
+	fmt.Printf("%v\n", in.Get())
+}
+
+
+
+到底什么是接口，我个人认为
+
+1、从接口自身来看，接口是 类型 的标准
+	但凡由任何一个类型实现了某个接口所有的方法
+	那么这个类型就可被这个类型识别
+
+2、从类型的角度来看，接口是多种类型的整合
+	有了接口，在 使用 接口涵盖的方法的时候
+	不需要考虑方法实际的接收者是谁
+
+3、总的来看
+	接口的一端是数据的操作（也就是不含接收者信息的方法）
+	接口的另一端是数据（也就是某种类型）
+
+
+EG2.【拓展 EG1】
+
+文件 firstInter.go
+
+/*测试 接口 的意义*/
+package firstInter
+
+import (
+	"fmt"
+	"strconv"
+)
+
+// 具有 Get 和 Push 方法的接口
+type SI interface {
+	Get() string
+	Push(string)
+	String() string
+}
+
+// 定义了一个 S1 类型，为结构体，包含一个整型变量
+type S1 struct {
+	I int
+}
+
+// 定义了 S1 类型的 Get 方法，获取了它所含有的整型数据
+func (s *S1) Get() string {
+	return strconv.Itoa(s.I)
+}
+
+// 定义了 S1 类型的 Push 方法，可以修改它所含有的整型数据
+func (s *S1) Push(a string) {
+	num, err := strconv.Atoi(a)
+	if err == nil {
+		s.I = num
+	}
+}
+
+// 定义了 S1 类型的 String 方法，返回了应该返回的字符串
+func (s *S1) String() string {
+	return strconv.Itoa(s.I)
+}
+
+// 定义了一个 S2 类型，为结构体，包含一个字符串变量
+type S2 struct {
+	S string
+}
+
+// 定义了 S2 类型的 Get 方法，获取了它所含有的字符串数据
+func (s *S2) Get() string {
+	return s.S
+}
+
+// 定义了 S1 类型的 Push 方法，可以修改它所含有的字符串数据
+func (s *S2) Push(a string) {
+	s.S = a
+}
+
+// 定义了 S1 类型的 String 方法，返回了应该返回的字符串
+func (s *S2) String() string {
+	return s.S
+}
+
+// 创建一个函数，运行接口 SI 所有的方法
+func run(tI SI) {
+	fmt.Printf(tI.Get())				// 注意， tI 不再关心方法的接收者到底是谁
+	tI.Push("3")						// 这种理念将降低代码的组织难度
+	fmt.Printf(tI.Get())
+}
+
+
+测试文件 firstInter_test.go
+
+// firstInter 单元测试文件
+package firstInter
+
+var tI SI						// 接口类型的实例
+
+var s1 *S1 = &S1{1}
+var s2 *S2 = &S2{"???"}
+
+func Example_InterFace() {
+	tI = s1						// 接口承载了一个类型的实例
+								// 该类型实现了该接口所定义的所有方法
+	run(tI)
+	tI = s2
+	run(tI)
+}
