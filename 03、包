@@ -110,6 +110,7 @@ testing 包的三个重要的函数（名）——三个重要的测试工具
 func TestXxx(*testing.T)
 
 以 Test 为函数名的开头，后面紧接非小写字母的字符（大写字母、数字、符号，等等）
+若要测试某函数，则 Xxx 为函数名
 
 
 单元性能测试：
@@ -117,6 +118,7 @@ func TestXxx(*testing.T)
 func BenchmarkXxx(*testing.B)
 
 以 Test 为函数名的开头，后面紧接非小写字母的字符（大写字母、数字、符号，等等）
+若要测试某函数，则 Xxx 为函数名
 
 
 单元样例测试（会出现在 GoDoc 里面）：
@@ -124,6 +126,13 @@ func BenchmarkXxx(*testing.B)
 func ExampleXxx()
 
 以 Test 为函数名的开头，后面紧接非小写字母的字符（大写字母、数字、符号，等等）
+<1> 若要写包的样例，则不加 Xxx
+<2> 若要写某函数的样例，则 Xxx 为原函数的函数名
+<3> 若要为某个包/函数写入多个样例，在 Xxx 加上 _xxx
+	xxx 的第一个字符必须是小写字符
+！！上述三种样例会随着 包 和 函数 出现在 godoc 中
+
+Xxx 为其他名字的，只运行测试，不出现在 godoc 中
 
 
 testing 包的四个最常见的方法
@@ -174,14 +183,14 @@ import (
 	"testing"						// 导入测试框架
 )
 
-func Test_Add(t *testing.T) {		// 使用特殊的关键字
+func TestAdd(t *testing.T) {		// 使用特殊的关键字
 	if Add(1, 2) != 3 {				// 判断执行结果是否和预期相同
 		t.Log("1+2 != 3 ???")		// 写入该对象的日志信息
 		t.Fail()					// 手动标记该对象处于失败状态
 	}
 }
 
-func Example_Add() {
+func ExampleAdd() {
 	fmt.Print(Add(1, 2))			// 一定要使用 fmt 包 中的 Print/Println/Printf 函数（立刻打印数值至 StdOut）
 									// 不能使用 builtin 包中的 print/println 函数（等待程序全部执行结束才输出至 StdErr）
 	// Output:						// 该函数最后一个注释为 Output: 或者 Unorder output: 时
@@ -189,7 +198,7 @@ func Example_Add() {
 									// 若没有完全没有注释，则不运行测试
 }
 
-func Benchmark_Add(b *testing.B) {
+func BenchmarkAdd(b *testing.B) {
 	for i := 0; i < b.N; i++ {		// b.N 表示测试将执行的次数，这个数会依据被测函数的运算速度自动修改，直至获取稳定的数据
 		Add(i, i)
 	}
