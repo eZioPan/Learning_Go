@@ -186,6 +186,7 @@ func Example_Add() {
 									// 不能使用 builtin 包中的 print/println 函数（等待程序全部执行结束才输出至 StdErr）
 	// Output:						// 该函数最后一个注释为 Output: 或者 Unorder output: 时
 	// 3							// Example 检查测试函数的打印值是否和注释的一致，若不一致则 标注 测试失败
+									// 若没有完全没有注释，则不运行测试
 }
 
 func Benchmark_Add(b *testing.B) {
