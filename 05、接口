@@ -212,3 +212,23 @@ func Example_3() {
 	// 3
 	// 3
 }
+
+
+
+由于 空接口 interface{} 不包含任何的方法，所以 Go 语言中任何一个类型都实现了 interface{} 这个接口
+我们可以使用 interface{} 这个接口作为通用类型
+
+EG5.
+// 一个可以接受任何类型的超级切片
+var uniSlice []interface{} = []interface{}{1,"aaaa",'c',[]int{1,2,3}}
+
+
+注意，
+<1> 不可将接口作为方法的接收者
+<1> 不可以使用接口指针，防止循环指针
+
+
+
+特殊接口的命名惯例
+
+对于只有一个方法的接口，接口名一般为 方法名+er，比如 Reader Writer Formatter
