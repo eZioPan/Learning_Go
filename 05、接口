@@ -24,6 +24,7 @@ type I interface {						// 声明了一个接口
 func main() {
 	var in I							// 创建了一个 接口 的对象
 	in = &S{6}							// 为该接口传入了一个类型的值
+										// 注意，这里使用了等号，暗示该 struct 类型和该 interface 类型是等价的
 	fmt.Printf("%v\n", in.Get())		// 使用该接口可识别的方法
 	in.Push(1)
 	fmt.Printf("%v\n", in.Get())
@@ -109,10 +110,10 @@ func (s *S2) String() string {
 }
 
 // 创建一个函数，运行接口 SI 所有的方法
-func run(tI SI) {
-	fmt.Printf(tI.Get())				// 注意， tI 不再关心方法的接收者到底是谁
-	tI.Push("3")						// 这种理念将降低代码的组织难度
-	fmt.Printf(tI.Get())
+func Run(tI SI) {
+	fmt.Printf("%v\n", tI.Get()) // 注意， tI 不再关心方法的接收者到底是谁
+	tI.Push("3")                 // 这种理念将降低代码的组织难度
+	fmt.Printf("%v\n", tI.Get())
 }
 
 
@@ -121,15 +122,19 @@ func run(tI SI) {
 // firstInter 单元测试文件
 package firstInter
 
-var tI SI						// 接口类型的实例
-
 var s1 *S1 = &S1{1}
 var s2 *S2 = &S2{"???"}
 
-func Example_InterFace() {
-	tI = s1						// 接口承载了一个类型的实例
-								// 该类型实现了该接口所定义的所有方法
-	run(tI)
-	tI = s2
-	run(tI)
+var l []SI = []SI{s1, s2}			// 这里并没有出现编译错误，说明 *S1 和 *S2 与 SI 类型是等价的
+									// 又由于 interface 也是一种 type，可以直接建立一个这个列表
+func Example() {
+	for _, item := range l {
+		Run(item)
+	}
+	//Output:
+	//1
+	//3
+	//???
+	//3
+}
 }
