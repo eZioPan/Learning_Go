@@ -137,4 +137,78 @@ func Example() {
 	//???
 	//3
 }
+
+
+
+一个接口可以包含另一个接口的所有方法，那个被包含的接口就被成为 插入接口
+
+EG3.
+
+type A interface{			// 接口 A
+	Amethod()				// 接口 A 的签名方法 Amethod
+}
+
+type B interface{			// 接口 B
+	Bmethod()				// 接口 B 特有的方法 Bmethod
+	A						// 插入 接口 B 的 接口 A，接口 A 称为 接口 B 的插入接口
+							// 此时接口 B 直接具有 接口 A 签名的方法
+}
+
+
+
+由于存在多种类型的方法都满足同一个 interface
+所以我们需要有一种方法来判断一个 interface 中的变量真实的类型
+
+有两种主要的方法作判断
+
+<1> type switch
+
+switch <接口实例>.(type){			// switch 和 .(type) 是关键字
+case <类型1>:
+	[要执行的动作1]
+case <类型2>:
+	[要执行的动作2]
+default:
+	[都不匹配时要执行的动作]
+}
+
+EG4.【接EG2】
+
+func Example_2() {
+	for _, item := range l {
+		s := ""
+		switch item.(type) {			// 类型判断
+		case *S1:						// 注意，*S1 和 S1 是不同的类型，不要写错
+			s = "*S1"
+		case *S2:
+			s = "*S2"
+		}
+		fmt.Printf("Type: %s\n", s)
+	}
+	//Output:
+	//Type: *S1
+	//Type: *S2
+}
+
+
+<2> type assertion
+
+<类型实例名>, ok := <接口实例>.(<预判类型>)
+
+若确实为该类型，则 <类型实例名> 取到非 nil 的值，ok 为 true
+若并非为该类型，则 <类型实例名> 为 nil, ok 为 false
+
+EG4.【接EG3】
+
+func Example_3() {
+	for _, item := range l {
+		if to, ok := item.(*S1); ok {
+			fmt.Printf("%v\n", to.Get())
+		} else if to, ok := item.(*S2); ok {
+			fmt.Printf("%v\n", to.Get())
+		}
+	}
+	//Output:
+	// 3
+	// 3
 }
