@@ -278,6 +278,5 @@ All Done
 没有打印 Ouch! 由于 panic 本身并打印出任何信息
 没有打印 Done 由于 panic 让 test 函数返回了
 打印了 All Done 表示 主程序执行了最后的语句
-					也就是 panic 没有扩散至 主程序中，也就是被 recover 捕获并恢复了
-
+也就是 panic 没有扩散至 主程序中，也就是被 recover 捕获并恢复了
 
