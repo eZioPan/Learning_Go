@@ -574,7 +574,44 @@ A17.2
 
 A18.1
 
-【未学习 interface 跳过】
+package main
+
+import (
+	"fmt"
+)
+
+// Read a element,then add one
+func plusOne(input interface{}) interface{} {
+	switch raw := input.(type) {
+	case int:
+		raw += 1
+		return raw
+	case float64:
+		raw += 0.01
+		return raw
+	case float32:
+		raw += 0.1
+		return raw
+	case string:
+		raw += "1"
+		return raw
+	default:
+		fmt.Printf("Unsupport Type: %#T,\tat Value: %#v\n", raw, raw)
+		return nil
+	}
+}
+
+// Iterate a list and feed element into a predeclare function
+func MyMap(f func(interface{}) interface{}, ol []interface{}) (rl []interface{}) {
+	for _, item := range ol {
+		rl = append(rl, f(item))
+	}
+	return
+}
+
+func main() {
+	fmt.Printf("%#v\n", MyMap(plusOne, []interface{}{1, "2", 3.14, 4, 5}))
+}
 
 
 A19.1
