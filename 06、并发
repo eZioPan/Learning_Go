@@ -1,0 +1,42 @@
+并发（Concurrent） 与 并行（Parallel）
+Go 语言通过 goroutine 来执行并发
+
+goroutine 的简单定义
+goroutine 是与其他 goroutine 相对独立执行，且处在相同的地址空间的函数
+
+goroutine 是一个函数，它以关键字 go 作为开头
+
+EG.
+ready("Tea",2)		// 普通的函数调用
+go ready("Tea",2)	// 作为 goroutine 执行
+
+
+
+一个简单的并发例子：
+
+EG:
+// 本包通过 gotoutine 打印 0 至 50 这 51 个数字
+package main
+
+import (
+	"fmt"
+	"strconv"
+)
+
+// 定义一个要在 goroutine 中执行的函数
+func span(w string) {
+	fmt.Printf("%#v", w)
+}
+
+func main() {
+	for i := 0; i <= 50; i++ {
+		go span(strconv.FormatInt(int64(i), 10))	// 使用关键字 Go 启动一个 goroutine
+	}
+}
+
+
+我们可以发现
+1、程序是乱序打印数字的，说明 go 关键字的确成功造成了并发的效果
+2、需要打印的数字的个数远远小于应该打印的个数
+   这是因为 main 函数在其他 goroutine 还没有全部返回的时候就结束运行了
+   于是没有运行完的 goroutine 就被立刻中断了
