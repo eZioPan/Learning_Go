@@ -40,3 +40,37 @@ func main() {
 2、需要打印的数字的个数远远小于应该打印的个数
    这是因为 main 函数在其他 goroutine 还没有全部返回的时候就结束运行了
    于是没有运行完的 goroutine 就被立刻中断了
+
+
+改进的并发例子：
+
+EG2.【手动让 main 函数等待 goroutine 执行完毕】
+
+// 本包通过 goroutine 打印 0 至 50 这 51 个数字
+// 并手动使主程序等待 goroutine 返回
+package main
+
+import (
+	"fmt"
+	"strconv"
+	"time"
+)
+
+// 定义一个要在 goroutine 中执行的函数
+func span(w string) {
+	fmt.Printf("%#v", w)
+}
+
+func main() {
+	for i := 0; i <= 50; i++ {
+		go span(strconv.FormatInt(int64(i), 10)) // 使用关键字 Go 启动一个 goroutine
+	}
+	time.Sleep(3 * time.Second) // 手动让 main 函数等待一段时间
+}
+
+
+这次所有 goroutine 的返回值都收到了
+
+
+但是在绝大多数并行程序中，我们并不知道 goroutine 会运行多久
+所以手动让 main 函数等待的做法并不可取
