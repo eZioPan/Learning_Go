@@ -86,3 +86,59 @@ func main() {
 
 但是在绝大多数并行程序中，我们并不知道 goroutine 会运行多久
 所以手动让 main 函数等待的做法并不可取
+
+
+
+在 go 语言中，goroutine 之间通过一种内置类型的实例进行数据传递（通信）
+这种内置的类型被称为 channel，每个 channel 如同一个可以带有中转功能的管道双向管道
+
+对于不带有中转功能的 channel
+仅当 channel 的发送端准备好发送数据，且接受端准备好接受数据时
+channel 才会建立起来，并完成数据的传输
+否则 发送端/接收端 所在的 goroutine 会进入睡眠状态，直到 channel 成功完成传输
+
+对于带有中转功能的 channel
+channel 可以存储一些数据在 channel 中
+直到它们被拉取时，才会输出出来，并释该数据占用 channel 的空间
+channel 中的数据遵循 FIFO 规则
+当某个 channel 中充满的数据，则该 发送端/接收端 所在的 goroutine 就会进入睡眠状态
+直到 channel 中的数据被拉取之后才解锁
+
+若一个程序中，所有的 goroutine 都进入睡眠状态的时候
+程序就会陷入 dead lock 状态，此时程序就会直接退出
+
+也就是说，channel 本身是一种可以阻塞 goroutine 的
+
+
+
+channel 的类型
+
+chan <数据类型>
+
+EG.
+var ch1 chan int		// 传递 int 类型数据的 channel
+var ch2 chan string		// 传递 string 类型数据的 channel
+var ch3 chan []byte		// 传递 []byte 类型数据的 channel
+
+
+除了普通的双向 channel
+还有两种特殊的 channel
+它们称为 one-derection channel
+分别写为
+<-chan <数据类型> 和 chan<- <数据类型>
+常用于 函数的形式参数，不常用于直接创建
+
+
+
+channel 的初始化
+一个 channel 必须经过 make 语句的初始化之后，才能进行使用
+
+EG.
+
+// 创建一个传递 int 类型的无缓冲 channel
+var ch1 chan int = make(chan int)
+// 创建一个传递 string 类型的，具有一个缓冲位的 channel
+var ch2 chan string = make(chan string,1)
+
+注意，channel 被初始化以后，channel 变量中存储的是 channel 的内存地址
+也就是说，不需要，也不可以 对 channel 取内存地址
