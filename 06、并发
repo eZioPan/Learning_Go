@@ -142,3 +142,55 @@ var ch2 chan string = make(chan string,1)
 
 注意，channel 被初始化以后，channel 变量中存储的是 channel 的内存地址
 也就是说，不需要，也不可以 对 channel 取内存地址
+
+
+
+向 channel 传入数据 与 从 channel 拉取数据
+
+出传入和传出数据使用的符号 <-
+
+向 channel 中传入数据 <channel变量> <- <对应的数据>
+从 channel 中拉取数据
+	<- <channel 变量>
+	i := <- <channel 变量>
+	i = <- <channel 变量>
+
+
+注意，向值为 nil 的 channel （未初始化的 channel）中传入数据会使 传入端 所在 goroutine 进入睡眠状态
+
+
+EG.
+package main
+
+import (
+	"fmt"
+)
+
+var ch1 chan int = make(chan int)
+
+// 向 channel 中写入数据
+func Set(i int, c chan<- int) {		// 单向 channel，只允许向 channel c 中传入参数
+	c <- i							// 传入数据
+}
+
+// 从 channel 中拉取数据，并返回数据本身
+func Get(c <-chan int) int {		// 单向 channel，只允许从 channel c 拉取参数
+	i := <-c						// 将数据直接赋入一个变量中
+	return i
+}
+
+// 从 channel 中拉取数据，并直接打印
+func Print(c <-chan int) {
+	fmt.Printf("%#v\n", <-c)		// 直接打印拉取的数据
+}
+
+func main() {
+	go Set(5, ch1)					// 在另一个 goroutine 中启动用于 写入 channel 的函数
+									// 错误写法： Set(5, ch1)
+									// 由于没有接收端又没有缓冲，会直接锁死当前唯一的 goroutine
+	fmt.Printf("%#v\n", Get(ch1))	// 拉取数据
+									// 错误写法： fmt.Printf("%#v\n", go Get(ch1))
+									// 第一，语法不允许，第二，goroutine 都是静默退出的，不会有任何的返回值
+	go Set(6, ch1)
+	Print(ch1)
+}
