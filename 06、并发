@@ -194,3 +194,27 @@ func main() {
 	go Set(6, ch1)
 	Print(ch1)
 }
+
+
+
+通道的关闭
+
+通道可以被显式的关闭，虽然通道不需要被显式的关闭
+仅在发送端关闭一个通道，而接收端永远不需要关闭通道的指令
+显式关闭一个通道表示，发送端将不再向 channel 中传入任何新的值了
+但对于带有 buffer 的 channel，在 buffer 中的数据依旧可以被拉取
+
+使用内置函数 close(<通道变量>) 来显式关闭一个通道
+
+<1> 关闭一个 值为 nil 的 channel（未初始化的通道） 会引发 runtime panic
+<2> 关闭一个已经关闭过的 channel 会引发 runtime panic
+<3> 向一个已经关闭的 channel 中传入数据会引发 runtime panic
+<4> 已经关闭的 channel 不可以被 reopen，但可以被 make 重新初始化一个新的 channel
+
+
+一个常用的显式关闭 channel 的方法
+
+func Sender(c chan<- int){
+	defer close(c)				// 在 defer 中 close channel
+	<blah...blah...blah...>
+}
