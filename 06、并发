@@ -218,3 +218,81 @@ func Sender(c chan<- int){
 	defer close(c)				// 在 defer 中 close channel
 	<blah...blah...blah...>
 }
+
+
+
+手动测试通道是否被关闭
+
+v, ok := <- <通道变量>
+
+
+注意，一个没有可拉取数据，且没有被关闭的通道，会直接引发 channel 接收端所在 goroutine 进入睡眠状态
+此时 v,ok := <- <通道变量> 是不会有任何作用的
+
+
+EG.
+
+package main
+
+import (
+	"fmt"
+)
+
+var ch1 chan int = make(chan int, 1)
+
+func main() {
+	fmt.Printf("channel %#v is opened\n", ch1)
+	func() {
+		ch1 <- 1						// 向带有 buffer 的 channel 中传入一个值
+		close(ch1)						// 并立刻关闭 channel
+	}()
+	for {
+		if v, ok := <-ch1; ok {			// 拉取数据，并测试 channel 是否被显式关闭
+			fmt.Printf("get value: %#v\n", v)
+		} else {
+			fmt.Printf("channel %#v is closed\n", ch1)
+			break						// 若 channel 被显式关闭，则跳出 for 循环
+		}
+	}
+
+	ch1 = make(chan int, 1)				// 在原有的 channel 变量上重新初始化一个带有 buffer 的 channel
+	ch1 <- 1							// 传入一个新的数据
+										// 错误写法： 即不传入任何新数据，又不关闭 channel
+										// 会让下面 if 语句的 拉取操作 锁死 main 所在的 goroutine
+	if _, ok := <-ch1; ok {
+		fmt.Printf("channel %#v is opened\n", ch1)
+	} else {
+		fmt.Printf("channel %#v is closed\n", ch1)
+	}
+}
+
+
+
+自动测试通道是否被关闭
+
+channel 的 ok pattern 可以写成如下形式
+
+for v := range <channel>{}
+
+EG.
+
+package main
+
+import (
+	"fmt"
+)
+
+var ch1 chan int = make(chan int, 1)
+
+func main() {
+	fmt.Printf("channel %#v is opened\n", ch1)
+	func() {
+		defer close(ch1)	// 使用 defer 在匿名函数返回后显式关闭 channel
+		ch1 <- 1			// 向带有 buffer 的 channel 中传入一个值
+
+	}()
+	for v := range ch1 {	// 使用 for range 自动识别一个 channel 是否被关闭
+		fmt.Printf("get value: %#v\n", v)
+	}
+	fmt.Printf("channel %#v is closed\n", ch1)
+}
