@@ -296,3 +296,113 @@ func main() {
 	}
 	fmt.Printf("channel %#v is closed\n", ch1)
 }
+
+
+
+select 语句 -- channel 的 switch 语句
+
+在多个 channel 中传入或拉取数据
+
+switch{
+case <channel> <- <value>:
+	<blah...>
+case v := <- <value>:
+	<blah...>
+case v,ok := <- <value>:
+	if ok{
+		<blah...>
+	}else{
+		<blah...>
+	}
+default:
+	<blah...>
+}
+
+
+对于 select 语句中所有的 case
+<0> 将 case 中属于 发送端类别 的 case 的 待发送的值都计算出来（在一次 select 过程中，会完整地且仅会完整地执行一次）
+	将 case 中属于 接受端类别 的 case 的 可接收的状态都标记出来
+<1> 若 有多个 case 可以执行，则随机挑一个执行
+<2> 若 只有一个 case 可以执行，则执行该 case
+<3> 若 没有任何一个 case 可以执行，且没有 default 语句，则 select 陷入 block，直到有至少一个 case 可以执行
+	或者陷入所有 goroutine 都 deadlock 的状态，而引发 runtime panic
+<4> 若 没有任何一个 case 可以执行，且由 default 语句，则直接执行 default 语句
+
+
+EG.
+
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+var (
+	eVc1 int		// 设置两个全局计数器
+	eVc2 int		// 计算 sender 端，待 sender 函数的计算次数
+)
+
+func Gen1(i int) int {		// 每进行一次计算，就报告一次计算次数累计，并返回传入的值
+	eVc1++
+	fmt.Printf("Gen1 func evl: %v times\n", eVc1)
+	return i
+}
+
+func Gen2(i int) int {		// 每进行一次计算，就报告一次计算次数累计，并返回传入的值
+	eVc2++
+	fmt.Printf("Gen2 func evl: %v times\n", eVc2)
+	return i
+}
+
+func Sender(c1, c2 chan<- int) {
+	defer func() {			// defer close channel
+		close(c1)
+		close(c2)
+	}()
+	for i := 0; i < 10; i++ {
+		select {
+		case c1 <- Gen1(i):
+			fmt.Printf("Send value: %v to ch1\n", i)
+		case c2 <- Gen2(i):
+			fmt.Printf("Send value: %v to ch2\n", i)
+		}
+		time.Sleep(1e9)
+	}
+}
+
+func Reciever(c1, c2 <-chan int) {
+	var (
+		v1, v2   int
+		ok1, ok2 bool
+	)
+
+	for {
+		time.Sleep(1e9)
+		select {
+		case v1, ok1 = <-c1:
+			if ok1 {
+				fmt.Printf("Get value: %v from ch1\n", v1)
+			} else {
+				fmt.Printf("ch1 is closed\n")
+			}
+		case v2, ok2 = <-c2:
+			if ok2 {
+				fmt.Printf("Get value: %v from ch2\n", v2)
+			} else {
+				fmt.Printf("ch2 is closed\n")
+			}
+		}
+		if !ok1 && !ok2 {
+			break
+		}
+	}
+}
+
+func main() {
+	var ch1 chan int = make(chan int)
+	var ch2 chan int = make(chan int)
+	go Sender(ch1, ch2)
+	Reciever(ch1, ch2)
+}
+
