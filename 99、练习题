@@ -719,3 +719,57 @@ func Max(a, b interface{}) interface{} {
 func main() {
 	fmt.Printf("%#v\n", Max("1", 2))
 }
+
+
+
+-------- Chapter 6 --------
+
+
+A26.1
+
+// 使用 goroutine 产生 0-9 的递增数字
+package main
+
+import (
+	"fmt"
+)
+
+// 生成器，并自带 defer channel close
+func Gen(in_chn chan<- int) {
+	defer func() {
+		close(in_chn)
+		fmt.Printf("Channel %v closed successfully\n", in_chn)
+	}()
+	fmt.Printf("Start to gen numbers\n")
+	for i := 0; i < 10; i++ {
+		in_chn <- i
+	}
+	fmt.Printf("Generation over, will close channel: %v\n", in_chn)
+}
+
+// 打印装置，写在一个死循环里
+func Print(out_chn <-chan int) {
+	for {
+		if v, ok := <-out_chn; ok {
+			fmt.Printf("Get Number: %v\n", v)
+		} else {
+			fmt.Printf("Channel %v has been closed, nothing to recieve", out_chn)
+			break
+		}
+	}
+}
+
+func main() {
+	var ch1 chan int = make(chan int)
+	go Gen(ch1)
+	Print(ch1)
+}
+
+
+A26.2
+见上
+
+
+
+A27.1
+【跳过，为什么斐波那契数列需要 channel？】
