@@ -451,6 +451,16 @@ for i<10 {
 				// i++ 可以写成 i += 1
 }
 
+上述循环还可以写成
+
+for i:=0; ; i++{
+	if i<10{
+		fmt.Print(i)
+	}else{
+	break
+	}
+}
+
 eg2.
 
 var arr [4]int = [4]int{2,4,6,8}
