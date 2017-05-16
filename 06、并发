@@ -360,30 +360,30 @@ func Sender(c1, c2 chan<- int) {
 		close(c1)
 		close(c2)
 	}()
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 10; i++ {		// 进行十次循环，并使用 select 判定并传入数据
 		select {
 		case c1 <- Gen1(i):
 			fmt.Printf("Send value: %v to ch1\n", i)
 		case c2 <- Gen2(i):
 			fmt.Printf("Send value: %v to ch2\n", i)
 		}
-		time.Sleep(1e9)
+		time.Sleep(1e9)				// 每次传输结束之后，都等待 1s
 	}
 }
 
 func Reciever(c1, c2 <-chan int) {
 	var (
 		v1, v2   int
-		ok1, ok2 bool
+		ok1, ok2 bool		// 为了判断两个通道是否都已经关闭，所以将 ok 值改为函数的顶层变量
 	)
 
 	for {
-		time.Sleep(1e9)
+		time.Sleep(1e9)				// 循环开始后立刻睡眠 1s
 		select {
 		case v1, ok1 = <-c1:
-			if ok1 {
+			if ok1 {				// 成功拉取就打印值
 				fmt.Printf("Get value: %v from ch1\n", v1)
-			} else {
+			} else {				// 返回不成功则表示通道关闭
 				fmt.Printf("ch1 is closed\n")
 			}
 		case v2, ok2 = <-c2:
@@ -393,7 +393,7 @@ func Reciever(c1, c2 <-chan int) {
 				fmt.Printf("ch2 is closed\n")
 			}
 		}
-		if !ok1 && !ok2 {
+		if !ok1 && !ok2 {			// 若两者都关闭，则跳出循环
 			break
 		}
 	}
