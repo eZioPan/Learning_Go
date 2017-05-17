@@ -1,0 +1,66 @@
+本章涉及 文件的读取、写入，外部命令的调用，tcp/udp 连接 的使用
+
+
+在 Go 语言中， IO 的核心接口是 io.Reader 和 io.Writer
+但凡是实现了 io.Reader 和 io.Writer 接口的类型，都可以被标准库所使用
+
+
+EG1.【无缓冲读取文件】
+
+package main
+
+import (
+	"os"	// os 包提供了平台无关的系统功能调用接口
+)
+
+func main() {
+	f, e := os.Open("text.txt")		// 打开文件，返回一个 *os.File 以及可能产生的错误 err
+									// os.File 实现了 io.Reader 和 io.Writer 接口
+	defer f.Close()					// 无论如何，都在 main 函数返回时，关闭文件
+	if e != nil {					// 若打开时出错，则返回这个错误
+		panic(e)
+	}
+	buf := make([]byte, 64)			// 指定单次读取文件的最大字节数
+	for {
+		n, _ := f.Read(buf)			// 使用 Read 方法，向 buf 中填充数据，并返回读取到的字节数
+		if n == 0 {					// 若某次读取完全没有读取到字节
+			break					// 则停止读取循环
+		}
+		os.Stdout.Write(buf[:n])	// 每次只向 StdOut 输出有数据的字节切片，忽略后续空白切片（最后一次读取，去除空切片）
+	}
+}
+
+
+
+EG2.【有缓冲读取文件】
+
+package main
+
+import (
+	"bufio"			// 具有缓冲的 IO 包
+	"io"
+	"os"
+)
+
+func main() {
+	f, e := os.Open("text.txt")			// 先打开一个文件
+	defer f.Close()
+	if e != nil {
+		panic(e)
+	}
+	bf := bufio.NewReader(f)			// 接着把 *os.File 包装为 *bufio.Reader
+	bw := bufio.NewWriter(os.Stdout)	// 把 *os.File 包装为 *bufio.Writer
+	defer bw.Flush()					// 函数返回时，把 bw 的数据全部写回 io.Writer 中
+	buf := make([]byte, 64)
+	for {
+		n, e := bf.Read(buf)
+		if e != io.EOF && e != nil {
+			panic(e)
+		}
+
+		if n == 0 {
+			break
+		}
+		bw.Write(buf[:n])
+	}
+}
