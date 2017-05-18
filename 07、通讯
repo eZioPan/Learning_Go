@@ -64,3 +64,47 @@ func main() {
 		bw.Write(buf[:n])
 	}
 }
+
+
+
+EG3.【调用外部命令】
+
+package main
+
+import (
+	"os/exec"
+)
+
+func main() {
+	cmd := exec.Command("/bin/ls", "-l")
+	err := cmd.Run()
+	if err != nil {
+		panic(err)
+	}
+}
+
+
+
+EG4.【调用外部命令并取得返回值】
+
+package main
+
+import (
+	"os"
+	"os/exec"
+)
+
+func main() {
+	cmd := exec.Command("/bin/ls", "-l")
+	buf, err := cmd.Output()
+	if err != nil {
+		panic(err)
+	}
+	os.Stdout.Write(buf)
+}
+
+
+
+EG5.
+
+【跳过本书后面的内容】
