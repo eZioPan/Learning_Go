@@ -148,3 +148,11 @@ math 包中，涉及浮点数运算的函数，需要接受的类型都是 float
 %g 用于自动判定并输出浮点表示法
 %f 强制使用普通浮点表示
 %e 强制使用科学计数法
+
+
+
+unicode 包中对字符的简单判断
+
+unicode.IsLetter(ch)
+unicode.IsDigit(ch)
+unicode.IsSpace(ch)
