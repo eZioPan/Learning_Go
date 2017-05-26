@@ -1,0 +1,44 @@
+strings 包用于字符串的操作
+【注意包名是复数的】
+
+strings.HasPrefix(str, pre string) bool
+strings.HasSufix(str, su string) bool
+判断一个一个字符串 str 是否以 字符串 pre/su 作为开头/结尾
+
+strings.Contains(str, substr string) bool
+判断一个字符串 str 是否包含一个字符串 substr
+
+strings.ContainsAny(str, chars string) bool
+判断一个字符串 str 是否包含字符串 chars 中的一个或多个字符
+
+strings.ConstainsRune(str string, r rune) bool
+判断一个字符串 str 中，是否包含一个 Unicode 字符 r
+
+strings.Count(str, sep string) int
+判断一个字符串 str 中，出现了多少个字符串 sep
+若 seq 为空，则返回 unicode点数+1 的数据
+
+strings.Fields(str string) []string
+通过 unicode.IsSpace 判断出的空白字符
+将文本切片为不含空白字符的 字符串 slice
+
+strings.FieldsFunc(s string, f func(rune) bool) []string
+自定义切片法则函数 f func(rune) bool
+将文本切片为不含 rune 字符的 字符串 slice
+
+strings.Index(s, sep string) int
+string.IndexAny(s, chars string) int
+strings.IndexByte(s string, c byte) int
+string.IndexRune(s string, r rune) int
+string.IndexFunc(s string, f func(rune) bool) int
+在字符串 s 中寻找指定的 字符串 sep
+若寻找成功返回第一个找到的位置的索引
+若不成功则返回 -1
+具体函数用法仿照上文函数
+
+strings.LastIndex(s, sep string) int
+strings.LastIndexAny(s, chars string) int
+strings.LastIndexByte(s string, c byte) int
+strings.LastIndexFunc(s string, f func(rune) bool) int
+同上，查找最后一个匹配上的
+注意没有 LastIndexRune 这个函数
