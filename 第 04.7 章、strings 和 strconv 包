@@ -42,3 +42,68 @@ strings.LastIndexByte(s string, c byte) int
 strings.LastIndexFunc(s string, f func(rune) bool) int
 同上，查找最后一个匹配上的
 注意没有 LastIndexRune 这个函数
+
+strings.Join(a []string, sep string) string
+用字符串 sep 作为间隔，将字符串 slice a 连接为一个字符串
+
+strings.Map(mapping func(rune) rune, s string) string
+定义一个映射的规则，重映射一组字符串
+
+strings.Repeat(s string, count int) string
+将一个字符串重复 count 次，并输出
+
+strings.Replace(s old, new string, n int) string
+将字符串中的指定字符串替换为新的字符串，且仅替换前 n 个
+若 n<0，则忽略个数的限制
+
+strings.Split(s, sep string) []string
+strings.SplitN(s, sep string, n int) []string
+将字符串切片，与 strings.Field 不同的是，
+若有连续的 sep 字符串出现
+则仅将第一个 sep 省略
+其他的 sep 以空字符的形式出现在 输出的 slice 中
+n 表示将返回的切片的长度
+n = 0 表示返回的是 nil
+n > 0 表示返回 n 个切片，若 n 小于需要切片的个数，则最后一个切片为剩余所有的字符串
+n < 0 表示使用全部的切片
+
+strings.SplitAfter(s, sep string) []string
+strings.SplitAfterN(s, sep string) []string
+向后切片
+切口的位置在 sep 与后一个字符之间
+sep 与前一个字符串一同输出为同一个字符串
+
+strings.Title(s string) string
+将每个单词的首字母转换为标题大小写
+
+strings.ToTitle(s string) string
+将每个单词的每个字母转换为标题大小写
+
+strings.ToTitleSpecial(c unicode.SpecialCase, s string) string
+特定语言环境下的大写转换
+
+strings.ToLower
+strings.ToLowerSpecial
+strings.ToUpper
+strings.ToUpperSpecial
+全字符转换为大写/小写
+
+strings.Trim(s, cutset string) string
+若字符串 s 的首尾，含有 字符串 cutset 中的字符
+则全部移除
+
+strings.TrimFunc(s string, f func(rune) bool) string
+自定义首位字符移除判断方式
+
+strings.TrimLeft(s, cutset string) string
+strings.TrimLeftFunc(s string, f func(rune) bool) string
+strings.TrimRight(s, cutset string) string
+strings.TrimRightFunc(s string, f func(rune) bool) string
+同上，分别为 左切、自定义规则左切、右切、自定义规则右切
+
+strings.TrimSpace(s, cutset string) string
+移除首尾空白字符
+
+strings.TrimPrefix(s, prefix string) string
+strings.TrimSuffix(s, prefix string) string
+匹配并移除首/尾指定的字符串
