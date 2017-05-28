@@ -2,6 +2,13 @@ strconv 包负责字符串与基本类型之间的互相转换
 
 
 
+【补充内容 Unicode 码点（Code Point） 分类】
+graphic characters 具有特定语义的字符，包括可见的字形和可见的空白字符
+format characters 没有可以显示的外观，但可以用以修改临近其他字符的外观或作用
+control code characters 控制符，比如 NUL BEL BS HT LF VT FF CR EOF ESC DEL 等
+
+
+
 strconv.Atoi(s string) (int, error)
 用 strconv.ParseInt(s, 10, 0) 将 ASCII 字符转换为 10 进制的 int 型
 
