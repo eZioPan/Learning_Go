@@ -1,0 +1,47 @@
+strconv 包负责字符串与基本类型之间的互相转换
+
+
+
+strconv.Atoi(s string) (int, error)
+用 strconv.ParseInt(s, 10, 0) 将 ASCII 字符转换为 10 进制的 int 型
+
+strconv.Itoa(i int) string
+用 strconv.FormatInt(int64(i), 10) 将 int64 类型以 10 为底转化为 string 类型
+
+strconv.CanBackquote(s string) bool
+检查一个字符串是否可以用一行字符串表示
+且该行字符串不含有除 tab 之外的控制符
+
+strconv.IsGraphic(r rune) bool
+判断一个 Rune 是否是一个 graphic character
+
+strconv.IsPrint(r rune) bool
+判断一个 Rune 是否可以被打印出来
+可打印的字符有：字母、数字、标点、符号和 ASCII 空格
+
+
+strconv.FormatBool(b bool) string
+boolean 转 string
+
+strconv.FormatFloat(f float64, fmt byte, prec, bitSize int) string
+float64 转 string
+fmt: 转换为 string 所使用的格式，一共有 6 种，注意该参数接受 byte 类型
+	'b': -ddddp±ddd 二进制科学计数法
+	'e': -d.ddde±dd 十进制小写 e 科学计数法
+	'E': -d.dddE±dd 十进制大写 E 科学计数法
+	'f': -ddd.dddd 普通十进制小数写法
+	'g': 自动切换为 'e' 或 'f'
+	'G': 自动切换为 'E' 或 'f'
+prec: 规定打印使用的位数（不包括指数的位数），该参数对 'b' 格式无效
+	对于 'e'/'E'/'f': 小数点后所使用的位数，对于 prec 小于 0 的数，使用最小可表示完整精度的位数表示
+	对于 'g'/'G': 整个数字（不算小数点）的位数，对于 prec = 0，等价于 prec = 1，对于 prec 小于 0 的数，使用最小可表示完整精度的位数表示
+bitSize: 原始数据的精度，32 对应 float32，64 对应 float64
+
+
+strconv.FormatInt(i int64, base int) string
+int64 转 string，基于 base 指定的进制
+使用小写 a-z 表示超过 10 的数
+
+strconv.FormatUint(i uint64, base int) string
+uint64 转 string，基于 base 指定的进制
+使用小写 a-z 表示超过 10 的数
