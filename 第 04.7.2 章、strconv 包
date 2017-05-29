@@ -9,11 +9,19 @@ control code characters 控制符，比如 NUL BEL BS HT LF VT FF CR EOF ESC DEL
 
 
 
+-------- 第一大类 常用字符数字转换 --------
+
+
 strconv.Atoi(s string) (int, error)
 用 strconv.ParseInt(s, 10, 0) 将 ASCII 字符转换为 10 进制的 int 型
 
 strconv.Itoa(i int) string
 用 strconv.FormatInt(int64(i), 10) 将 int64 类型以 10 为底转化为 string 类型
+
+
+
+-------- 第二大类 字符串判断 --------
+
 
 strconv.CanBackquote(s string) bool
 检查一个字符串是否可以用一行字符串表示
@@ -25,6 +33,10 @@ strconv.IsGraphic(r rune) bool
 strconv.IsPrint(r rune) bool
 判断一个 Rune 是否可以被打印出来
 可打印的字符有：字母、数字、标点、符号和 ASCII 空格
+
+
+
+-------- 第三大类 各类型转字符串 --------
 
 
 strconv.FormatBool(b bool) string
@@ -54,6 +66,10 @@ uint64 转 string，基于 base 指定的进制
 使用小写 a-z 表示超过 10 的数
 
 
+
+-------- 第四大类 字符串转各类型 --------
+
+
 strconv.ParseBool(str string) (bool, error)
 string 转 boolean
 接受的字符串 1 t T TRUE true True 0 f F FALSE false False
@@ -64,6 +80,10 @@ strconv.ParseUint(s string, base int, bitSize int) (uint64, error)
 string 转数字
 原数据的进度为 bitSize，取值 32 或 64
 原数据的进制为 base，若不定义，则以 0x 开头的为 16 进制，0 开头的为 8 进制，其他均为 10 进制
+
+
+
+-------- 第五大类 字符串的安全表示和反转化 --------
 
 
 strconv.Quote(s string) string
@@ -88,6 +108,10 @@ strconv.Unquote(s string) (string, error)
 
 strconv.UnquoteChar(s string, quote byte) (value rune, multibyte bool, tail string, err error)
 【用法不明】
+
+
+
+-------- 第六大类 字节流后衔接各类型 --------
 
 
 strconv.AppendBool(dst []byte, b bool) []byte
