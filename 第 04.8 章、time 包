@@ -24,3 +24,24 @@ time.Parse("15:04 Z07", "10:30 +08")
 Go 预设了一系列字符串作为格式化时间的标准模板，它们就在 time 包的全局常量中
 常用的有
 time.ANSIC time.UnixDate time.Kiten time.Stamp time.Milli time.StampNano
+
+
+
+time.After(d time.Duration) <-chan time.Time
+用于 select 语句，置于 case 中，作为 select 的超时处理机制
+time.After 会在指定的时间之后向 select 中传递数据，结束 select 的轮询
+
+
+time.Sleep(d time.Duration)
+将所在的进程暂停至少 d 的时间
+若 d <= 0 则 time.Sleep 会立刻返回
+
+
+time.Tick(d time.Duration) <-chan time.Time
+对 time.NewTicker 的简化包装，仅返回 tick channel
+time.Tick 在指定的时间间隔不断的产生当前时间的返回值
+time.Tick 不会自我关闭，其底层的 time.NewTicker 会一直执行
+所以需要其他方法来关闭
+
+
+
