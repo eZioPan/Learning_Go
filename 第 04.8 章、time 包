@@ -1,0 +1,26 @@
+time 包
+测量和显示时间
+
+
+全局常数
+
+时间显示格式
+
+time 包可以用一个字符串来表示显示时间所用的模板
+这个时间是一个固定的值：
+
+Mon Jan 15:04:05 MST 2006
+
+这个值常用于 time.Format(<format>) 和 time.Parse(<format>)
+可以用这个时间点来自定义自己表示时间的方式
+EG.
+// 获取当前时分秒
+time.Now().Format("15:04:05")
+// 解释输入的小时和分钟，并附加上时区
+time.Parse("15:04 Z07", "10:30 +08")
+
+注意 time.Now().Format("Mon Jan _2") 中的下划线，表示日期若不足两位，则在日期前补 0
+
+Go 预设了一系列字符串作为格式化时间的标准模板，它们就在 time 包的全局常量中
+常用的有
+time.ANSIC time.UnixDate time.Kiten time.Stamp time.Milli time.StampNano
