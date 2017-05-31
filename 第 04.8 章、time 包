@@ -45,3 +45,36 @@ time.Tick 不会自我关闭，其底层的 time.NewTicker 会一直执行
 
 
 
+time.Duration 类型
+
+time.Duration 类型用 int64 数据表示了两个时间点之间的间隔的纳秒数
+最大可用间隔大约为 290 年
+
+该类型的常量有
+Nanosecond Microsecond Millisecond Second Minute Hour
+
+
+(time.Duration) ParseDuration(s string) (Duration, error)
+将字符串表示的时间差转化为 time.Duration 表示的时间差
+可接受的单位有 ns us(µs) ms s m h
+字符串中可以出现小数
+
+
+(time.Duration) Since(t Time) Duration
+(time.Duration) Until(t Time) Duration
+过去的时间距今的时间差，以及未来的时间距今的时间差
+分别是 time.Now().Sub(t) 和 t.Sub(time.Now()) 的缩写
+
+
+(time.Duration) Hours() float64
+(time.Duration) Minutes() float64
+(time.Duration) Seconds() float64
+(time.Duration) Nanoseconds() int64
+(time.Duration) String() string
+将时间差转化为 小时数、分钟数、秒数、纳秒数、以及字符串
+其中 小时数、分钟数、秒数 均为 64位浮点数
+纳秒数为 64位整型
+字符串总保证使用了首位非零的最大单位
+	若时间差大于 1s 则最小单位为秒，且秒可能出现小数
+	若时间差小于 1s 则最小单位自动取其他小单位
+	若时间差为 0 则返回 0s
