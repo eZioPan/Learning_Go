@@ -85,8 +85,10 @@ time.Location struct 类型
 
 time.Location 将时间映射至当前所在地点的时间
 
+
 (time.Location) FixedZone(name string, offset int) *Location
 新建一个地点，使用制定的名称和相对 UTC 时间偏移的秒数
+
 
 (time.Location) LoadLocation(name string) (*Location, error)
 通过地点名称获取 time.Location 类型的数据
