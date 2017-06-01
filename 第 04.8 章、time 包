@@ -45,7 +45,7 @@ time.Tick 不会自我关闭，其底层的 time.NewTicker 会一直执行
 
 
 
-time.Duration 类型
+time.Duration int64 类型
 
 time.Duration 类型用 int64 数据表示了两个时间点之间的间隔的纳秒数
 最大可用间隔大约为 290 年
@@ -78,3 +78,60 @@ Nanosecond Microsecond Millisecond Second Minute Hour
 	若时间差大于 1s 则最小单位为秒，且秒可能出现小数
 	若时间差小于 1s 则最小单位自动取其他小单位
 	若时间差为 0 则返回 0s
+
+
+
+time.Location struct 类型
+
+time.Location 将时间映射至当前所在地点的时间
+
+(time.Location) FixedZone(name string, offset int) *Location
+新建一个地点，使用制定的名称和相对 UTC 时间偏移的秒数
+
+(time.Location) LoadLocation(name string) (*Location, error)
+通过地点名称获取 time.Location 类型的数据
+若地点名为 "" 或 "UTC" 则返回 UTC
+若地点名为 "Local" 则返回 Local
+其他地点，则参照 IANA 时区数据库，表示为 "Asia/Shanghai"
+Go 自带支持的数据库可查看
+$GOROOT/lib/time/zoneinfo.zip
+
+
+(time.Location) String() string
+用于实现 fmt.Stringer 接口
+
+
+
+time.Month int 类型
+定义了英文中月份的表示
+
+
+(time.Month) String() string
+用于实现 fmt.Stringer 接口
+
+
+
+time.ParseError struct 类型
+定义了一系列解析错误
+
+
+(*time.ParseError) Error() string
+用于实现 builtin.error 接口
+
+
+
+time.Ticker struct 类型
+具有一个可提供时钟滴答的 out channel
+
+
+NewTicker(d Duration) *Ticker
+返回一个以 d 为时间间隔的 time.Ticker
+对于较慢的接收者，它会调整间隔或者丢弃一些 时钟滴答
+d 必须大于 0，否则会产生 panic
+停止一个 ticker，来释放相关的资源
+
+
+(*time.Ticker) Stop()
+停止向 channel 中传入 ticker
+但并不会关闭这个 channel
+防止后续读取出现错误
