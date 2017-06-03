@@ -54,14 +54,14 @@ time.Duration 类型用 int64 数据表示了两个时间点之间的间隔的�
 Nanosecond Microsecond Millisecond Second Minute Hour
 
 
-(time.Duration) ParseDuration(s string) (Duration, error)
+time.ParseDuration(s string) (Duration, error)
 将字符串表示的时间差转化为 time.Duration 表示的时间差
 可接受的单位有 ns us(µs) ms s m h
 字符串中可以出现小数
 
 
-(time.Duration) Since(t Time) Duration
-(time.Duration) Until(t Time) Duration
+time.Since(t Time) Duration
+time.Until(t Time) Duration
 过去的时间距今的时间差，以及未来的时间距今的时间差
 分别是 time.Now().Sub(t) 和 t.Sub(time.Now()) 的缩写
 
@@ -85,12 +85,10 @@ time.Location struct 类型
 
 time.Location 将时间映射至当前所在地点的时间
 
-
-(time.Location) FixedZone(name string, offset int) *Location
+time.FixedZone(name string, offset int) *Location
 新建一个地点，使用制定的名称和相对 UTC 时间偏移的秒数
 
-
-(time.Location) LoadLocation(name string) (*Location, error)
+time.LoadLocation(name string) (*Location, error)
 通过地点名称获取 time.Location 类型的数据
 若地点名为 "" 或 "UTC" 则返回 UTC
 若地点名为 "Local" 则返回 Local
@@ -99,7 +97,7 @@ Go 自带支持的数据库可查看
 $GOROOT/lib/time/zoneinfo.zip
 
 
-(time.Location) String() string
+(l *time.Location) String() string
 用于实现 fmt.Stringer 接口
 
 
@@ -117,7 +115,7 @@ time.ParseError struct 类型
 定义了一系列解析错误
 
 
-(*time.ParseError) Error() string
+(e *time.ParseError) Error() string
 用于实现 builtin.error 接口
 
 
