@@ -135,3 +135,23 @@ d 必须大于 0，否则会产生 panic
 停止向 channel 中传入 ticker
 但并不会关闭这个 channel
 防止后续读取出现错误
+
+
+
+time.Time struct 类型
+
+纳秒精度的时间表示
+一般来说，应该使用这个类型的值，而非指针
+
+这个类型的 相互比较 可以使用方法 Before After Equal
+这个类型的相减方法为 Sub，两个 Time 类型相减，返回一个 time.Duration 类型
+这个类型的相加方法为 Add，一个 time.Time 类型 Add 一个 time.Duration 类型，得到一个 time.Time 类型
+
+这个类型的零值为 Jan 1st 00:00:00.000000000 UTC
+可以用 IsZero 判断该类型的变量是否被初始化
+
+一个 time.Time 类型总是与一个 time.Location 类型相关联
+改变一个 time.Time 的 Location 仅改变了该 time.Time 的展现方式，不改变实际内容
+
+注意，Go 语言中的 == 操作，会同时比较 time.Time 和 time.Location
+所以，time.Time 被用作 map 和 数据库 的 键 时，必须要转换至同一个时区
