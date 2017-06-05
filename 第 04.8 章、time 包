@@ -155,3 +155,29 @@ time.Time struct 类型
 
 注意，Go 语言中的 == 操作，会同时比较 time.Time 和 time.Location
 所以，time.Time 被用作 map 和 数据库 的 键 时，必须要转换至同一个时区
+
+
+time.Data(year int, month time.Month, day, hour, min, sec, nsec int, loc *time.Location) time.Time
+产生一个 time.Time 类型
+需要 年月日 时分秒 纳秒 以及一个地点
+所有的单位都会自动进位
+地点必须被指定，否则会产生 panic
+
+
+time.Now() time.Time
+返回当前的本地时间
+
+
+(time.Time) In(loc *time.Location) time.Time
+将时间转化为指定地点的本地时间
+
+
+(time.Time) Local() time.Time
+(time.Time) UTC() time.Time
+给出 time.Time 在 本地/UTC 相对应的时间
+
+
+(time.Time) Unix() int64
+(time.Time) UnixNano() int64
+返回从 Jan 1st 1970 UTC 到指定时间的秒/纳秒数
+对于纳秒，返回值不可以超过 int64 的最大容量，对应范围大致为 1678年-2262年
