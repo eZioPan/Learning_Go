@@ -183,6 +183,10 @@ time.Now() time.Time
 对于纳秒，返回值不可以超过 int64 的最大容量，对应范围大致为 1678年-2262年
 
 
+time.Unix(sec int64, nsec int64) time.Time
+将 Unix 表示的时间转化为一个 time.Time 类型
+
+
 (time.Time) Truncate(d Duration) time.Time
 (time.Time) Round(d Duration) time.Time
 向下或四舍五入时间，最小单位为 d
