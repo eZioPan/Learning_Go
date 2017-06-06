@@ -181,3 +181,11 @@ time.Now() time.Time
 (time.Time) UnixNano() int64
 返回从 Jan 1st 1970 UTC 到指定时间的秒/纳秒数
 对于纳秒，返回值不可以超过 int64 的最大容量，对应范围大致为 1678年-2262年
+
+
+(time.Time) Truncate(d Duration) time.Time
+(time.Time) Round(d Duration) time.Time
+向下或四舍五入时间，最小单位为 d
+若 d<=0 则不对原数据产生修改
+由于 time.Time 被转换为了相对 time.Time 的零值的 Duration
+所以可能会出现小数
