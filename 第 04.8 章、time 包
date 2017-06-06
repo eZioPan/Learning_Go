@@ -189,3 +189,13 @@ time.Now() time.Time
 若 d<=0 则不对原数据产生修改
 由于 time.Time 被转换为了相对 time.Time 的零值的 Duration
 所以可能会出现小数
+
+
+time.Parse(layout,value string) (Time, error)
+将字符串按照自定的规则解析为 time.Time 类型
+若缺失地点，则默认解析为 UTC 时间
+
+time.ParseInLocation(layout, value string, loc *Location) (Time, error)
+与 Parse 类似，区别在于 ParseInLocation 必须指定地点
+在解析时间的时候， Parse 会将时间转换至指定地点的时区中
+而 ParseInLocation 会直接认为输入的值属于该指定的地点
