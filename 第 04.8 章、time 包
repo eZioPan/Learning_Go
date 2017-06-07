@@ -195,6 +195,21 @@ time.Unix(sec int64, nsec int64) time.Time
 所以可能会出现小数
 
 
+(time.Time) Add(d Duration) Time
+(time.Time) AddDate(years int, months int, days int) Time
+向一个时间点加入另一段时间，来获得新的时间
+
+
+(time.Sub) Sub(u Time) Duration
+两个时间点相减，并得到持续时间
+
+
+(time.Time) After(u Time) bool
+(time.Time) Before(u Time) bool
+(time.Time) Equal(u Time) bool
+时间比较，是否在指定时间之后/之前/相同
+
+
 time.Parse(layout,value string) (Time, error)
 将字符串按照自定的规则解析为 time.Time 类型
 若缺失地点，则默认解析为 UTC 时间
