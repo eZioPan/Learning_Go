@@ -218,3 +218,13 @@ time.ParseInLocation(layout, value string, loc *Location) (Time, error)
 与 Parse 类似，区别在于 ParseInLocation 必须指定地点
 在解析时间的时候， Parse 会将时间转换至指定地点的时区中
 而 ParseInLocation 会直接认为输入的值属于该指定的地点
+
+
+(time.Time) Format(layout string) string
+(time.Time) AppendFormat(b []byte, layout string) []byte
+将 time.Time 类型格式化为字符串
+或将 time.Time 类型格式化为字符串后，追加在字节流的后面
+
+
+(time.Time) String() string
+满足了 fmt.Stringer 接口
