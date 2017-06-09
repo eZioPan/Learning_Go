@@ -228,3 +228,8 @@ time.ParseInLocation(layout, value string, loc *Location) (Time, error)
 
 (time.Time) String() string
 满足了 fmt.Stringer 接口
+
+
+(*time.Time) GobDecode(data []byte) error
+(time.Time) GobEncode() ([]byte, error)
+实现了 gob.GobDecoder 和 gob.GobEncoder 两个接口
