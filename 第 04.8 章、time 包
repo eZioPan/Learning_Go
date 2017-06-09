@@ -164,6 +164,11 @@ time.Data(year int, month time.Month, day, hour, min, sec, nsec int, loc *time.L
 地点必须被指定，否则会产生 panic
 
 
+(time.Time) IsZero() bool
+判断是个 time.Time 类型是否是零值（或是没有初始化过）
+零值为 Jan 1st year1 00:00:00 UTC
+
+
 time.Now() time.Time
 返回当前的本地时间
 
