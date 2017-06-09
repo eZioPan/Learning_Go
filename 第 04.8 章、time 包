@@ -254,3 +254,9 @@ time.ParseInLocation(layout, value string, loc *Location) (Time, error)
 (time.Time) Day() int
 (time.Time) YearDay() int
 从 time.Time 的实例中取得各类值
+
+
+(time.Time) Location() *time.Location
+(time.Time) Zone() (name string, offset int)
+给出 time.Time 关联的地点
+给出 time.Time 对应的时区名称和相对 UTC 的偏移
