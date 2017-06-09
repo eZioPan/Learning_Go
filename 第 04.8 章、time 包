@@ -260,3 +260,12 @@ time.ParseInLocation(layout, value string, loc *Location) (Time, error)
 (time.Time) Zone() (name string, offset int)
 给出 time.Time 关联的地点
 给出 time.Time 对应的时区名称和相对 UTC 的偏移
+
+
+(time.Time) MarshalBinary() ([]byte, error)
+(time.Time) MarshalJSON() ([]byte, error)
+(time.Time) MarshalText() ([]byte, error)
+(time.Time) UnmarshalBinary() ([]byte, error)
+(time.Time) UnmarshalJSON() ([]byte, error)
+(time.Time) UnmarshalText() ([]byte, error)
+满足了 encoding.(Un)BinaryMarshaler json.(Un)Marshaler encoding.(Un)TextMarshaler 接口
