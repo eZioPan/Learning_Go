@@ -111,6 +111,15 @@ time.Month int 类型
 
 
 
+Weekday int 类型
+
+包含了惯用周天名和数值的对应关系
+
+(d time.Weekday) String() string
+满足了 fmt.Stringer 接口
+
+
+
 time.ParseError struct 类型
 定义了一系列解析错误
 
