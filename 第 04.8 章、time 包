@@ -54,14 +54,14 @@ time.Duration 类型用 int64 数据表示了两个时间点之间的间隔的�
 Nanosecond Microsecond Millisecond Second Minute Hour
 
 
-time.ParseDuration(s string) (Duration, error)
+time.ParseDuration(s string) (time.Duration, error)
 将字符串表示的时间差转化为 time.Duration 表示的时间差
 可接受的单位有 ns us(µs) ms s m h
 字符串中可以出现小数
 
 
-time.Since(t Time) Duration
-time.Until(t Time) Duration
+time.Since(t time.Time) time.Duration
+time.Until(t time.Time) time.Duration
 过去的时间距今的时间差，以及未来的时间距今的时间差
 分别是 time.Now().Sub(t) 和 t.Sub(time.Now()) 的缩写
 
@@ -85,10 +85,10 @@ time.Location struct 类型
 
 time.Location 将时间映射至当前所在地点的时间
 
-time.FixedZone(name string, offset int) *Location
+time.FixedZone(name string, offset int) *time.Location
 新建一个地点，使用制定的名称和相对 UTC 时间偏移的秒数
 
-time.LoadLocation(name string) (*Location, error)
+time.LoadLocation(name string) (*time.Location, error)
 通过地点名称获取 time.Location 类型的数据
 若地点名为 "" 或 "UTC" 则返回 UTC
 若地点名为 "Local" 则返回 Local
@@ -103,6 +103,7 @@ $GOROOT/lib/time/zoneinfo.zip
 
 
 time.Month int 类型
+
 定义了英文中月份的表示
 
 
@@ -133,7 +134,7 @@ time.Ticker struct 类型
 具有一个可提供时钟滴答的 out channel
 
 
-NewTicker(d Duration) *Ticker
+NewTicker(d time.Duration) *time.Ticker
 返回一个以 d 为时间间隔的 time.Ticker
 对于较慢的接收者，它会调整间隔或者丢弃一些 时钟滴答
 d 必须大于 0，否则会产生 panic
@@ -153,14 +154,14 @@ time.Time struct 类型
 一般来说，应该使用这个类型的值，而非指针
 
 这个类型的 相互比较 可以使用方法 Before After Equal
-这个类型的相减方法为 Sub，两个 Time 类型相减，返回一个 time.Duration 类型
+这个类型的相减方法为 Sub，两个 time.Time 类型相减，返回一个 time.Duration 类型
 这个类型的相加方法为 Add，一个 time.Time 类型 Add 一个 time.Duration 类型，得到一个 time.Time 类型
 
 这个类型的零值为 Jan 1st 00:00:00.000000000 UTC
 可以用 IsZero 判断该类型的变量是否被初始化
 
 一个 time.Time 类型总是与一个 time.Location 类型相关联
-改变一个 time.Time 的 Location 仅改变了该 time.Time 的展现方式，不改变实际内容
+改变一个 time.Time 的 time.Location 仅改变了该 time.Time 的展现方式，不改变实际内容
 
 注意，Go 语言中的 == 操作，会同时比较 time.Time 和 time.Location
 所以，time.Time 被用作 map 和 数据库 的 键 时，必须要转换至同一个时区
@@ -201,34 +202,34 @@ time.Unix(sec int64, nsec int64) time.Time
 将 Unix 表示的时间转化为一个 time.Time 类型
 
 
-(time.Time) Truncate(d Duration) time.Time
-(time.Time) Round(d Duration) time.Time
+(time.Time) Truncate(d time.Duration) time.Time
+(time.Time) Round(d time.Duration) time.Time
 向下或四舍五入时间，最小单位为 d
 若 d<=0 则不对原数据产生修改
-由于 time.Time 被转换为了相对 time.Time 的零值的 Duration
+由于 time.Time 被转换为了相对 time.Time 的零值的 time.Duration
 所以可能会出现小数
 
 
-(time.Time) Add(d Duration) Time
-(time.Time) AddDate(years int, months int, days int) Time
+(time.Time) Add(d time.Duration) time.Time
+(time.Time) AddDate(years int, months int, days int) time.Time
 向一个时间点加入另一段时间，来获得新的时间
 
 
-(time.Sub) Sub(u Time) Duration
+(time.Sub) Sub(u time.Time) time.Duration
 两个时间点相减，并得到持续时间
 
 
-(time.Time) After(u Time) bool
-(time.Time) Before(u Time) bool
-(time.Time) Equal(u Time) bool
+(time.Time) After(u time.Time) bool
+(time.Time) Before(u time.Time) bool
+(time.Time) Equal(u time.Time) bool
 时间比较，是否在指定时间之后/之前/相同
 
 
-time.Parse(layout,value string) (Time, error)
+time.Parse(layout,value string) (time.Time, error)
 将字符串按照自定的规则解析为 time.Time 类型
 若缺失地点，则默认解析为 UTC 时间
 
-time.ParseInLocation(layout, value string, loc *Location) (Time, error)
+time.ParseInLocation(layout, value string, loc *time.Location) (time.Time, error)
 与 Parse 类似，区别在于 ParseInLocation 必须指定地点
 在解析时间的时候， Parse 会将时间转换至指定地点的时区中
 而 ParseInLocation 会直接认为输入的值属于该指定的地点
