@@ -269,3 +269,32 @@ time.ParseInLocation(layout, value string, loc *Location) (Time, error)
 (time.Time) UnmarshalJSON() ([]byte, error)
 (time.Time) UnmarshalText() ([]byte, error)
 满足了 encoding.(Un)BinaryMarshaler json.(Un)Marshaler encoding.(Un)TextMarshaler 接口
+
+
+
+time.Timer struct 类型
+
+当 time.Timer 到时间时，会将当前的时间传入 channel 中
+
+
+AfterFunc(d time.Duration, f func()) *time.Timer
+等待一段时间结束，并在自己的 goroutine 中启动一个函数 f func()
+并返回一个 *time.Timer 以便掉其他 goroutine 可以用 Stop 来取消它
+
+
+NewTimer(d time.Duration) *time.Timer
+在经过至少 d 时间之后，通过 channel 发送出当前的时间
+
+
+(*time.Timer) Reset(d time.Duration) bool
+将仍活跃的 time.Timer 重置至 d 时间之后在过时
+若 time.Timer 已经过期或已被 Stop，重置失败则返回 false
+若 time.Timer 被重置成功，则返回 true
+【注意，不要产生数据竞争（race）】
+
+
+(*time.Timer) Stop(d time.Duration) bool
+停止 time.Timer 让它不向 channel 中发送数据
+若 time.Timer 被成功停止，则返回 true
+若 time.Timer 已经过期或已被停止，则返回 false
+该函数不会关闭 channel，防止后续从 channel 中拉取数据出现 panic
