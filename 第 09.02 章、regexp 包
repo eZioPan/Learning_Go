@@ -1,0 +1,30 @@
+regexp 用于正则表达式的匹配
+
+所有用于匹配的字符均为 UTF-8 编码的码点
+
+
+
+Match(pattern string, b []byte) (matched bool, err error)
+最基础的 字节流 正则匹配，返回是否匹配成功
+pattern 为以字符串表示的正则匹配表达式
+b 为待匹配字节流
+
+
+MatchReader(pattern string, r io.RuneReader) (mathced bool, err error)
+最基础的 Rune 正则匹配，返回是否匹配成功
+pattern 为以字符串表示的正则匹配表达式
+r 为满足了 io.RuneReader 的变量
+
+
+MatchString(pattern string, s string) (matched bool, err error)
+最基础的 字符串 正则匹配，返回是否匹配成功
+pattern 为以字符串表示的正则匹配表达式
+s 为待匹配字符串
+
+
+QuoteMeta(s string) string
+将输入的字符串作为 raw string
+全部转义为不用反引号即可表示的字符串
+EG.
+regexp.QuoteMeta(`^(\n)`)
+返回 "\^\(\\n\)"
