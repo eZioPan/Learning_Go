@@ -28,3 +28,30 @@ QuoteMeta(s string) string
 EG.
 regexp.QuoteMeta(`^(\n)`)
 返回 "\^\(\\n\)"
+
+
+
+Regexp struct 类型
+Regexp 类型就是编译过的（compiled）正则表达式
+
+
+Compile(expr string) (*Regexp, error)
+输入一个 string，生成一个正则表达式类型变量
+当匹配字符时，遵循 leftmost-first 匹配，也就是
+从左至右，匹配第一个能匹配上的开头，接着匹配上第一个能够匹配结尾的部分
+
+
+CompilePOSIX(expr string) (*Regexp, error)
+输入一个 string，生成一个正则表达式类型变量
+当匹配字符时，遵循 leftmost-longest 匹配，也就是
+从左至右，匹配第一个能匹配上的开头，接着匹配上最后一个能够匹配结尾的部分
+
+
+MustCompile(str string) *Regexp
+MustCompilePOSIX(str string) *Regexp
+正则表达式类型必须编译成功，否则会立刻 panic
+
+
+(re *Regexp) Copy() *Regexp
+完全拷贝一个 Regexp
+当使用多个 goroutine 的时候，可以防止锁竞争
