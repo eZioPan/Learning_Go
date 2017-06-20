@@ -55,3 +55,36 @@ MustCompilePOSIX(str string) *Regexp
 (re *Regexp) Copy() *Regexp
 完全拷贝一个 Regexp
 当使用多个 goroutine 的时候，可以防止锁竞争
+
+
+(re *Regexp) Find(b []byte) []byte
+寻找 b 中，以 leftmost 模式能匹配上的第一段字节流
+若返回 nil，则表示未能匹配上
+
+
+(re *Regexp) FindIndex(b []byte) (loc []int)
+用 两个元素的 []int 变量来确定 leftmost 匹配上的 字节 的位置
+匹配上的内容应为 b[loc[0]:loc[1]]
+
+
+(re *Regexp) FindString(s string) string
+寻找 s 中，以 leftmost 模式能匹配上的第一段字符串
+若返回空字符串，表示未匹配成功，或者成功匹配上了空字符串
+
+
+(re *Regexp) FindSubmatch(b []byte) [][]byte
+次级匹配，一系列 []byte 类型的数据
+其中第一个 []byte 是全匹配的数据
+其后的每一个都是正则表达式中，用小括号括起来的部分的数据
+
+见下方案例
+
+
+(re *Regexp) FindSubmatchIndex(b []byte) []int
+次级匹配Index，返回一个 []int 列表
+其中数据两两配对，表示匹配上的 字节 所在的位置
+
+EG.
+regexp.Compile("p(at)").FindSubmatchIndex([]byte("bat pat"))
+// 返回 [4 7 5 7]
+// 也就是全匹配的 pat 以及次级匹配的 pat 的 at
