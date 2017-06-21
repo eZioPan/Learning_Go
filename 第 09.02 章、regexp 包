@@ -88,3 +88,29 @@ EG.
 regexp.Compile("p(at)").FindSubmatchIndex([]byte("bat pat"))
 // 返回 [4 7 5 7]
 // 也就是全匹配的 pat 以及次级匹配的 pat 的 at
+
+
+(re *Regexp) FindReaderIndex(r io.RuneReader) (loc []int)
+(re *Regexp) FindReaderSubmatchIndex(r io.RuneReader) []int
+匹配 Rune 的 Find
+
+
+(re *Regexp) FindStringIndex(s string) (loc []int)
+(re *Regexp) FindStringSubmatch(s string) []string
+(re *Regexp) FindStringSubmatchIndex(s string) []int
+匹配 string 的 Find
+
+
+(re *Regexp) FindAll(b []byte, n int) [][]byte
+(re *Regexp) FindAllIndex(b []byte, n int) [][]int
+
+(re *Regexp) FindAllString(s string, n int) []string
+(re *Regexp) FindAllStringIndex(s string, n int) [][]int
+(re *Regexp) FindAllStringSubmatch(s string, n int) [][]string
+(re *Regexp) FindAllStringSubmatchIndex(s string, n int) [][]int
+
+(re *Regexp) FindAllSubmatch(b []byte, n int) [][][]byte
+(re *Regexp) FindAllSubmatchIndex(b []byte, n int) [][]int
+“All” 版本的 Find
+若 n<0，则返回输入字段中，所有可以被匹配上的全部都会返回
+若 n>=0，则最多只返回制定个数的匹配项
