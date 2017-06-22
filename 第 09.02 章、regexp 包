@@ -114,3 +114,26 @@ regexp.Compile("p(at)").FindSubmatchIndex([]byte("bat pat"))
 “All” 版本的 Find
 若 n<0，则返回输入字段中，所有可以被匹配上的全部都会返回
 若 n>=0，则最多只返回制定个数的匹配项
+
+
+(re *REgexp) NumSubexp() int
+返回这个正则表达式变量中，含有多少次级匹配表达式
+
+
+(re *Regexp) SubexpNames() []string
+返回这个正则表达式变量中，还有多少命名过的次级表达式
+
+
+(re *Regexp) LiteralPrefix() (prefix string, complete bool)
+返回该正则表达式中，从头算起，匹配上的固定不变的字符串
+若该字符串就是整个正则表达式，则 complete 为 true
+
+EG.
+regexp.Compile("Hello").LiteralPrefix()
+// 返回 "Hello" true
+regexp.Compile("Hello \\w+").LiteralPrefix()
+// 返回 "Hello " false
+
+
+(re *Regexp) Longest()
+在执行了这条语句之后，其后的执行的匹配的模式变为 leftmost-longest
