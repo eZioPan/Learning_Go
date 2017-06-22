@@ -137,3 +137,24 @@ regexp.Compile("Hello \\w+").LiteralPrefix()
 
 (re *Regexp) Longest()
 在执行了这条语句之后，其后的执行的匹配的模式变为 leftmost-longest
+
+
+(re *Regexp) Expand(dst []byte, template []byte, src []byte, match []int) []byte
+(re *Regexp) ExpandString(dst []byte, template string, src string, match []int) []byte
+match 是通过 (*Regexp).FindSubmatchIndex 解析 原文本 src 获得的 次级匹配Index
+接着把从 src 中次级匹配出来的内容替换至 template 中
+最后将 替换好的 template 追加至 dst 的末尾
+
+在 template 中，待替换的部分使用 $1 $2 （次级匹配顺序） 以及 ${<name1>} ${<name2>} （次级匹配名称）表示
+待替换变量采取最长识别模式， eg. $1x 将被认为是 ${1x} 而非 ${1}x
+若要输出美元符号 $，请使用 $$
+
+EG.
+reg := regexp.MustCompile(`(\w+),(\w+)`)
+src := []byte("Golang,World!")           // 源文本
+dst := []byte("Say: ")                   // 目标文本
+template := []byte("Hello $1, Hello $2") // 模板
+match := reg.FindSubmatchIndex(src)      // 解析源文本
+// 填写模板，并将模板追加到目标文本中
+fmt.Printf("%q", reg.Expand(dst, template, src, match))
+// "Say: Hello Golang, Hello World"
