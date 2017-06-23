@@ -166,3 +166,30 @@ fmt.Printf("%q", reg.Expand(dst, template, src, match))
 返回 字节流/Rune/字符串 是否完全匹配上了正则表达式
 
 
+(re *Regexp) ReplaceAll(src, repl []byte) []byte
+完全用 repl 中的内容替换 src 中匹配上 re 的内容
+repl 的书写方法见 (*Regexp).Expand 的 template
+
+EG.
+re, _ := regexp.Compile("(\\w)at[^\\w]")
+src := []byte("cat pat nat gate")
+repl := []byte("${1}Wow! ")
+res := re.ReplaceAll(src, repl)
+fmt.Printf("%v\n", string(res))
+
+
+(re *Regexp) ReplaceAllFunc(src []byte, repl func([]byte) []byte) []byte
+自定义替换函数
+
+
+(re *Regexp) ReplaceAllLiteral(src, repl []byte) []byte
+(re *Regexp) ReplaceAllLiteralString(src, repl string) string
+repl 将使用字面值替换，也就是说，完全忽视 (* Regexp).Expand 的中的 $1 ${name} 规则
+直接用字符替换匹配上的部分
+
+
+(re *Regexp) ReplaceAllString(src, repl string) string
+(re *Regexp) ReplaceAllStringFunc(src string, repl func(string) string) string
+字符串版本的 Replace
+
+
