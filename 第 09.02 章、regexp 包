@@ -158,3 +158,11 @@ match := reg.FindSubmatchIndex(src)      // 解析源文本
 // 填写模板，并将模板追加到目标文本中
 fmt.Printf("%q", reg.Expand(dst, template, src, match))
 // "Say: Hello Golang, Hello World"
+
+
+(re *Regexp) Match(b []byte) bool
+(re *Regexp) MatchReader(r io.RuneReader) bool
+(re *Regexp) MatchString(s string) bool
+返回 字节流/Rune/字符串 是否完全匹配上了正则表达式
+
+
