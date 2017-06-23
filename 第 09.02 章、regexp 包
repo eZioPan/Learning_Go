@@ -193,3 +193,15 @@ repl 将使用字面值替换，也就是说，完全忽视 (* Regexp).Expand �
 字符串版本的 Replace
 
 
+(re *Regexp) Split(s string, n int) []string
+从 原字符串 中移除匹配上的字符，并依据移除字符产生的间隔将剩余字符分组
+
+n>0 时，最多分成 n 组，若没有分解完成，则最后一组为剩余所有的字符串
+n=0 时，返回 nil
+n<0 时，完整分组
+
+eg.
+src := "cat sat mat"
+re, _ := regexp.Compile("at")
+fmt.Printf("%#v\n", re.Split(src, -1))
+// 返回 []string{"c"," s"," m",""}
