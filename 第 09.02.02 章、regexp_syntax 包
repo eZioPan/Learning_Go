@@ -1,0 +1,51 @@
+regexp/syntax 包
+
+定义和处理 正则表达式 本身的语法
+
+
+
+正则表达式语法
+
+
+
+单一字符：
+
+
+.				任何字符，可能包含 newline（flag s=true）
+[xyz]			包含指定字符中的某一个
+[^xyz]			不包含指定字符中的任何一个
+\d				Perl 定义的字符
+\D				不含任何 Perl 定义的字符
+[[:alpha:]]		ASCII 定义的字符
+[[:^alpha:]]	不含 ASCII 定义的字符
+\pN				单个 Unicode 字符
+				参见 http://www.regular-expressions.info/unicode.html Unicode Categories 部分
+\p{Greek}		指定语言下的单个 Unicode 字符
+				参见 http://www.regular-expressions.info/unicode.html Unicode Script 部分
+				中文为 {Han}
+\PN				不含 Unicode 字符
+\P{Greek}		不含指定语言下的 Unicode 字符
+
+
+复合字符串：
+
+xy				x 后跟随 y
+x|y				x 或 y（优先匹配 x）
+
+
+重复字符：
+
+x*				0 个或多个 x，优先匹配最多数量
+x+				1 个或多个 x，优先匹配最多数量
+x?				0 个或 1 个 x，优先匹配 1 个
+x{n,m}			重复 n 至 m 个 x，优先匹配最多数量
+x{n,}			至少重复 n 个 x，优先匹配最多数量
+x{n}			重复且仅重复 n 个 x
+x*?				0 个或多个 x，优先匹配最少数量
+x+?				1 个或多个 x，优先匹配最少数量
+x??				0 个或 1 个 x，优先匹配 0 个
+x{n,m}?			重复 n 至 m 个 x，优先匹配最少数量
+x{n,}?			至少重复 n 个 x，优先匹配最少数量
+x{n}?			重复且仅重复 n 个 x
+
+#### 由于某些原因 x{n,m} x{n,} x{n} 最多仅能匹配上 1000 个重复
