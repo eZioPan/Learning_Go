@@ -1,0 +1,78 @@
+sync 包提供底层的同步机制，比如互斥锁
+除了 Once 和 WaitGroup 两种类型，大部分都被用于底层
+高阶同步机制，应该通过 channel 和 communication 来完成
+
+
+
+Cond struct 类型
+
+Cond 实现了一个条件变量，一个让 gorountine 等待 或 声明 事件发生的 聚集地
+每个 Cond 都有一个与之关联的 Locker L（一般是 *Mutex 或 *RWMutex）
+当修改条件或者调用 Wait 方法时，Locker L 必须被持有（held）
+
+Cond 可以作为其他结构的部分而被创建
+在经过首次使用之后，Cond 就不可以被拷贝
+
+type Cond struct{
+	// 当状态被观察或修改时， L 必须被持有
+	L Locker
+	// 其他未导出量
+}
+
+
+NewCond(l Locker) *Cond
+产生一个内含 Locker l 的 Cond
+
+
+(c *Cond) Broadcast()
+Broadcast 唤醒所有正在等待 c 的 goroutine
+它允许但不要求调用者持有 c.L
+
+
+(c *Cond) Signal()
+如果存在的话，Signal 唤醒一个正在等待 c 的 goroutine
+它允许但不要求调用者持有 c.L
+
+
+(c *Cond) Wait()
+Wait 原子操作：解锁 c.L，并挂起调用它的 goroutine
+在其后恢复执行后， Wait 会在返回前锁住 c.L
+和其他系统不同， Wait 不会返回，除非被 Broadcast 和 Signal 唤醒
+
+由于在 Wait 第一次恢复时 c.L 并未被锁，调用者通常不能假设在 Wait 返回时 条件为真
+相反的，调用者需要在一个循环中 Wait
+
+c.L.Lock()
+for !condition(){
+	c.Wait()
+}
+... make use of condition ...
+c.L.Unlock()
+
+
+
+Locker interface 类型
+Locker 表示一个物体可以被 Lock 和 Unlock
+
+type Locker interface{
+	Lock()
+	Unlock()
+}
+
+
+
+type Mutex struct 类型
+Mutex 既是互斥锁。
+Mutexes 可以作为其他结构的部分被创建
+Mutex 的零值为 Unlock 状态的 mutex
+Mutex 在初次使用后便不该被拷贝
+
+
+(m *Mutex) Lock()
+锁住 m，如果锁正在被使用，则调用方法的 goroutine 一直阻塞，直到 mutex 可用
+
+
+(m *Mutex) Unlock()
+解锁 m，若 m 没有被锁住，则产生 run-time error
+一个锁住的 Mutex 不和任何特定的 goroutine 关联，
+它允许一个 goroutine 锁住 Mutex，然后让另一个 goroutine 解锁它
