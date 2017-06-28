@@ -76,3 +76,71 @@ Mutex 在初次使用后便不该被拷贝
 解锁 m，若 m 没有被锁住，则产生 run-time error
 一个锁住的 Mutex 不和任何特定的 goroutine 关联，
 它允许一个 goroutine 锁住 Mutex，然后让另一个 goroutine 解锁它
+
+
+
+Once struct 类型
+
+执行且仅执行一次行动的类型
+
+
+(o *Once) Do(f func())
+对于同一个 Once 实例， 传入 Do 方法的函数只会被执行一次
+无论这个实例的 Do 方法被调用多少次，或在多少个不同的 goroutine 中被调用
+
+在 f 返回前， Do 不会返回，所以，不要在 f 中再次调用 Do，这会让 goroutine 陷入 deadlock
+
+即便 f 发出了 panic， Do 也会认为 f 返回了，其后任何操作都不会让这个 Once 实例再次执行 f
+
+
+
+Pool strcut 类型
+
+一个 Pool 就是一系列可以被独立保存和恢复的临时对象的集合
+
+任何保存在 Pool 中的对象都可能在任何时候不加提示的被自动移除
+若 Pool 具有的是某内存数据唯一的引用，则发生移除的时候，这部分数据可能会直接丢失
+
+Pool 是并行安全的
+
+Pool 用于缓存一些分配过的但还未使用的内存地址，以便其后再使用
+这样可以减轻 GC 的压力
+这让建立高效的、线程安全的 free list 变得简单
+但它并不适合所有的 free list
+
+一个正确的 Pool 的用法是：管理一组临时项目
+这些零时项目将静默地在并发且独立的客户端中分享
+并有可能再次被利用
+Pool 提供了一种在多个客户端之间分配内存的方法
+
+fmt 包就很好的利用了 Pool
+它维护了一个动态大小的临时输出缓存
+缓存空间在大量打印时会增长，在少有打印时会缩减
+
+另一方面说，一个作为短暂存在的物体的一部分的 free list 并不适合用 Pool
+因为 overhead 并不适合这种场景
+让这些物体实现自己的 free list 比较高效
+
+Pool 在首次使用之后，就不应被拷贝
+
+type Pool strcut{
+	// 可选的 New 函数规定了一个函数来生成一个值，以供 Get 方法返回
+	// 一般情况下， Get 会返回 nil
+	New func() interface{}
+
+	// 其他隐藏的条目
+
+}
+
+
+(p *Pool) Get() interface{}
+Get 会从 Pool 中任意选择一个项目，并把它从 Pool 中移除，并将这个项目返回给调用者
+Get 可能会无视 pool，并认为它的空的
+
+调用者不可认为 Get 和之前 Put 的值会有关联
+
+若 Get 只能返回 nil，而 p.New 函数有返回值，则用 p.New() 的返回值替代 nil
+
+
+(p *Pool) Put(x interface{})
+向 pool 中添加 x
