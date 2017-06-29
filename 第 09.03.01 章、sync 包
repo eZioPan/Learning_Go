@@ -144,3 +144,48 @@ Get 可能会无视 pool，并认为它的空的
 
 (p *Pool) Put(x interface{})
 向 pool 中添加 x
+
+
+
+RWMutex strcut 类型
+
+RWMutex 是 reader/writer 互斥锁
+这把锁可以被任意多个 reader 或者 一个 writer 持有
+RWMutex 可作为其他结构的组成部分而被创建
+RWMutex 的零值是一个 解锁状态的互斥锁
+
+RWMutex 在第一次使用后，便不应该被拷贝
+
+如果一个 goroutine 为了读取数据持有一个 RWMutex，则它不能希望任何其他的调用者能同持有 RWMutex 的 read 锁
+直到上一个 read 锁被释放之后，新的调用者才能持有 read 锁
+具体来说这防止了循环 read 锁，保证了锁最终是可用的
+一个已阻塞的 Lock 调用，将让新的 reader 无法获得 lock
+
+
+(rw *RWMutex) Lock()
+持有 rw 的写入锁
+若 rw 已经被 read 锁住或者 write 锁住
+Lock 函数会阻塞，直到锁再次可用
+
+
+(rw *RWMutex) RLock()
+持有 rw 的读取锁
+
+
+(rw *RWMutex) RLocker() Locker
+返回一个实现了 Locker interface 的实例
+这个实例通过调用 rw.RLock 和 rw.RUnlock 来满足 Locker interface 的 Lock() 和 Unlock()
+
+
+(rw *RWMutex) RUnlock()
+RUnlock 解锁单个 RLock 调用，它不影响其他并行的 reader
+如果 rw 并未被锁，则产生 run-time error
+
+
+(rw *RWMutex) Unlock()
+解锁 RWMutex 来写入
+若 rw 并未被锁，则产生 run-time error
+
+
+RWMutex 和 Mutex 一样，不和特定的 goroutine 绑定
+一个 goroutine 锁定的 RWMutex 可以由其他的 goroutine 解锁
