@@ -189,3 +189,35 @@ RUnlock 解锁单个 RLock 调用，它不影响其他并行的 reader
 
 RWMutex 和 Mutex 一样，不和特定的 goroutine 绑定
 一个 goroutine 锁定的 RWMutex 可以由其他的 goroutine 解锁
+
+
+
+WaitGroup struct 类型
+
+一个 WaitGroup 实例会等待一组 goroutine 结束
+主 goroutine 调用 Add 来设置需要等待的 goroutine 的数量
+接着每个 goroutine 运行并在返回时调用 Done
+于此同时， Wait 可以用于阻塞，直到所有的 goroutine 全部结束
+
+WaitGroup 在使用之后便不该被拷贝
+
+
+(wg *WaitGroup) Add(delta int)
+将一个加数加入 WaitGroup 的计数器中，这个加数可以是负数
+若计数器变为 0，则所有被 Wait 阻塞的 goroutine 全部被释放
+若计数器变为负数，则 Add 方法 panic
+
+注意，若要在 计数器 为 0 的时候，用 Add 方法为计数器加一个正数，
+则这个 Add 语句必须出现在 Wait 语句之前
+当 计数器 大于 0 的时候，带负数或正数的调用可以出现在任何时候
+代表性地来说，这意味着，Add 的执行应早于创建 goroutine 和其他需要等待的事件的语句前
+如果一个 WaitGroup 被用在等待不同组相互独立的事件组之中，
+则新的 Add 调用必须发生在全部前序的 Wait 调用全部返回之时才可以
+
+
+(wg *WaitGroup) Done()
+Done 方法减少 WaitGroup 的计数器
+
+
+(wg *WaitGroup) Wait()
+Wait 方法保持阻塞，直到 WaitGroup 的计数器到 0
