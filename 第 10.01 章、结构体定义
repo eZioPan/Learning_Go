@@ -1,0 +1,62 @@
+递归结构体
+
+EG1.【链表】
+package main
+
+import (
+	"fmt"
+)
+
+type Node struct {
+	data float64
+	su   *Node			// 指向自身类型的另一个实例
+}
+
+func main() {
+	// 递归创类型实例
+	node0 := Node{
+		0.0,
+		nil,
+	}
+	node1 := Node{
+		1.0,
+		&node0,
+	}
+	node2 := Node{
+		2.0,
+		&node1,
+	}
+	fmt.Printf("%v\n", node2.su.su)		// 指针递归调用
+}
+
+EG2.【简单二叉树】
+package main
+
+import (
+	"fmt"
+)
+
+type Tree struct {
+	le   *Tree
+	data float64
+	ri   *Tree
+}
+
+func main() {
+	node0 := Tree{
+		nil,
+		0.0,
+		nil,
+	}
+	node1 := Tree{
+		nil,
+		1.0,
+		nil,
+	}
+	node2 := Tree{
+		&node0,
+		2.0,
+		&node1,
+	}
+	fmt.Printf("%v\t%v\n", node2.le, node2.ri)
+}
