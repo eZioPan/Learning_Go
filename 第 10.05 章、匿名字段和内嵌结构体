@@ -1,0 +1,31 @@
+结构体中可以嵌套匿名字段
+同一个结构体的同一个级别下，只能出现一个相同的匿名字段
+同一个结构体的不同级别下，可以出现相同的匿名字段
+赋值和取值时，按照嵌套浅至深的规则，优先修改和调取较浅的结构体中的匿名字段的数据
+
+EG.
+package main
+
+import (
+	"fmt"
+)
+
+type A struct {
+	int
+}
+
+type B struct {
+	A				// 故意设置第一个字段为结构体类型 A 的实例
+	int
+}
+
+func main() {
+	a := new(A)
+	a.int = 5
+	fmt.Printf("%v\n", a)
+	b := new(B)
+	b.int = 3			// 修改 结构体 B 类型自身带有的 int 匿名字段
+	fmt.Printf("%v\n", b)
+	b.A.int = 4
+	fmt.Printf("%v\n", b)
+}
