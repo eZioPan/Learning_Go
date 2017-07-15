@@ -1,0 +1,83 @@
+在使用方法的时候，方法会根据方法在声明时的定义，自动获取接收者本身或接收者的指针
+
+但是，接口的要求比方法要严格一些
+
+
+对于满足 接口 interfaceA 的类型 typeX
+
+若 typeX 用于满足 interfaceA 的方法的接收者都是自身类型而非指针
+则传入 interfaceA 的变量的 typeX 的实例，可以是 typeX，也可以是 *typeX
+
+若 typeX 用于满足 interfaceA 的方法的接收者包含至少一个指针类型
+则传入 interfaceA 的变量的 typeX 的实例，必须是 *typeX
+
+EG.
+
+package main
+
+import (
+	"fmt"
+)
+
+// IDer 设置一个 IDer 接口
+// 满足该接口的类型必须实现
+// GetID() int
+// 以及
+// SetID(int)
+// 方法
+type IDer interface {
+	GetID() int
+	SetID(int)
+}
+
+// B 类型
+type B struct {
+	ID int
+}
+
+// C 类型
+type C struct {
+	ID int
+}
+
+// GetID ：B 类型，使用的是类型本身
+func (b B) GetID() int {
+	return b.ID
+}
+
+// SetID : B 类型，使用的是类型本身
+// (方法本身是错误的，这样并不能修改 Set)
+func (b B) SetID(id int) {
+	b.ID = id
+}
+
+// GetID ：C 类型，使用的是类型本身
+func (c C) GetID() int {
+	return c.ID
+}
+
+// SetID : C 类型，使用的是类型的指针
+func (c *C) SetID(id int) {
+	c.ID = id
+}
+
+// AddOne 针对 IDer 接口类型的变量的函数
+func AddOne(id IDer) {
+	id.SetID(id.GetID() + 1)
+}
+
+func main() {
+	var id1 IDer
+	b1 := B{1}
+	c1 := C{10}
+
+	// id1 可以接受 b1 的值
+	id1 = b1
+	AddOne(id1)
+	fmt.Printf("%v\n", id1.GetID())
+
+	// id1 必须接受 c1 的指针
+	id1 = &c1
+	AddOne(id1)
+	fmt.Printf("%v\n", id1.GetID())
+}
