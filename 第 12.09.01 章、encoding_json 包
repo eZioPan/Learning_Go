@@ -15,3 +15,27 @@ Indent(dst *bytes.Buffer, src []byte, prefix, indent string) error
 向目标 Buffer 尾部追加 缩进过的 JSON 数据
 每个 JSON 元素都放在新的一行中，且这行的行首追加 prefix 定义的字符串，缩进将使用 indent 定义的字符串
 原 JSON 中行首的 空白字符都会被省略，但行尾的都会被保留
+
+
+Marshal(v interface{}) ([]byte, error)
+Marshal 函数返回 JSON 编码的 数据 v，（Marshal 在英语中有编队的含义）
+
+Marshal 会递归扫描 v 的值。如果遇到的值实现了 Marshaler 接口，并且不为 nil 指针，则 Marshal 调用该值的 MarshalJSON 方法来产生 JSON 数据
+若没有实现 MarshalJSON 方法，但实现了 encoding.TextMarshaler,则 Marshal 调用 MarshalText 方法来产生 JSON 字符串
+nil 指针 exception 并非严格需要，而是对 UnmarshalJSON 行为的一种模仿
+
+其他情况下， Marshal 遵循下列 类型相关 默认编码：
+
+布尔值 编码为 JSON 布尔值
+
+浮点数、整数、 Number 值 编码为 JSON 数字
+
+字符串 编码为 JSON 字符串，并强制转换为合法 UTF-8 字符，将不合法字符传唤为 Unicode replacement rune
+尖角括号 < 和 > 转义为 \u003c 和 \u003e，防止部分浏览器将 JSON 数据误认为 HTML 数据
+& 符号 转义为 \u0026，同样为了防止浏览器误认
+可以调用 Encoder 的 SetEscapeHTML(false) 方法来关闭该 Encoder 实例的转义功能
+
+array 和 slice 编码为 JSON array
+特例：
+[]byte 转化为 base64 编码的字符串
+nil slice 编码为 null JSON 值
