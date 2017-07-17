@@ -1,0 +1,17 @@
+json 包实现了编码和解码 JSON 文件的方法
+JSON 类型与 Go 类型的对应关系在 Marshal 和 Unmarshal 函数中说明
+
+
+
+Compact(dst *bytes.Buffer, src []byte) error
+将 JSON 编码过的字节流，去掉无用的空白字符，并追加至目标 Buffer 的尾部
+
+
+HTMLEscape(des *bytes.Buffer, src []byte)
+将 JSON 中出现的 HTML 特殊字符都转义为非特殊字符
+
+
+Indent(dst *bytes.Buffer, src []byte, prefix, indent string) error
+向目标 Buffer 尾部追加 缩进过的 JSON 数据
+每个 JSON 元素都放在新的一行中，且这行的行首追加 prefix 定义的字符串，缩进将使用 indent 定义的字符串
+原 JSON 中行首的 空白字符都会被省略，但行尾的都会被保留
