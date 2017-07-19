@@ -119,3 +119,7 @@ Channel/复数/函数 不可以被编码为 JSON 对象
 
 由于 JSON 不可以表示循环数据结构，所以 Marshal 不处理它们
 对 Marshal 传入 循环结构将导致无限递归
+
+
+MarshalIndent(v interface{}, prefix, indent string) ([]byte, error)
+输出 JSON 对象的时候，自动缩进
