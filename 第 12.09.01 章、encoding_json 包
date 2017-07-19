@@ -123,3 +123,53 @@ Channel/复数/函数 不可以被编码为 JSON 对象
 
 MarshalIndent(v interface{}, prefix, indent string) ([]byte, error)
 输出 JSON 对象的时候，自动缩进
+
+
+Unmarshal(data []byte, v interface{}) error
+解码 JSON 数据，并将结果存入 v 中
+v 是指向某个类型的变量的指针
+
+Unmarshal 反向使用 Marshal 的方法，若需要则使用 map/slice/pointer，符合以下规则：
+将 JSON 解码为 指针， Unmarshal 首先假设该 JSON 对象为 null 指针，获得一个 指向 nil 的指针
+若 JSON 值不为空，则将 指针 指向这个值
+
+将 JSON 对象解码为一个实现了 Unmarshaler 接口的类型
+Unmarshal 调用该对象的 UnmarshalJSON 方法（JSON null 对象也是如此解码的）
+其他情况，若类型实现了 encoding.TextUnmarshaler 接口，且输入的 JSON 是一个引号引起来的字符串
+则调用该值得 UnmarshalText 方法，并解码为一个字符串
+
+将 JSON 解码为一个结构体， Unmarshal 匹配 JSON 键名和 结构体的字段名（或 json tag 名）
+优先匹配完全匹配的名称，但也可以匹配上忽略大小写的名称
+仅有被导出的字段会被匹配
+
+要将 JSON 解码为一个 Interface 值， Unmarshal 将做以下对应：
+bool，对应 JSON 布尔值
+float64，对应 JSON 数字
+string，对应 JSON 字符串
+[]interface{}，对应 JSON array
+map[string]interface{}，对应 JSON 对象
+nil，对应 JSON null
+
+将 JSON array 解码为 slice， Unmarshal 重置 slice 的长度至 0，
+并逐次将元素追加在 slice 的后面
+特例是，若 JSON array 为空，则 Unmarshal 将原 slice 替换为一个空的 slice
+
+将 JSON array 解码为 Go array， Unmarshal 将 JSON 元素解码为对应的 Go array 元素
+若 Go array 的长度小于 JSON array 的长度，则多余的 JSON array 元素被抛弃
+若 Go array 的长度大于 JSON array 的长度，则多余的 Go array 元素被填上 零值
+
+将一个 JSON 物体解码为 map， Unmarshal 首先新建一个 map
+若 map 为 nil，则 Unmarshal 会重定位一个新的 map
+除此之外， Unmarshal 会重复利用已存在的 map，并保留当前的已存在的条目
+接着从 JSON 对象中解码 键-值对，并输入 map 中
+map 的键必须是 string/integer 或者 实现了 encoding.TextUnmarshaler 的类型
+
+若 JSON 值无法匹配目标类型，或者 JSON 数字使目标类型溢出
+Unmarshal 会跳过该位置，并试图继续解码剩下的部分
+若其后没有非常严重的错误发生，则 Unmarshal 会在解码后返回一个 UnmarshalTypeError 错误
+
+解码 JSON null 会将 interface/map/pointer/slice 的值变为 nil
+解码 JSON null 值其他的类型的值，将不会对它们的产生影响并且不会产生错误
+
+若解码引号引起来的字符串，出现了不合法的 UTF-8 字符或者 不合法的 UTF-16 代理对
+并不会触发错误，而非法字符将会被 Unicode 字符 U+FFFD 替代
