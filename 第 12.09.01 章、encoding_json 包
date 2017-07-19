@@ -99,3 +99,23 @@ Go 的结构体可见性规则，在执行 JSON 的 marshal 和 unmarshal 将会
 <1> 将结构体所有的字段名通过 “有 tag 读取 tag 内容，无 tag 读取字段名” 的方法都转化为键名
 <2> 若顶层的键名和非顶层键名重名，则仅保留顶层键名
 <3> 若均为同级的插入结构体的键名重复，则全部丢弃，仅保留键名不重复的部分
+
+Map 被编码为 JSON 对象
+map 的键必须是 字符串、整型或者实现了 encoding.TextMarshaler 的类型
+map 的键将被排序，并按照下述规则编码为 JSON 对象
+
+<1> 字符串可以直接使用
+<2> 实现了 encoding.TextMarshaler 的全部编码
+<3> 整型值转换为字符串
+
+指针编码为指针所指向的值
+空指针编码为 JSON 的 null 对象
+
+Interface 编码为 interface 所包含的对象
+空 interface 编码为 JSON 的 null 对象
+
+Channel/复数/函数 不可以被编码为 JSON 对象
+编码上述类型的值会返回 UnsupportedTypeError
+
+由于 JSON 不可以表示循环数据结构，所以 Marshal 不处理它们
+对 Marshal 传入 循环结构将导致无限递归
