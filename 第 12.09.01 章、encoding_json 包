@@ -247,3 +247,32 @@ NewEncoder(w io.Writer) *Encoder
 指示 encoder 格式化输出其下每个编码过的值
 让它们看起来和调用了包级别函数 Indent 一样
 调用 SetIndent("","") 方法清除这个设置
+
+
+
+InvalidUTF8Error struct 类型
+
+与 Go1.2 之前的版本保持兼容
+由于 Go1.2 之后，不可编码的 UTF 码点都会被 U+FFFD 替代
+该错误将不会被触发
+
+type InvalidUTF8Error struct{
+	S string // 产生错误的整个字符串
+}
+
+
+(e *InvalidUTF8Error) Error() string
+实现了该类型的报错接口
+
+
+
+InvalidUnmarshalError struct 类型
+
+传入和不合法的待解码参数（传入参数必须是非空指针）
+
+type InvalidUnmarshalError struct{
+	Type reflect.Type
+}
+
+(e *InvalidUnmarshalError) Error() string
+实现了该类型的报错接口
