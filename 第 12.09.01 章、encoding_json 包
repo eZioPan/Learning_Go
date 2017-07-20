@@ -276,3 +276,25 @@ type InvalidUnmarshalError struct{
 
 (e *InvalidUnmarshalError) Error() string
 实现了该类型的报错接口
+
+
+
+Marshaler interface 类型
+
+所有可以让自身类型转换为合法的 JSON 数据的类型都实现了 Marshaler 接口
+
+type Marshaler interface{
+	MarshalJSON() ([]byte, error)
+}
+
+
+
+MarshalerError struct 类型
+
+type MarshalerError struct{
+	Type reflect.Type
+	Err error
+}
+
+
+(e *MarshalerError) Error() string
