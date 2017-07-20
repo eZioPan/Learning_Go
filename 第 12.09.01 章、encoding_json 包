@@ -173,3 +173,44 @@ Unmarshal 会跳过该位置，并试图继续解码剩下的部分
 
 若解码引号引起来的字符串，出现了不合法的 UTF-8 字符或者 不合法的 UTF-16 代理对
 并不会触发错误，而非法字符将会被 Unicode 字符 U+FFFD 替代
+
+
+
+Decoder type 类型
+
+从输入流中读取并解码 JSON 值
+
+
+NewDecoder(r io.Reader) *Decoder
+返回一个从 r 读取数据的解码器
+解码器会自己引入 buffer，并可能读取超过解码 JSON 值所需的数据量
+
+
+(dec *Decoder) Bufferd() io.Reader
+返回在 Decoder 的 buffer 中剩下的数据的一个 reader
+直到下次调用 Decode 前，这个 reader 都是合法的
+
+
+(dec *Decoder) Decode(v interface{}) error
+读取下一个 JSON 编码的元素，并将解码后的数据存入指向 v 的指针
+具体细节参看 Unmarshal 函数
+
+
+(dec *Decoder) More() bool
+反馈当前 JSON array 或 JSON 对象 中否是还有下一个可以解析的元素
+
+
+(dec *Decoder) Token() (Token, error)
+返回输入流中下一个 JSON token
+若到达输入流的结尾，Token 返回值为 nil, io.EOF
+
+Token 保证了定界符 [ ] 和 { } 正确的嵌套匹配
+若 Token 遇上了未知的定界符，则返回一个错误
+
+输入流由基础的 JSON 值——布尔值、字符串、数字、null——和类型为 Delim 的定界符 [] {} 构成
+定界符用于标记 JSON array 和 JSON 对象的开始和结束
+逗号了冒号将被忽略
+
+
+(dec *Decoder) UseNumber()
+让 Decoder 将一个 JSON 数字解析为 Number 类型，而非 float64 类型
