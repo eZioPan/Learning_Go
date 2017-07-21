@@ -298,3 +298,21 @@ type MarshalerError struct{
 
 
 (e *MarshalerError) Error() string
+
+
+
+Number string 类型
+
+表示了一个 JSON 数字的字面值
+
+
+(n Number) Float64() (float64, error)
+数字作为 float64 值返回
+
+
+(n Number) Int64() (int64, error)
+数字作为 int64 值返回
+
+
+(n Number) String() string
+数字作为 字符串 值返回
