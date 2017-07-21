@@ -361,3 +361,16 @@ type SyntaxError struct{
 
 (e *SyntaxError) Error() string
 实现了该类型的报错接口
+
+
+
+Token interface{} 类型
+
+Token 可以具有一个值，该值为以下几种类型中的一种
+
+Delim， JSON 定界符
+bool， JSON 布尔值
+float64， JSON 数字
+Number， JSON 数字
+string, JSON 字符
+nil， JSON null
