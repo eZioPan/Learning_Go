@@ -346,3 +346,18 @@ os.Stdout.Write(b)
 
 (m *RawMessage) UnmarshalJSON(data []byte) error
 从字节流中读取数据
+
+
+
+SyntaxError struct 类型
+
+描述了 JSON 语法错误
+
+type SyntaxError struct{
+	Offset int64 // 在发生错误时，已经读取的字节数
+	// 含有未导出的字段
+}
+
+
+(e *SyntaxError) Error() string
+实现了该类型的报错接口
