@@ -316,3 +316,33 @@ Number string 类型
 
 (n Number) String() string
 数字作为 字符串 值返回
+
+
+
+RawMessage []byte 类型
+
+该类型的值是一个已经被编码出来的 JSON 值
+它实现了 Marshaler 和 Unmarshaler 用于其后的 JSON 解码或者 JSON 预编码
+
+【也就是说，任何一个 []byte 类型 都可以是 RawMessage，也就时 JSON 最后呈现的样子】
+
+EG.
+h := json.RawMessage(`{"precomputed": true}`)
+
+c := struct {
+    Header *json.RawMessage `json:"header"`
+    Body   string           `json:"body"`
+}{Header: &h, Body: "Hello Gophers!"}
+
+b, err := json.MarshalIndent(&c, "", "\t")
+if err != nil {
+    fmt.Println("error:", err)
+}
+os.Stdout.Write(b)
+
+
+(m RawMessage) MarshalJSON() ([]byte, error)
+将编码后的字节流重新加入其它的 JSON 编码过程
+
+(m *RawMessage) UnmarshalJSON(data []byte) error
+从字节流中读取数据
