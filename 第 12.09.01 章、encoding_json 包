@@ -374,3 +374,77 @@ float64， JSON 数字
 Number， JSON 数字
 string, JSON 字符
 nil， JSON null
+
+
+
+UnmarshalFieldError struct 类型
+【不再使用，向前兼容】
+描述了一个指向结构体中未导出字段（也就时不可写入）的 JSON 对象的键
+
+type UnmarshalFieldError struct {
+    Key   string
+    Type  reflect.Type
+    Field reflect.StructField
+}
+
+
+func (e *UnmarshalFieldError) Error() string
+实现了该类型的报错接口
+
+
+
+UnmarshalTypeError struct 类型
+
+描述了一个 JSON 值不能与指定的 Go 类型匹配
+
+type UnmarshalTypeError struct {
+    Value  string       // 描述了 JSON 值
+    Type   reflect.Type // 不可以被赋予的 Go 类型
+    Offset int64        // 已经读取的字节偏移量
+    Struct string       // 包含该字段的结构体名称
+    Field  string       // 包含该字段的 Go 的值
+}
+
+
+(e *UnmarshalTypeError) Error() string
+实现了该类型的报错接口
+
+
+
+Unmarshaler interface 类型
+
+所有可以让 JSON 数据转换为合法的自身类型都实现了 Unmarshaler 接口
+输入被假设为合法编码的 JSON 值
+若要在方法返回后保存原始数据，UnmarshalJSON 必须拷贝 JSON 数据
+
+为了方便贴近 Unmarshal 函数的行为， Unmarshaler 将 UnmarshalJSON([]byte("null")) 作为 不操作 的实现
+
+type Unmarshaler interface{
+	UnmashalJSON([]byte) error
+}
+
+
+UnsupportedTypeError struct 类型
+
+当尝试编码不收支持的值类型时， Marshal 返回该错误
+
+type UnsupportedTypeError struct {
+    Type reflect.Type
+}
+
+
+(e *UnsupportedTypeError) Error() string
+实现了该类型的报错接口
+
+
+
+UnsupportedValueError struct 类型
+
+type UnsupportedValueError struct {
+    Value reflect.Value
+    Str   string
+}
+
+
+(e *UnsupportedValueError) Error() string
+实现了该类型的报错接口
