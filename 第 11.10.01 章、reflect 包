@@ -1,0 +1,165 @@
+reflect 包实现了运行时反射，允许一个程序操控各种类型的对象
+常见用法即为：从静态类型 interface{} 中取出一个值，并通过调用 TypeOf，返回一个 Type 类型的值，来获得它的动态类型信息
+调用 ValueOf 返回一个 Value 类型的数据，表示运行时数据
+Zero 函数获取一个 Type 类型的值，并返回一个代表该类型零值的 Value 类型的值
+
+参见 “The Laws if Reflection” 了解 Go 语言中 reflection 的简介
+https://golang.org/doc/articles/laws_of_reflection.html
+
+
+
+Copy(dst, src Value) int
+将 src 的内容开呗值 dst 中，直到 dst 被填满或者 src 被耗尽
+返回拷贝元素的数量
+dst 和 src 必须具有 Slice 或 Array 的 kind
+且 dst 和 src 必须具有相同的元素类型
+
+
+DeepEqual(x,y interface{}) bool
+返回 x 和 y 是否 “深层相等”
+若两个相同类型的值满足以下条件之一，则称之为 “深层相等” 的
+
+<1> Array 值：当它们所含有的元素一一对应 “深层相等” 时
+
+<2> Struct 值：当它们所含字段一一对应 “深层相等” 时（包含导出字段和非导出字段）
+
+<3> Func 值：当它们均为 nil 时，它们 “深层相等”，否则它们 不为 “深层相等”
+
+<4> Interface 值：当它们具有的值 “深层相等” 时，它们 “深层相等”
+
+<5> Map 值：当符合以下全部规则时，它们 “深层相等”
+	1. 它们要么全部是 nil，要么全部是 非 nil
+	2. 它们具有相同的长度
+	3. 它们要么是完全相同的 map 对象，要么对应键名对应的值是 “深层相等” 的
+
+<6> Pointer 值：要么用 Go 操作符 == 返回值为真，要么指向 “深层相等” 的值
+
+<7> Slice 值：当符合以下全部规则时，它们 “深层相等”
+	1. 它们要么全部是 nil，要么全部是 非 nil
+	2. 它们具有相同的长度
+	3. 它们要么指向完全相同的底层 array 的相同条目，要么一一对应的所有元素都是 “深层相等” 的
+	注意： 非 nil 空 slice 和 nil slice 是 非 “深层相等” 的
+		eg. []byte{} []byte{nil} 是不同的
+
+<8> 其他值 —— 数字、布尔值、字符串、通道 —— 若它们被 Go 操作符 == 返回真，则为 “深层相等”
+
+大体来说， DeepEqual 就是递归进行 Go 操作符 == 操作
+但这个想法和实际必有一些出入
+特别的，
+有一些值可能和自身不相等，比如 func 值（不可比较的类型）或者 浮点数的 NaN 值（在浮点比较中不相等）
+或者 含有上述两种值的 array struct 与 interface
+另一方面， pointer 永远与自身相等，即便它们指向了上述两种值，
+因为无论它们的内容如何，pointer 总会在 Go 操作符 == 下与自身相等
+DeepEqual 函数被设计成为只要 slice 和 map 是完全相同的 slice 和 map，无论内容也会 “深度相等” 的状态
+
+
+Select(cases []SelectCase) (chosen int, recv Value, recvOK bool)
+选择执行被 cases 所描述的一系列操作中的一个
+如同 Go 的 select 声明，它会阻塞，直到至少一个 case 可以被执行，做一个均一化随机选择，并执行那个 case
+它返回被选中 case 的索引号，若 case 是一个拉取操作，拉取的值被返回，
+并且返回一个布尔值，指示出该值是否真的是 send 出来的数据（反例：由于通道关闭，所以接受到一个零值）
+
+
+Swapper(slice interface{}) func(i, j int)
+返回一个翻转输入 slice 的函数
+若输入并非 slice 类型，Swapper panic
+
+
+ChanDir int 类型
+
+表示 channel 类型的方向
+
+const(
+	RecvDir ChanDir = 1 << iota	// <-chan
+	SendDir						// chan<-
+	BothDir = RecvDir | SendDir	// chan
+)
+
+
+(d ChanDir) String() string
+满足了 fmt.Stringer 接口
+
+
+
+Kind uint 类型
+
+表示了 Type 类型所表示的特定类型
+Kind 的零值不是一个合法的 kind
+
+const (
+    Invalid Kind = iota
+    Bool
+    Int
+    Int8
+    Int16
+    Int32
+    Int64
+    Uint
+    Uint8
+    Uint16
+    Uint32
+    Uint64
+    Uintptr
+    Float32
+    Float64
+    Complex64
+    Complex128
+    Array
+    Chan
+    Func
+    Interface
+    Map
+    Ptr
+    Slice
+    String
+    Struct
+    UnsafePointer
+)
+
+(k Kind) String() string
+满足了 fmt.Stringer 接口
+
+
+
+Method struct 类型
+
+代表了一个单独的方法
+
+type Method struct {
+    // Name 即为方法的名称
+    // PkgPath 即为小写方法名（非导出方法）的包路径
+    // 对于大写方法名（导出方法），PkgPath 为空
+    // Name 和 PkgPath 从一个方法集中确定了一个唯一的方法
+    // 参见 https://golang.org/ref/spec#Uniqueness_of_identifiers
+    Name    string
+    PkgPath string
+
+    Type  Type  // 方法的类型
+    Func  Value // 以接受者为第一个参数的函数
+    Index int   // Type.Method 的索引
+}
+
+
+
+SelectCase struct 类型
+
+一个 SelectCase 描述了正在一个选择操作中的一个单一的 case
+case 的 kind 由 Dir，也就是 通信的方向 决定
+
+若 Dir 为 SelectDefault，case 表示了一个默认 case
+Chan 和 Send 必须为 zero Value
+
+若 Dir 为  SelectSend，case 表示了一个发送 case
+普通情况下， Chan 的底层值必须是 channel，Send 的底层值必须是 channel 可以接受的元素类型
+特殊情况，若 Chan 是 ezro Value，那么 case 被忽略， Send 也同样被忽略，此时可以为 zero 或 non-zero
+
+若 Dir 为 SelectRecv，case 表示了一个接受 case
+通常情况下，Chan 的底层值必须是是 channel，Send 的底层值必须是 channel 可以接受的元素类型
+若 Chan 是 zero Value，那么 case 将被忽略，但 Send 依旧必须为 zero Value
+当接收操作被选中， Value 的值就被 Select 函数返回
+
+type SelectCase struct {
+    Dir  SelectDir // case 的方向
+    Chan Value     // 使用的 channel（发送或接接收）
+    Send Value     // 将要发送的值（发送时使用）
+}
