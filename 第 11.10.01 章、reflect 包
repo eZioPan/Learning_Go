@@ -87,33 +87,33 @@ Kind uint 类型
 Kind 的零值不是一个合法的 kind
 
 const (
-    Invalid Kind = iota
-    Bool
-    Int
-    Int8
-    Int16
-    Int32
-    Int64
-    Uint
-    Uint8
-    Uint16
-    Uint32
-    Uint64
-    Uintptr
-    Float32
-    Float64
-    Complex64
-    Complex128
-    Array
-    Chan
-    Func
-    Interface
-    Map
-    Ptr
-    Slice
-    String
-    Struct
-    UnsafePointer
+	Invalid Kind = iota
+	Bool
+	Int
+	Int8
+	Int16
+	Int32
+	Int64
+	Uint
+	Uint8
+	Uint16
+	Uint32
+	Uint64
+	Uintptr
+	Float32
+	Float64
+	Complex64
+	Complex128
+	Array
+	Chan
+	Func
+	Interface
+	Map
+	Ptr
+	Slice
+	String
+	Struct
+	UnsafePointer
 )
 
 (k Kind) String() string
@@ -126,17 +126,17 @@ Method struct 类型
 代表了一个单独的方法
 
 type Method struct {
-    // Name 即为方法的名称
-    // PkgPath 即为小写方法名（非导出方法）的包路径
-    // 对于大写方法名（导出方法），PkgPath 为空
-    // Name 和 PkgPath 从一个方法集中确定了一个唯一的方法
-    // 参见 https://golang.org/ref/spec#Uniqueness_of_identifiers
-    Name    string
-    PkgPath string
+	// Name 即为方法的名称
+	// PkgPath 即为小写方法名（非导出方法）的包路径
+	// 对于大写方法名（导出方法），PkgPath 为空
+	// Name 和 PkgPath 从一个方法集中确定了一个唯一的方法
+	// 参见 https://golang.org/ref/spec#Uniqueness_of_identifiers
+	Name    string
+	PkgPath string
 
-    Type  Type  // 方法的类型
-    Func  Value // 以接受者为第一个参数的函数
-    Index int   // Type.Method 的索引
+	Type  Type  // 方法的类型
+	Func  Value // 以接受者为第一个参数的函数
+	Index int   // Type.Method 的索引
 }
 
 
@@ -159,7 +159,8 @@ Chan 和 Send 必须为 zero Value
 当接收操作被选中， Value 的值就被 Select 函数返回
 
 type SelectCase struct {
-    Dir  SelectDir // case 的方向
-    Chan Value     // 使用的 channel（发送或接接收）
-    Send Value     // 将要发送的值（发送时使用）
+	Dir  SelectDir // case 的方向
+	Chan Value     // 使用的 channel（发送或接接收）
+	Send Value     // 将要发送的值（发送时使用）
+}
 }
