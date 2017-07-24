@@ -163,4 +163,45 @@ type SelectCase struct {
 	Chan Value     // 使用的 channel（发送或接接收）
 	Send Value     // 将要发送的值（发送时使用）
 }
+
+
+
+SelectDir int 类型
+
+描述了一个 select 的 case 的通信方向
+
+const (
+	SelectSend SelectDir    // case Chan<- Send
+	SelectRecv              // case <-Chan
+	SelectDefault           // default
+)
+
+
+
+SliceHeader struct 类型
+
+运行时 slice 的表现
+该类型会随着语言的更新而变动
+Data 字段也无法有效保证被它引用的数据不被垃圾回收清理，
+所以程序必须持有一个独立且正确的具有类型的指针来指向底层数据
+
+type SliceHeader strcut{
+	Data uintptr
+	Len int
+	Cap int
+}
+
+
+
+StringHeader struct 类型
+
+运行时 string 的表现
+该类型会随着语言的更新而变动
+Data 字段也无法有效保证被它引用的数据不被垃圾回收清理，
+所以程序必须持有一个独立且正确的具有类型的指针来指向底层数据
+
+type StringHeader struct {
+	Data uintptr
+	Len  int
+}
 }
