@@ -204,4 +204,49 @@ type StringHeader struct {
 	Data uintptr
 	Len  int
 }
+
+
+
+StructFiled struct 类型
+
+描述了一个结构体中的单一的一个字段
+
+type StructField struct {
+	// Name 为字段名
+	Name string
+	// PkgPath 使用包路径定位了一个小写（非导出）字段名
+	// 对于大写（导出）字段名，该位置为空
+	// 参见 https://golang.org/ref/spec#Uniqueness_of_identifiers
+	PkgPath string
+
+	Type      Type      // 字段类型
+	Tag       StructTag // 字段标签字符串
+	Offset    uintptr   // byte 为标记的字段相对所在结构体的偏移值
+	Index     []int     // Type.FieldByIndex 的索引
+	Anonymous bool      // 内嵌字段
+}
+
+
+
+StructTag string 类型
+
+结构体类型的 标签字符串
+
+为了方便，标签字符串 由 空格分开的 键:"值" 对组成
+每个 tag 键都由不含控制符、空格、双引号、冒号的非空字符串构成
+每个 tag 值 都由双引号引起，并遵循 Go 字符串的语法
+
+
+(tag StructTag) Get(key string) string
+该方法返回与 tag 键 对应的 tag 值
+若没有对应的 tag 键，则返回空字符串
+若 tag 不具有常规的格式，则本方法的返回值不可预知
+若要明确一个 tag 是否明确被设置为空字符串，使用 Lookup 方法
+
+
+(tag StructTag) Lookup( key string) (value string, ok bool)
+该方法返回 tag 键 对应的 tag 值
+若 tag 中存在对应的 tag 键，则返回其值（即便可能是空值）
+ok 返回一个 tag 值 是否明确的被设定了
+若 tag 不具有常规的格式，则本方法的返回值不可预知
 }
