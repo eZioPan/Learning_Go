@@ -295,4 +295,62 @@ type Type interface {
 
 	// 返回指定类型的 方法集中 导出的方法的数量
 	NumMethod() int
+
+	// 返回指定类型 在它所在包内的 类型名
+	// 对于未命名类型，会返回空字符串
+	Name() string
+
+	// 返回一个命名过的类型的 包路径
+	// 也就是确定该包唯一位置的 导入路径，比如 "encoding/base64"
+	// 若类型是 预声明的（比如 string 和 error） 或者 未命名的（比如 *T struct{} 和 []int）
+	// 则 包路径 为空字符串
+	PkgPath() string
+
+	// 返回要存储一个指定类型的值，需要多少字节的存储空间
+	// 与 unsafe.Sizeof 函数相似
+	Size() uintptr
+
+	// 返回用字符串表示的类型
+	// 字符串可能会使用短包名称（比如说：使用 base64 而非 encoding/base64）
+	// 因此不能保证在不同类型之间的唯一性
+	// 测试类型的身份，请直接比较 Type 值
+	String() string
+
+	// 返回这个类型的 kind
+	Kind() Kind
+
+	// 报告这个类型是否实现了接口类型 u
+	Implements(u Type) bool
+
+	// 报告该类型的值是否可以被赋予至 类型 u 中
+	AssignableTo(u Type) bool
+
+	// 报告该类型的值是否可以被转换为 类型 u
+	ConvertibleTo(u Type) bool
+
+	// 报告该类型的值之间是否可以做比较
+	Comparable() bool
+
+	// 返回以 位 为单位计算的类型的大小
+	// 若类型的 Kind 并非 sized 或 unsized 的 Int Uint Float Complex 类中的任何一个
+	// 则产生 panic
+	Bits() int
+
+	// ChanDir returns a channel type's direction.
+	// It panics if the type's Kind is not Chan.
+	// 返回一个 通道 类型的方向
+	// 若 类型的 Kind 值不是 Chan，则产生 panic
+	ChanDir() ChanDir
+
+	// 报告一个函数类型的输入形参的最后一个参数是否为 "..."
+	// 若是如此，则 t.In(t.NumIn() - 1) 返回参数隐含的实际类型 []T
+	//
+	// 具体来说，若 t 代表了 func(x int, y ... float64)， 那么
+	//
+	// t.NumIn() == 2
+	// t.In(0) 是 “int” 的 reflect.Type
+	// t.In(1) 是 “[]float64” 的 reflect.Type
+	//
+	// 若方法接受者的类型的 Kind 并非 Func，则产生 panic
+	IsVariadic() bool
 }
