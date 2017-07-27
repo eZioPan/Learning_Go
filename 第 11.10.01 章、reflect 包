@@ -353,4 +353,61 @@ type Type interface {
 	//
 	// 若方法接受者的类型的 Kind 并非 Func，则产生 panic
 	IsVariadic() bool
+
+	// 返回一个类型的元素的类型
+	// 若方法接受者的 Kind 并非 Array/Chan/Map/Ptr 或者 Slice，则产生 panic
+	Elem() Type
+
+	// 返回一个结构体类型的第 i 个字段
+	// 若接受者的 Kind 并非 Struct，则产生 panic
+	// 若 i 不在 [0, NumField()) 范围内，则产生 panic
+	Field(i int) StructField
+
+	// 返回在索引排序下的结构体嵌套字段
+	// 等价于 对于每个索引 i 都调用 Field 方法
+	// 若接受者的 Kind 并非 Struct。则产生 panic
+	FieldByIndex(index []int) StructField
+
+	// 用给定的名称找到结构体的字段，并用一个布尔值指示是否找到该字段
+	FieldByName(name string) (StructField, bool)
+
+	// 返回一个满足名称匹配函数的结构体字段名，并用一个布尔值指示是否寻找到该字段
+	//
+	// 本方法首先分析结构体本身的字段，然后是任何匿名结构体的字段
+	// 依照广度优先的顺序，在匹配上的最浅层停止
+	// 若在同一级有多个字段被匹配上，则它们相互抵消，本方法返回无匹配
+	// 这个行为是 Go 处理含有匿名字段结构体的名称查找时的行为
+	FieldByNameFunc(match func(string) bool) (StructField, bool)
+
+	// 返回一个函数的类型的第 i 个输入形参的类型
+	// 若接受者的 Kind 并非 Func，则产生 panic
+	// 若 i 不在区间 [0, NumIn())，则产生 panic
+	In(i int) Type
+
+	// 返回一个 map 类型的 键的类型
+	// 若 接受者的 Kind 并非 Map，则产生 panic
+	Key() Type
+
+	// 返回 array 类型的长度
+	// 若接受者的 Kind 并非 Array，则产生 panic
+	Len() int
+
+	// 返回结构体的字段的数量
+	// 若接受者的 Kind 并非 Struct，则产生 panic
+	NumField() int
+
+	// 返回一个函数类型的输入形参的数量
+	// 若接受者的 Kind 并非 Func，则产生 panic
+	NumIn() int
+
+	// 返回一个函数类型的输出形参的数量
+	// 若接受者的 Kind 并非 Func，则产生 panic
+	NumOut() int
+
+	// 返回一个函数类型的第 i 个输出形参的类型
+	// 若接受者的 Kind 并非 Func，则产生 panic
+	// 若 i 不在区间 [0, NumOut()) 中，则产生 panic
+	Out(i int) Type
+
+	// 包含其他过滤掉的或者未导出的字段
 }
