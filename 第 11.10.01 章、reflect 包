@@ -411,3 +411,95 @@ type Type interface {
 
 	// 包含其他过滤掉的或者未导出的字段
 }
+
+
+ArrayOf(count int, elem Type) Type
+返回以指定的元素数量和元素类型所组成的 Array 类型的 Type
+eg.
+	reflect.ArrayOf(5, reflect.TypeOf(1)) 将返回
+	表示 [5]int 的 reflect.Type 对象
+若返回的类型大于可用的内存地址，则 ArrayOf 产生 panic
+
+
+ChanOf(dir ChanDir, t Type) Type
+返回以指定的 channel 方向以及承载数据类型所组成的 channel 类型的 Type
+eg.
+	reflect.ChanOf(reflect.RecvDir, reflect.TypeOf(1)) 将返回
+	表示 <-chan int 的 reflect.Type 对象
+gc 限制了 channel 的元素类型的大小必须小于 64kB
+若接受者的其等于或超过这个值，则 ChanOf 产生 panic
+
+
+FuncOf(in, out []Type, variadic bool) Type
+返回以指定的 传入/传出 数据类型以及传入数据的最后一个数据是否变长 所确定的 函数的 Type
+
+eg.
+	in := []Type{relfect.TypeOf(1)}
+	out := []Type{reflect.TypeOf("1")}
+	reflect.FuncOf(in, out, false)
+	将返回一个签名为 func(int) string 的函数的 reflect.Type 对象
+
+若 in[len(in)-1] 对应的元素并非 slice 对应的 reflect.Type，且 variadic 设置为 true
+则 FuncOf 产生 panic
+
+
+MapOf(key, elem Type) Type
+返回指定 键元素类型/值元素类型所组成的 Map 的类型的 reflect.Type 对象
+
+eg.
+	reflect.MapOf(reflect.TypeOf("1"),reflect.TypeOf(1)) 将返回
+	表示 map[string]int 的 reflect.Type 对象
+
+若键的类型并非合法类型（也就是没有满足 Go 操作符 == ）
+则 MapOf 产生 panic
+
+
+PtrTo(t Type) Type
+【注意这个函数是 PtrTo 不是 PtrOf】
+返回 指向 指定元素类型 的指针类型的 reflect.Type 对象
+
+eg.
+	reflect.PtrTo(reflect.TypeOf("a")) 将返回
+	表示 *string 的 reflect.Type 对象
+
+
+SliceOf(t Type) Type
+返回 指定元素类型所组成的 slice 的类型的 reflect.Type 对象
+
+eg. reflect.SliceOf(reflect.TypeOf(1)) 将返回
+	表示 []int 的 reflect.Type 对象
+
+
+StructOf(fields []StructField) Type
+返回 由指定的字段类型 组成的结构体的类型 的 reflect.Type 对象
+StructFlied 中的 Offset 和 Index 字段将被忽略，并交由编译器决定它们的值
+
+eg.
+	f1 := reflect.StructField{
+		Name:      "A1",
+		PkgPath:   "",
+		Type:      reflect.TypeOf(1),
+		Tag:       reflect.StructTag("Good"),
+		Offset:    0,
+		Index:     []int{0},
+		Anonymous: false,
+	}
+	f2 := reflect.StructField{
+		Name:      "A2",
+		PkgPath:   "",
+		Type:      reflect.TypeOf("1"),
+		Tag:       reflect.StructTag("nice"),
+		Offset:    0,
+		Index:     []int{0},
+		Anonymous: false,
+	}
+	a := reflect.StructOf([]reflect.StructField{f1, f2})
+	将返回表示 struct { A1 int "Good"; A2 string "nice" } 的 reflect.Type 对象
+
+当前的 StructOf 函数并不会为 内嵌字段 生成 wrapper method
+这个限制可能将在未来的版本中移除
+
+
+TypeOf(i interface{}) Type
+返回一个 Type 对象，表示了 i 的动态类型
+若 i 是 nil 接口值，则 TypeOf 函数产生 panic
