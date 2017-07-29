@@ -503,3 +503,77 @@ eg.
 TypeOf(i interface{}) Type
 返回一个 Type 对象，表示了 i 的动态类型
 若 i 是 nil 接口值，则 TypeOf 函数产生 panic
+
+
+
+Value struct 类型
+
+本类型是 Go 值的反射接口
+
+并非所有的方法都能作用于所有的值之上
+若有任何的限制，请参阅每个方法的文档
+在使用 kind-specific 方法前，请使用 Kind 方法确定值的 kind
+对值调用错误的方法会导致 运行时 panic
+
+Value 的 零值 表示没有值
+它的 IsValid 方法返回 false
+它的 Kind 方法返回 Invalid
+它的 String 方法返回 "<invalid Value>"
+它的其它所有方法都产生 panic
+大多数函数和方法绝不会返回一个 invalid Value
+若产生了 invalid Value，产生的条件会在方法的文档中注明
+
+若一个 Value 能被多个并发进程使用，则表示其底层的 Go 值可以以同样的方式被多个并发的进程使用
+
+使用 == 来比较两个 Value，并不会比较它们代表的底层值，而是比较 Value 结构体
+通过 Interface 方法产生的值来比较两个 Value 对象
+
+
+Append(s Value, x ...Value) Value
+将多个 Value 所表示的值添加至 s 所表示的 slice 中，并返回追加后的切片的 Value
+每个 x 所表示的值必须是可以赋予 s 所表示的切片中的
+
+
+AppendSlice(s, t Value) Value
+将 t 表示的 slice 追加至 s 表示的 slice 的后面，并返回追加后的切片的 Value
+两个 slice 的内部元素类型必须相同
+
+
+Indirect(v Value) Value
+返回 v 所表示的值 指向的 值的 Value
+若 v 所表示的值为 nil pointer，则 Indirect 函数返回 Value 的零值
+若 v 所表示的值并非 pointer，则返回 v 本身
+
+
+MakeChan(typ Type, buffer int) Value
+创建一个由指定 数据类型 和 缓冲大小 的表示 channel 的 Value 值
+
+
+MakeFunc(typ Type, fn func(args []Value) (results []value)) Value
+【没看懂，先忽略】
+
+
+MakeMap(typ Type) Value
+创建一个由指定的类型的元素 组成的 map 的 Value
+
+
+MapSlice(typ Type, len, cap int) Value
+创建一个由指定类型的零值填充的指定长度和容量的 slice 的 Value
+
+New(typ Type) Value
+返回一个指向指定类型的零值的指针的 Value
+
+
+NewAt(typ Type, p unsafe.Pointer) Value
+返回一个指向指定类型的零值的指针的 Value
+并指定 p 为其指针
+
+
+ValueOf(i interface{}) Value
+返回一个 i 的值所对应的 Value
+ValueOf(nil) 将返回 Value 的零值
+
+
+Zero(typ Type) Value
+函数返回代表指定类型的零值的 Value
+这和 Value 结构体的零值是不同的概念（Value 的零值表示没有值）
