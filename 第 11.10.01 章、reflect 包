@@ -636,3 +636,203 @@ ValueOf(nil) 将返回 Value 的零值
 Zero(typ Type) Value
 函数返回代表指定类型的零值的 Value
 这和 Value 结构体的零值是不同的概念（Value 的零值表示没有值）
+
+
+(v Value) Addr() Value
+返回 v 的地址的 Value 值
+若 CanAddr() 方法返回 false，本方法产生 panic
+本函数常用于存储指向 结构体的一个字段的指针 或者 切片的一个元素的指针，
+当方法需要 指针 作为接受者的时候，传入方法之中
+
+
+(v Value) Bool() bool
+返回 v 的底层值
+若 v 的 kind 并非 Bool，则产生 panic
+
+
+(v Value) Bytes() []byte
+返回 v 的底层值
+若 v 的底层值并非 []byte 则产生 panic
+
+
+(v Value) Call(in []Value) []Value
+本方法调用函数 v，并将 in 作为传入参数传入 v 中，函数 v 的返回值作为 []Value 被返回
+举例来说，若 len(in)==3，则 v.Call(in) 表示 Go 调用了 v(in[0], in[1], in[2])
+若 v 的 Kind 并非 Func，则产生 panic
+在 Go 中，每个输入的实参必须可以赋值于对应的形参
+若 v 是一个 “可变长函数”，则本方法将可变长参数变为切片，并拷贝对应的值至切片中
+
+
+(v Value) CallSlice(in []Value) []Value
+本方法调用“可变长函数” v，并传入参数 in，将 切片 in[len(in)-1] 作为 函数 v 最后的变长参数 传入，并将返回值作为 []Value 返回
+举例来说，若 len(in)==3，则 v.SliceCall(in) 表示 Go 调用了 v(in[0], in[1], in[2]...)
+若 v 的 Kind 并非 Func，或 v 并非 “可变长函数”，则产生 panic
+在 Go 中，每个输入的实参必须可以赋值于对应的形参
+
+
+(v Value) CanAddr() bool
+报告一个值的地址是否可以被 Addr 方法获得
+若可被 Addr 方法持有，则称该值为 可取地址的（addressable）
+如果一个值是可取地址的，则表示该值为：
+	<1> slice 的元素
+	<2> 可取地址的 array 的元素
+	<3>	可取地址的 struct 的字段
+	<4> 解引用后的 pointer
+若 CanAddr 返回 false，则调用 Addr 产生 panic
+
+
+(v Value) CanInterface() bool
+报告一个 interface 是否可以不产生 panic 的使用
+
+
+(v Value) CanSet() bool
+报告 v 的值是否可以被改变
+一个 Value 可以被改变，仅当该 Value 是 可取的地址的，并且没有被用于 结构体 非导出字段
+若 本方法 返回 false，则调用 Set 或任何类型特定的设置方法（eg. SetBool SetInt）会产生 panic
+
+
+(v Value) Cap() int
+返回 v 的容量
+若 v 的 Kind 并非 Array Chan Slice，则产生 panic
+
+
+(v Value) Close()
+关闭 通道 v
+若 v 的 Kind 并非 Chan，则产生 panic
+
+
+(v Value) Complex() complex128
+以 complex128 的类型，返回 v 的底层值
+若 v 的 Kind 并非 Complex64 或 Complex128，则产生 panic
+
+
+(v Value) Convert(t Type) Value
+返回 v 的值转换为 t 的值
+若在通常情况下， Go 转换规则不允许 v 转换为 t 类型，则本方法产生 panic
+
+
+(v Value) Elem() Value
+返回 interface v 含有的值，或者 pointer v 指向的值
+若 v 的 Kind 并非 Interface 或者 Ptr，则产生 panic
+若 v 是 nil，则返回 Value 的 零值
+
+
+(v Value) Field(i int) Value
+返回 struct v 的第 i 个字段
+若 v 的 Kind 并非 Struct 或者 i 超出范围，则产生 panic
+
+
+(v Value) FieldByIndex(index []int) Value
+通过指定数组，返回 嵌套结构体 指定的字段值
+eg.
+package main
+
+import (
+	"fmt"
+	"reflect"
+)
+
+type A struct {
+	A1 int
+	A2 int
+	B
+}
+
+type B struct {
+	B1 int
+	C
+	B2 int
+}
+
+type C struct {
+	C1 int
+	C2 int
+}
+
+func main() {
+	c := C{4,5}
+	b := B{2,c,3}
+	a := A{0,1,b}
+
+	va := reflect.ValueOf(a)
+	fmt.Printf("%v\n", va.FieldByName([]int{2, 1, 1})) // 将返回 5，也就是 结构体 C 的 C2 的值
+}
+
+
+(v Value) FieldByName(name string) Value
+寻找指定的字段名名称，返回结构体的字段
+若没有找到字段，则返回 Value 的零值
+若 v 的 Kind 并非 Struct，则产生 panic
+
+
+(v Value) FieldByNameFunc(match func(string) bool) Value
+用指定的函数匹配字段名名称，返回结构体的字段
+若没有找到字段，则返回 Value 的零值
+若 v 的 Kind 并非 Struct，则产生 panic
+
+
+(v Value) Float() float64
+以 float64 的类型，返回 v 的底层值
+若 v 的 Kind 并非 Float62 或 Float64，则产生 panic
+
+
+(v Value) Index(i int) Value
+返回 v 的 第 i 个元素
+若 v 的 Kind 并非 Array Slice String 或 i 超过范围，则产生 panic
+
+
+(v Value) Int() int64
+以 int64 的类型，返回 v 的底层值
+若 v 的 Kind 并非 Int Int8 Int16 Int32 或 Int64，则产生 panic
+
+
+(v Value) Interface() (i interface{})
+以 interface{} 的类型，返回当前 v 的值
+等价于：
+var i interface{} = (v 的底层数据)
+若 v 具有的是非导出字段，则产生 panic
+
+
+(v Value) InterfaceData() [2]unitptr
+以 uintptr 对的方式，返回 interface 的值
+若 v 的 Kind 并非 Interface，则产生 panic
+
+
+(v Value) IsNil() bool
+报告 v 是否是 nil
+v 必须是 chan func interface map pointer slice 中的一种，若不是，产生 panic
+注意，IsNil 并不全等于 Go 中普通的 nil 比较
+比如：
+	若 v 是由 对未初始化的 interface 变量 i 取 ValueOf 得到的，则 i==nil 将为真，
+	但 v.IsNil 将产生 panic，因为 v 是 Value 的零值
+
+
+(v Value) IsValid() bool
+报告 v 是否表示了一个值
+若 v 是 Value 的零值，则返回 false
+若 IsValid 返回 false，则除了 String 之外的方法都产生 panic
+大多数函数和方法从不会返回一个 不合法的值
+若其中一个可能产生，则它的文档中将有明确的指示
+
+
+(v Value) Kind() Kind
+返回 v 的 Kind
+若 v 是 Value 的零值（也就是 IsValid 返回 false）， Kind 返回 Invalid
+
+
+(v Value) Len() int
+返回 v 的长度
+若 v 的 Kind 并非 Array Chan Map Slice 或 String，则产生 panic
+
+
+(v Value) MapIndex(key Value) Value
+返回 map v 中与键 key 关联的值
+若 v 的 Kind 并非 Map，则产生 panic
+若不能找到 key，或 v 表示 nil map，本方法返回 Value 的零值
+在 Go 中， 键 key 的值必须可以赋予 map 的 键 的 类型
+
+
+(v Value) MapKeys() []Value
+返回一个 slice， 该 slice 具有 v 所表示的 map 的所有的键，顺序未指明
+若 v 的 Kind 并非 Map，则产生 panic
+若 v 是 nil map，则返回 空 slice
