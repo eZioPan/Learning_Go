@@ -550,7 +550,66 @@ MakeChan(typ Type, buffer int) Value
 
 
 MakeFunc(typ Type, fn func(args []Value) (results []value)) Value
-【没看懂，先忽略】
+使用 指定的函数类型 “包裹”函数 fn ，并返回这个包裹后的函数
+当被包裹后的函数被调用时，执行以下的操作：
+	<1> 将它的实际参数转化为一个由 Value 值组成的 slice
+	<2> 运行 results := fn(args)
+	<3> 将返回值作为一个 slice 返回，slice 由 Value 值组成，每个返回值作为 slice 中的一个 Value
+实际实现功能的 fn 会假设自己的 传入/传出 参数和 typ 传入/传出 参数具有相同的数量和类型
+若 typ 描述了一个 可变长参数的 函数，则传入 fn 的 []reflect.Value 的最后一个 Value 值，将用一个 slice 表示所有传入的可变长量
+fn 返回的 []reflect.Value 的 Value 值，必须具有 typ 所定义的返回值的数量和类型
+
+对比 reflect.Value 类型的 Call 方法，和 MakeFunc 函数
+Value.Call 方法允许调用者传入 reflect.Value 来调用一个函数
+MakeFunc 函数允许调用者传入 reflect.Value 来实现一个函数
+
+EG.
+
+package main
+
+import (
+	"fmt"
+	"reflect"
+)
+
+// PrototypeFunc 函数用于传出函数的最后一个参数值
+// 构造一个建立在 MakeFunc 可用的函数
+// 该函数将不涉及实际的数据的类型，只有对数据的操作
+func PrototypeFunc(in []reflect.Value) (out []reflect.Value) {
+
+	// 取得最后一个参数
+	last := in[len(in)-1]
+
+	// 在这里我们可以看到传入数据的类型和值
+	fmt.Printf("%[1]T\t%[1]v\n", last)
+
+	// 数据打包，传出
+	return []reflect.Value{last}
+}
+
+// ValInt 变量用于承载一个只有签名没有实际操作的函数
+// 注意使用的是 var 语句，将函数赋予变量，而非函数声明语句
+var ValInt func(a, b int, c ...int) []int
+
+func main() {
+
+	// 通过 MakeFunc 函数绑定数据操作函数和函数签名
+	// 生成一个特殊的“原函数”
+	metaFunc := reflect.MakeFunc(reflect.TypeOf(ValInt), PrototypeFunc)
+
+	//获取承载实际函数的变量的指针的 reflect.Value 表示
+	// 这里取得指针，是为了后面 Set 方法调用
+	funcValue := reflect.ValueOf(&ValInt)
+
+	// 取得指针的 reflect.Value 表示的 指向的值
+	funcV := funcValue.Elem()
+
+	// 将 metaFunc 注入实际运行的函数
+	funcV.Set(metaFunc)
+
+	// 调用实际的函数，并产生最后的结果
+	fmt.Printf("%v\n", ValInt(1, 2, 3, 4, 5, 6))
+}
 
 
 MakeMap(typ Type) Value
