@@ -836,3 +836,202 @@ v 必须是 chan func interface map pointer slice 中的一种，若不是，引
 返回一个 slice， 该 slice 具有 v 所表示的 map 的所有的键，顺序未指明
 若 v 的 Kind 并非 Map，则引发 panic
 若 v 是 nil map，则返回 空 slice
+
+
+(v Value) Method(i int) Value
+返回 v 的第 i 个方法的函数值
+使用 返回值 的 Call 方法调用 返回值 对应的方法 时，不应包含接受者，
+因为返回值永远使用 v 本身作为接受者
+若 i 超出范围，或者 v 表示 nil interface，引发 panic
+
+
+(v Value) MethodByName(name string) Value
+通过方法名返回 v 的方法，
+使用 返回值 的 Call 方法调用 返回值 对应的方法 时，不应包含接受者，
+因为返回值永远使用 v 本身作为接受者
+若未找到方法，则返回 Value 的零值
+
+
+(v Value) NumField() int
+返回 struct v 的总字段数量
+若 v 的 Kind 并非 Struct，则引发 panic
+
+
+(v Value) NumMethod() int
+返回 v 的方法集中的方法的总数量
+
+
+(v Value) OverflowComplex(x complex128) bool
+报告 以 complex128 表示的 x 是否能用 v 的类型来表示
+若 v 的 Kind 并非 Complex64 或 Complex128，则引发 panic
+
+
+(v Value) OverflowFloat(x float64) bool
+报告 以 float64 表示的 x 是否能用 v 的类型来表示
+若 v 的 Kind 并非 Float32 或 Float64，则引发 panic
+
+
+(v Value) OverflowInt(x int64) bool
+报告 以 int64 表示的 x 是否能用 v 的类型来表示
+若 v 的 Kind 并非 Int Int8 Int16 Int32 或 Int64，则引发 panic
+
+
+(v Value) OverflowUint(x uint64) bool
+报告 以 uint64 表示的 x 是否能用 v 的类型来表示
+若 v 的 Kind 并非 Uint Uintptr Uint8 Uint16 Uint32 或 Uint64，则引发 panic
+
+
+(v Value) Pointer() uintptr
+以 uintptr 的形式返回 v 的值
+它返回的是 uintptr 而非 unsafe.Pointer，
+这样就保证了，除非明确导入了 unsafe 包，否则代码不可使用 unsafe.Pointer
+若 v 的 Kind 并非 Chan Func Map Ptr Slice 或 UnsafePointer，则引发 panic
+
+若 v 的 Kind 是 Func，返回的 pointer 是底层代码的 pointer，但并非确定单个函数的充分条件
+仅能保证若结果是 零，那么 v 表示的是 nil func
+
+若 v 的 Kind 是 Slice，返回的 pointer 指向 slice 的第一个元素
+若 slice 为 nil，则返回值为 0
+若 slice 为空，但并非 nil，则返回的值也非零
+
+
+(v Value) Recv() (x Value, ok bool)
+从 channel v 中接收数据，并将值返回
+若 v 的 Kind 并非 Chan，则引发 panic
+方法阻塞直到一个值已经准备好被接收
+若 x 对应 channel 的 send，则布尔值 ok 为 true
+若 x 由于 channel 关闭收到零值，则布尔值 ok 为 false
+
+
+(v Value) Send(x Value)
+向 channel v 中发送 x
+若 v 的 kind 并非 Chan 或 x 的类型与 v 的元素的类型不同，则引发 panic
+在 Go 中，z 的值必须可以被赋值于 channel 的元素类型
+
+
+(v Value) Set(x Value)
+将 x 赋予值 v 中
+若 CanSet 返回 false，则引发 panic
+在 Go 中，x 的值必须可以被赋值于 v 的类型
+
+
+(v Value) SetBool(x bool)
+设置 v 的底层值
+若 v 的 Kind 并非 Bool 或者 CanSet() 返回 false，则引发 panic
+
+
+(v Value) SetBytes(x []byte)
+设置 v 的底层值
+若 v 的底层值并非 []byte，则引发 panic
+
+
+(v Value) SetCap(n int)
+设置 v 的容量至 n
+若 v 的 Kind 不为 Slice 或 n 比 slice 的长度小，或者比 slice 的容量大，都会引发 panic
+
+
+(v Value) SetComplex(x complex128)
+设置 v 的底层值
+若 v 的 Kind 并非 Complex64 或 Complex128 或 CanSet() 返回 false，都会引发 panic
+
+
+(v Value) SetFloat(x float64)
+设置 v 的底层值
+若 v 的 Kind 并非 Float32 或 Float64，或 CanSet() 返回 false，都会引发 panic
+
+
+(v Value) SetInt(x int64)
+设置 v 的底层值
+若 v 的 Kind 并非 Int Int8 Int16 Int32 或 Int64，或 CanSet() 返回 false，都会引发 panic
+
+
+(v Value) SetLen(n int)
+设置 v 的长度至 n
+若 v 的 Kind 并非 Slice 或 n 是负值，或者比 slice 的容量大，都会引发 panic
+
+
+(v Value) SetMapIndex(key, val Value)
+将 map 的中 key 对应的键的键值设置为 val
+若 v 的 Kind 并非 Map，则引发 panic
+若 val 为 Value 的零值，则 本方法从 map 中删除 key 对应的键值对
+若 v 持有 nil map，则引发 panic
+在 Go 中，key 的值必须可以被赋值于 map 的键类型，val 的值必须可以被赋予 map 的值类型
+
+
+(v Value) SetPointer(x unsafe.Pointer)
+将 unsafe.Pointer x 的值设置至 v 中
+若 v 的 Kind 并非 UnsafePointer，则引发 panic
+
+
+(v Value) SetString(x string)
+设置 v 的底层值
+若 v 的 Kind 并非 String 或 CanSet() 返回 false，都会引发 panic
+
+
+(v Value) SetUint(x int64)
+设置 v 的底层值
+若 v 的 Kind 并非 Uint Uintptr Uint8 Uint16 Uint32 或 Uint64，或 CanSet() 返回 false，都会引发 panic
+
+
+(v Value) Slice(i, j int) Value
+返回 v[i:j]
+若 v 的 Kind 并非 Array Slice 或 String，或 v 是一个 不可取地址的 array，或 索引超出范围，都会引发 panic
+
+
+(v Value) Slice3(i, j, k int) Value
+本方法为 三索引形式 的 切片 操作：也就是返回 v[i:j:k]
+若 v 的 Kind 并非 Array Slice 或 String，或 v 是一个 不可取地址的 array，或 索引超出范围，都会引发 panic
+
+
+(v Value) String() string
+返回 v 的底层值的字符串表示
+由于 Go 的 String 方法的便利性，本方法是一种特殊情况
+不像其他的取值方法，若 v 的 Kind 不为 String，本方法也不会产生 panic
+相反，它会以如下形式返回一个字符串： "<T value>"，其中 T 是 v 的类型
+fmt 包特殊对待 Value 类型的值
+它并不会隐式地调用 Value 类型的值的 String 方法，而是打印它们所具有的底层值
+
+
+(v Value) TryRecv() (x Value, ok bool)
+本方法尝试从 channel v 中接收一个值，但不会产生阻塞
+若 v 的 Kind 并非 Chan，则引发 panic
+若 channel 发出了一个值，x 传出那个值， ok 为 true
+若 接收操作不能再不阻塞的情况下完成，则 x 为 Value 的零值， ok 为 false
+若 channel 关闭，则 x 为 channel 元素的零值，ok 为 false
+
+
+(v Value) TrySend(x Value) bool
+本方法尝试向 channel v 中发送一个值，但不会产生阻塞
+若 v 的 Kind 并非 Chan，则引发 panic
+本方法会报告是否发送成功
+在 Go 中， x 的值必须可以被赋值于 channel 元素的类型
+
+
+(v Value) Type() Type
+返回 v 的类型
+
+
+(v Value) Uint() uint64
+以 uint64 的类型，返回 v 的底层值
+若 v 的 Kind 并非 Uint Uintptr Uint8 Uint16 Uint32 Uint64，则引发 panic
+
+
+(v Value) UnsafeAddr() uintptr
+返回一个 指向 v 的数据的 pointer
+为了同时导入了 unsafe 包的客户端使用
+若 v 不可取地址，则引发 panic
+
+
+
+ValueError struct 类型
+
+若 Value 的方法被不匹配的 Value 所调用，则引发 ValueError
+每个 Value 的方法都有详细的说明
+
+type ValueError struct {
+	Method string
+	Kind Kind
+}
+
+
+(e *ValueError) Error() string
