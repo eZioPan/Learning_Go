@@ -240,3 +240,22 @@ fmt.Sprintf("%d %d %#[1]x %#x", 16, 17)
 
 %!s 显示了错误产生时，使用的打印“动词”
 若 panic 由 Error 或 String 方法的接受者为 nil 造成，则输出的未未装饰的字符串 “<nil>”
+
+
+
+扫描
+
+类似的函数集，用于扫描格式化文本，以返回值
+Scan Scanf Scanln 从 os.Stdin 读取
+Fscan Fscanf Fscanln 从指定的 io.Reader 读取
+Sscan Sscanf Sscanln 从参数字符串读取
+
+Scan Fscan Sscan 将输入的 newline 字符当做空格
+
+Scanln Fscaln Sscanln 在 newline 处停止扫描，并希望下一个出现的是一个新行或者 EOF
+
+Scanf Fscanf Sscanf 通过格式化字符串解析参数，类似于 Printf 做的事情
+在其后跟随的字符， "空格" 意味着 除了 newline 的 Unicode 白空格
+
+在格式化字符串中，一个由 百分号 % 引导的 动词 消耗并解析输入；这些动词在下方有详细的描述
+
