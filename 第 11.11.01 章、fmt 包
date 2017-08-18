@@ -258,4 +258,92 @@ Scanf Fscanf Sscanf 通过格式化字符串解析参数，类似于 Printf 做�
 在其后跟随的字符， "空格" 意味着 除了 newline 的 Unicode 白空格
 
 在格式化字符串中，一个由 百分号 % 引导的 动词 消耗并解析输入；这些动词在下方有详细的描述
+在格式化字符串中，除了 百分号 %、空格、或者 newline 之外的字符，会精确消耗，也必须消耗所输入的字符
+在格式化字符串中，一个 newline 前有零个或多个空格，会消耗输入中的零个或多个空格，并跟随一个单独的 newline 或者 EOF
+在格式化字符串中，一个空格后跟随一个 newline，会消耗输入的零个或多个空格
+除了以上情况，任意多的一个或多个空格都会尽可能地消耗输入中的空格
+除非格式化字符串中的空格紧随 newline，否则至少要匹配上一个空格，或者找到 EOF
 
+处理 空格 和 newline 与 C 的 scanf 函数不同：
+在 C 中， newline 和其他的空格做相同的处理，
+当格式化字符串中的空格没有找到输入的空格时，也不会产生任何错误
+
+这些动词的行为和 Printf 中的一样
+举个例子， %x 将会扫描十六进制的整数， %v 将会扫描一个值的默认格式化表示
+Printf 的动词 %p 和 %T 以及表标示 # 和 + 都没有在 扫描 中实现
+动词 %e %E %f %F %g %G 都是全等的，都会扫描任何的浮点数或者复数
+
+输入值被动词处理的过程暗含了 “空格分隔”：除了 %c 之外的每一个 动词，开始处理时，都会忽略剩余输入中的前序空格，
+而 %s 动词（以及用 %v 读入字符串）会在输入的首个空格或 newline 处停止
+
+在扫描整数时，熟知的进制设置，比如 以 0（八进制） 以及 0x（十六进制）作为开头，可以在没有特定的格式化字符串或者在 %v 动词下可用
+
+宽度（width）在输入文本中是可以被解析的，但扫描中并没有解析精度（precision）的语法（没有 %5.2f，只有 %5f）
+若提供了宽度，则它在去除了前序空格之后被运用，并指定了用于满足动词的最长的字符数
+举例来说
+
+Sscanf("1234567", "%5s%d", &s, &i)
+
+将变量 s 的值设置为 12345，同时将变量 i 的值设置为 67
+而
+
+Sscanf("12 34 567","%5s%d", &s, &i)
+
+将变量 s 的值设置为 12，同时将变量 i 的值设置为 34
+
+在所有的扫描函数中，一个 carruage return 立刻接一个 newline 将视作一个 newline （\r\n 的含义等价于 \n）
+
+在所有的扫描函数中，若一个操作数实现了 Scan 方法（也就是，其实现了 Scanner 接口），那么该方法将用于该操作数的文本扫描
+同时，若要扫描的总量小于给出的参数的数量，将产生一个错误
+
+所有要扫描的参数要么是指向基本类型的指针，要么是满足了 Scanner 接口的类型
+
+如同 Scanf 和 Fscanf，Sscanf 不需要消耗整个输入
+也没有办法回访 Sscanf 使用的输入字符串的量
+
+注意：Fscan 等 can read one character (rune) past the input they return,也就是说循环调用一个 scan routine 可能会跳过一些输入
+这通常仅当输入值之间没有空格时才是一个问题
+若提供给 Fscan 的 reader 满足了 ReadRune，则该方法将用于读取字符
+若 reader 同时还实现了 UnreadRune，则那个方法用于保存字符，后续的调用将不会丢失数据
+为一个没有 ReadRune 和 UnreadRune 的方法的 reader 加上这些方法，使用 bufio.NewReader
+
+
+
+Errorf(format string, a ...interface{}) error
+根据定义的格式返回一个字符串，该字符串满足了一个 error 值
+
+
+Fprint(w io.Writer, a ...interface{}) (n int, err error)
+使用操作数默认的格式化格式，并写入 w 中
+若两个操作数都不是字符串时，在两者之间加入一个空格
+返回写入的字节数以及产生的任何错误
+
+
+Fprintf(w io.Writer, format string, a ...interface{}) (n int, err error)
+使用指定的格式来格式化操作数，并写入 w 中
+返回写入的字节数以及产生的任何错误
+
+
+Fprintln(w io.Writer, a ...interface{}) (n int, err error)
+使用操作数默认的格式化格式，并写入 w 中
+永远在两个操作数之间加入一个空格，并在最后追加一个 newline
+返回写入的字节数以及产生的任何错误
+
+
+Fscan(r io.Reader, a ...interface{}) (n int, err error)
+扫描从 r 中读取的数据，并逐次将空格分隔的值写入后续的参数中
+newline 也被认作为一个空格
+返回成功扫描的项目的数量
+若扫描出的数量小于给定的参数数量， err 将会返回原因
+
+
+Fscanf(r io.Reader, format string, a ...interface{}) (n int, err error)
+扫描从 r 中读取的数据，并逐次将空格分隔的值，按照指定的格式写入后续的参数中
+将返回成功解析的项目的数量
+输入中的 newline 必须和 格式化字符串中的 newline 相匹配
+
+
+Fscanln(r io.Reader, a ...interface{}) (n int, err error)
+Fscanln 与 Fscan 类似
+但当扫描至 newline 时停止
+且在最后一个项目之后，必须有一个 newline 或者一个 EOF
