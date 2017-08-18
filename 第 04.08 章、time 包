@@ -9,68 +9,97 @@ time 包
 time 包可以用一个字符串来表示显示时间所用的模板
 这个时间是一个固定的值：
 
-Mon Jan 15:04:05 MST 2006
+Mon Jan 2 15:04:05 MST 2006
 
-这个值常用于 time.Format(<format>) 和 time.Parse(<format>)
+这个值常用于 Format(<format>) 和 Parse(<format>)
 可以用这个时间点来自定义自己表示时间的方式
 EG.
 // 获取当前时分秒
-time.Now().Format("15:04:05")
+Now().Format("15:04:05")
 // 解释输入的小时和分钟，并附加上时区
-time.Parse("15:04 Z07", "10:30 +08")
+Parse("15:04 Z07", "10:30 +08")
 
-注意 time.Now().Format("Mon Jan _2") 中的下划线，表示日期若不足两位，则在日期前补 0
+注意 Now().Format("Mon Jan _2") 中的下划线，表示日期若不足两位，则在日期前补 0
 
 Go 预设了一系列字符串作为格式化时间的标准模板，它们就在 time 包的全局常量中
 常用的有
-time.ANSIC time.UnixDate time.Kiten time.Stamp time.Milli time.StampNano
+ANSIC UnixDate Kiten Stamp Milli StampNano
+
+
+const (
+    ANSIC       = "Mon Jan _2 15:04:05 2006"
+    UnixDate    = "Mon Jan _2 15:04:05 MST 2006"
+    RubyDate    = "Mon Jan 02 15:04:05 -0700 2006"
+    RFC822      = "02 Jan 06 15:04 MST"
+    RFC822Z     = "02 Jan 06 15:04 -0700" // 带数字时区的 RFC822
+    RFC850      = "Monday, 02-Jan-06 15:04:05 MST"
+    RFC1123     = "Mon, 02 Jan 2006 15:04:05 MST"
+    RFC1123Z    = "Mon, 02 Jan 2006 15:04:05 -0700" // 带数字时区的 RFC1123
+    RFC3339     = "2006-01-02T15:04:05Z07:00"
+    RFC3339Nano = "2006-01-02T15:04:05.999999999Z07:00"
+    Kitchen     = "3:04PM"
+    // 常用时间戳
+    Stamp      = "Jan _2 15:04:05"
+    StampMilli = "Jan _2 15:04:05.000"
+    StampMicro = "Jan _2 15:04:05.000000"
+    StampNano  = "Jan _2 15:04:05.000000000"
+)
 
 
 
-time.After(d time.Duration) <-chan time.Time
+After(d Duration) <-chan Time
 用于 select 语句，置于 case 中，作为 select 的超时处理机制
-time.After 会在指定的时间之后向 select 中传递数据，结束 select 的轮询
+After 会在指定的时间之后向 select 中传递数据，结束 select 的轮询
 
 
-time.Sleep(d time.Duration)
+Sleep(d Duration)
 将所在的进程暂停至少 d 的时间
-若 d <= 0 则 time.Sleep 会立刻返回
+若 d <= 0 则 Sleep 会立刻返回
 
 
-time.Tick(d time.Duration) <-chan time.Time
-对 time.NewTicker 的简化包装，仅返回 tick channel
-time.Tick 在指定的时间间隔不断的产生当前时间的返回值
-time.Tick 不会自我关闭，其底层的 time.NewTicker 会一直执行
+Tick(d Duration) <-chan Time
+对 NewTicker 的简化包装，仅返回 tick channel
+Tick 在指定的时间间隔不断的产生当前时间的返回值
+Tick 不会自我关闭，其底层的 NewTicker 会一直执行
 所以需要其他方法来关闭
 
 
 
-time.Duration int64 类型
+Duration int64 类型
 
-time.Duration 类型用 int64 数据表示了两个时间点之间的间隔的纳秒数
+Duration 类型用 int64 数据表示了两个时间点之间的间隔的纳秒数
 最大可用间隔大约为 290 年
 
 该类型的常量有
 Nanosecond Microsecond Millisecond Second Minute Hour
 
+const (
+    Nanosecond  Duration = 1
+    Microsecond          = 1000 * Nanosecond
+    Millisecond          = 1000 * Microsecond
+    Second               = 1000 * Millisecond
+    Minute               = 60 * Second
+    Hour                 = 60 * Minute
+)
 
-time.ParseDuration(s string) (time.Duration, error)
-将字符串表示的时间差转化为 time.Duration 表示的时间差
+
+ParseDuration(s string) (t Duration, error)
+将字符串表示的时间差转化为 Duration 表示的时间差
 可接受的单位有 ns us(µs) ms s m h
 字符串中可以出现小数
 
 
-time.Since(t time.Time) time.Duration
-time.Until(t time.Time) time.Duration
+Since(t Time) Duration
+Until(t Time) Duration
 过去的时间距今的时间差，以及未来的时间距今的时间差
-分别是 time.Now().Sub(t) 和 t.Sub(time.Now()) 的缩写
+分别是 Now().Sub(t) 和 t.Sub(t Now()) 的缩写
 
 
-(time.Duration) Hours() float64
-(time.Duration) Minutes() float64
-(time.Duration) Seconds() float64
-(time.Duration) Nanoseconds() int64
-(time.Duration) String() string
+(t Duration) Hours() float64
+(t Duration) Minutes() float64
+(t Duration) Seconds() float64
+(t Duration) Nanoseconds() int64
+(t Duration) String() string
 将时间差转化为 小时数、分钟数、秒数、纳秒数、以及字符串
 其中 小时数、分钟数、秒数 均为 64位浮点数
 纳秒数为 64位整型
@@ -81,15 +110,15 @@ time.Until(t time.Time) time.Duration
 
 
 
-time.Location struct 类型
+Location struct 类型
 
-time.Location 将时间映射至当前所在地点的时间
+Location 将时间映射至当前所在地点的时间
 
-time.FixedZone(name string, offset int) *time.Location
+FixedZone(name string, offset int) *Location
 新建一个地点，使用制定的名称和相对 UTC 时间偏移的秒数
 
-time.LoadLocation(name string) (*time.Location, error)
-通过地点名称获取 time.Location 类型的数据
+LoadLocation(name string) (t *Location, error)
+通过地点名称获取 Location 类型的数据
 若地点名为 "" 或 "UTC" 则返回 UTC
 若地点名为 "Local" 则返回 Local
 其他地点，则参照 IANA 时区数据库，表示为 "Asia/Shanghai"
@@ -97,17 +126,32 @@ Go 自带支持的数据库可查看
 $GOROOT/lib/time/zoneinfo.zip
 
 
-(l *time.Location) String() string
+(l *Location) String() string
 用于实现 fmt.Stringer 接口
 
 
 
-time.Month int 类型
+Month int 类型
 
 定义了英文中月份的表示
 
+const (
+    January Month = 1 + iota
+    February
+    March
+    April
+    May
+    June
+    July
+    August
+    September
+    October
+    November
+    December
+)
 
-(time.Month) String() string
+
+(t Month) String() string
 用于实现 fmt.Stringer 接口
 
 
@@ -116,195 +160,214 @@ Weekday int 类型
 
 包含了惯用周天名和数值的对应关系
 
-(d time.Weekday) String() string
+const (
+    Sunday Weekday = iota
+    Monday
+    Tuesday
+    Wednesday
+    Thursday
+    Friday
+    Saturday
+)
+
+
+(d Weekday) String() string
 满足了 fmt.Stringer 接口
 
 
 
-time.ParseError struct 类型
+ParseError struct 类型
 定义了一系列解析错误
 
+type ParseError struct {
+    Layout     string
+    Value      string
+    LayoutElem string
+    ValueElem  string
+    Message    string
+}
 
-(e *time.ParseError) Error() string
+
+(e *ParseError) Error() string
 用于实现 builtin.error 接口
 
 
 
-time.Ticker struct 类型
+Ticker struct 类型
 具有一个可提供时钟滴答的 out channel
 
 
-NewTicker(d time.Duration) *time.Ticker
-返回一个以 d 为时间间隔的 time.Ticker
+NewTicker(d Duration) *Ticker
+返回一个以 d 为时间间隔的 Ticker
 对于较慢的接收者，它会调整间隔或者丢弃一些 时钟滴答
 d 必须大于 0，否则会产生 panic
 停止一个 ticker，来释放相关的资源
 
 
-(*time.Ticker) Stop()
+(t *Ticker) Stop()
 停止向 channel 中传入 ticker
 但并不会关闭这个 channel
 防止后续读取出现错误
 
 
 
-time.Time struct 类型
+Time struct 类型
 
 纳秒精度的时间表示
 一般来说，应该使用这个类型的值，而非指针
 
 这个类型的 相互比较 可以使用方法 Before After Equal
-这个类型的相减方法为 Sub，两个 time.Time 类型相减，返回一个 time.Duration 类型
-这个类型的相加方法为 Add，一个 time.Time 类型 Add 一个 time.Duration 类型，得到一个 time.Time 类型
+这个类型的相减方法为 Sub，两个 Time 类型相减，返回一个 Duration 类型
+这个类型的相加方法为 Add，一个 Time 类型 Add 一个 Duration 类型，得到一个 Time 类型
 
 这个类型的零值为 Jan 1st 00:00:00.000000000 UTC
 可以用 IsZero 判断该类型的变量是否被初始化
 
-一个 time.Time 类型总是与一个 time.Location 类型相关联
-改变一个 time.Time 的 time.Location 仅改变了该 time.Time 的展现方式，不改变实际内容
+一个 Time 类型总是与一个 Location 类型相关联
+改变一个 Time 的 Location 仅改变了该 Time 的展现方式，不改变实际内容
 
-注意，Go 语言中的 == 操作，会同时比较 time.Time 和 time.Location
-所以，time.Time 被用作 map 和 数据库 的 键 时，必须要转换至同一个时区
+注意，Go 语言中的 == 操作，会同时比较 Time 和 Location
+所以，Time 被用作 map 和 数据库 的 键 时，必须要转换至同一个时区
 
 
-time.Data(year int, month time.Month, day, hour, min, sec, nsec int, loc *time.Location) time.Time
-产生一个 time.Time 类型
+Date(year int, month Month, day, hour, min, sec, nsec int, loc *Location) Time
+产生一个 Time 类型
 需要 年月日 时分秒 纳秒 以及一个地点
 所有的单位都会自动进位
 地点必须被指定，否则会产生 panic
 
 
-(time.Time) IsZero() bool
-判断是个 time.Time 类型是否是零值（或是没有初始化过）
+(t Time) IsZero() bool
+判断是个 Time 类型是否是零值（或是没有初始化过）
 零值为 Jan 1st year1 00:00:00 UTC
 
 
-time.Now() time.Time
+Now() Time
 返回当前的本地时间
 
 
-(time.Time) In(loc *time.Location) time.Time
+(t Time) In(loc *Location) Time
 将时间转化为指定地点的本地时间
 
 
-(time.Time) Local() time.Time
-(time.Time) UTC() time.Time
-给出 time.Time 在 本地/UTC 相对应的时间
+(t Time) Local() Time
+(t Time) UTC() Time
+给出 Time 在 本地/UTC 相对应的时间
 
 
-(time.Time) Unix() int64
-(time.Time) UnixNano() int64
+(t Time) Unix() int64
+(t Time) UnixNano() int64
 返回从 Jan 1st 1970 UTC 到指定时间的秒/纳秒数
 对于纳秒，返回值不可以超过 int64 的最大容量，对应范围大致为 1678年-2262年
 
 
-time.Unix(sec int64, nsec int64) time.Time
-将 Unix 表示的时间转化为一个 time.Time 类型
+Unix(sec int64, nsec int64) Time
+将 Unix 表示的时间转化为一个 Time 类型
 
 
-(time.Time) Truncate(d time.Duration) time.Time
-(time.Time) Round(d time.Duration) time.Time
+(t Time) Truncate(d Duration) Time
+(t Time) Round(d Duration) Time
 向下或四舍五入时间，最小单位为 d
 若 d<=0 则不对原数据产生修改
-由于 time.Time 被转换为了相对 time.Time 的零值的 time.Duration
+由于 Time 被转换为了相对 Time 的零值的 Duration
 所以可能会出现小数
 
 
-(time.Time) Add(d time.Duration) time.Time
-(time.Time) AddDate(years int, months int, days int) time.Time
+(t Time) Add(d Duration) Time
+(t Time) AddDate(years int, months int, days int) Time
 向一个时间点加入另一段时间，来获得新的时间
 
 
-(time.Sub) Sub(u time.Time) time.Duration
+(t Sub) Sub(u Time) Duration
 两个时间点相减，并得到持续时间
 
 
-(time.Time) After(u time.Time) bool
-(time.Time) Before(u time.Time) bool
-(time.Time) Equal(u time.Time) bool
+(t Time) After(u Time) bool
+(t Time) Before(u Time) bool
+(t Time) Equal(u Time) bool
 时间比较，是否在指定时间之后/之前/相同
 
 
-time.Parse(layout,value string) (time.Time, error)
-将字符串按照自定的规则解析为 time.Time 类型
+Parse(layout,value string) (t Time, error)
+将字符串按照自定的规则解析为 Time 类型
 若缺失地点，则默认解析为 UTC 时间
 
-time.ParseInLocation(layout, value string, loc *time.Location) (time.Time, error)
+ParseInLocation(layout, value string, loc *Location) (t Time, error)
 与 Parse 类似，区别在于 ParseInLocation 必须指定地点
 在解析时间的时候， Parse 会将时间转换至指定地点的时区中
 而 ParseInLocation 会直接认为输入的值属于该指定的地点
 
 
-(time.Time) Format(layout string) string
-(time.Time) AppendFormat(b []byte, layout string) []byte
-将 time.Time 类型格式化为字符串
-或将 time.Time 类型格式化为字符串后，追加在字节流的后面
+(t Time) Format(layout string) string
+(t Time) AppendFormat(b []byte, layout string) []byte
+将 Time 类型格式化为字符串
+或将 Time 类型格式化为字符串后，追加在字节流的后面
 
 
-(time.Time) String() string
+(t Time) String() string
 满足了 fmt.Stringer 接口
 
 
-(*time.Time) GobDecode(data []byte) error
-(time.Time) GobEncode() ([]byte, error)
+(t *Time) GobDecode(data []byte) error
+(t Time) GobEncode() ([]byte, error)
 实现了 gob.GobDecoder 和 gob.GobEncoder 两个接口
 
 
-(time.Time) Clock() (hour, min, sec int)
-(time.Time) Hour() int
-(time.Time) Minute() int
-(time.Time) Second() int
-(time.Time) Nanosecond() int
+(t Time) Clock() (hour, min, sec int)
+(t Time) Hour() int
+(t Time) Minute() int
+(t Time) Second() int
+(t Time) Nanosecond() int
 
-(time.Time) Date() (year int, month time.Month,day int)
-(time.Time) Year() int
-(time.Time) Month() Month
-(time.Time) IOSWeek() (year, week int)
-(time.Time) Weekday() Weekday
-(time.Time) Day() int
-(time.Time) YearDay() int
-从 time.Time 的实例中取得各类值
-
-
-(time.Time) Location() *time.Location
-(time.Time) Zone() (name string, offset int)
-给出 time.Time 关联的地点
-给出 time.Time 对应的时区名称和相对 UTC 的偏移
+(t Time) Date() (year int, month Month, day int)
+(t Time) Year() int
+(t Time) Month() Month
+(t Time) IOSWeek() (year, week int)
+(t Time) Weekday() Weekday
+(t Time) Day() int
+(t Time) YearDay() int
+从 Time 的实例中取得各类值
 
 
-(time.Time) MarshalBinary() ([]byte, error)
-(time.Time) MarshalJSON() ([]byte, error)
-(time.Time) MarshalText() ([]byte, error)
-(time.Time) UnmarshalBinary() ([]byte, error)
-(time.Time) UnmarshalJSON() ([]byte, error)
-(time.Time) UnmarshalText() ([]byte, error)
+(t Time) Location() *Location
+(t Time) Zone() (name string, offset int)
+给出 Time 关联的地点
+给出 Time 对应的时区名称和相对 UTC 的偏移
+
+
+(t Time) MarshalBinary() ([]byte, error)
+(t Time) MarshalJSON() ([]byte, error)
+(t Time) MarshalText() ([]byte, error)
+(t Time) UnmarshalBinary() ([]byte, error)
+(t Time) UnmarshalJSON() ([]byte, error)
+(t Time) UnmarshalText() ([]byte, error)
 满足了 encoding.(Un)BinaryMarshaler json.(Un)Marshaler encoding.(Un)TextMarshaler 接口
 
 
 
-time.Timer struct 类型
+Timer struct 类型
 
-当 time.Timer 到时间时，会将当前的时间传入 channel 中
+当 Timer 到时间时，会将当前的时间传入 channel 中
 
 
-AfterFunc(d time.Duration, f func()) *time.Timer
+AfterFunc(d Duration, f func()) *Timer
 等待一段时间结束，并在自己的 goroutine 中启动一个函数 f func()
-并返回一个 *time.Timer 以便掉其他 goroutine 可以用 Stop 来取消它
+并返回一个 *Timer 以便掉其他 goroutine 可以用 Stop 来取消它
 
 
-NewTimer(d time.Duration) *time.Timer
+NewTimer(d Duration) *Timer
 在经过至少 d 时间之后，通过 channel 发送出当前的时间
 
 
-(*time.Timer) Reset(d time.Duration) bool
-将仍活跃的 time.Timer 重置至 d 时间之后在过时
-若 time.Timer 已经过期或已被 Stop，重置失败则返回 false
-若 time.Timer 被重置成功，则返回 true
+(t *Timer) Reset(d Duration) bool
+将仍活跃的 Timer 重置至 d 时间之后在过时
+若 Timer 已经过期或已被 Stop，重置失败则返回 false
+若 Timer 被重置成功，则返回 true
 【注意，不要产生数据竞争（race）】
 
 
-(*time.Timer) Stop(d time.Duration) bool
-停止 time.Timer 让它不向 channel 中发送数据
-若 time.Timer 被成功停止，则返回 true
-若 time.Timer 已经过期或已被停止，则返回 false
+(t *Timer) Stop(d Duration) bool
+停止 Timer 让它不向 channel 中发送数据
+若 Timer 被成功停止，则返回 true
+若 Timer 已经过期或已被停止，则返回 false
 该函数不会关闭 channel，防止后续从 channel 中拉取数据出现 panic
