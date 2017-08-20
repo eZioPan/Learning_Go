@@ -347,3 +347,96 @@ Fscanln(r io.Reader, a ...interface{}) (n int, err error)
 Fscanln 与 Fscan 类似
 但当扫描至 newline 时停止
 且在最后一个项目之后，必须有一个 newline 或者一个 EOF
+
+
+Print(a ..interface{}) (n int, err error)
+使用默认的格式格式化操作数，并写入 Stdout
+返回写入的字节数，以及任何遇到的错误
+
+
+Printf(format string, a ...interface{}) (n int, err error)
+使用默认的格式格式化操作数，并写入 Stdout
+返回写入的字节数，以及任何遇到的错误
+
+
+Println(a ...interface{}) (n int, err error)
+使用默认的格式格式化操作数，并写入 Stdout
+永远在两个操作数之间插入一个空格，并在最后追加一个 newline
+返回写入的字节数，以及任何遇到的问题
+
+
+Scan(a ..interface{}) (n int, err error)
+从 Stdin 中读取文本，并逐次将空格分隔的值写入后续的参数中
+newline 被认作为一个空格
+将返回成功扫描的项目的数量
+若数量少于传入的参数，err 会返回原因
+
+
+Scanf(format string, a ...interface{}) (n int, err error)
+从 Stdin 中读取文本，并逐次将空格分隔的值，按照指定的格式写入后续的参数中
+将返回成功解析的项目的数量
+若数量少于传入的参数，err 会返回原因
+输入中的 newline 必须和 格式化字符串中的 newline 相匹配
+有一个例外：
+动词 %c 永远会读取输入的下一个字符，即便它可能是 空格（或者 tab 等等） 或者 newline
+
+
+Scanln(a ...interface{}) (n int, err error)
+Scanln 和 Scan 类似
+但当扫描至 newline 时停止
+且在最后一个项目之后，必须有一个 newline 或者一个 EOF
+
+
+Sprint(a ...interface{}) string
+使用默认的格式格式化操作数，并返回得到的字符串
+若两个操作数都不是字符串时，在两者之间加入一个空格
+
+
+Sprintf(format string, a ...interface{}) string
+通过指定的 格式 格式化输入的字符串，并返回得到的字符串
+
+
+Sprintln(a ...interface{}) string
+使用默认的 格式 格式化输入的字符串，并返回得到的字符串
+永远在两个操作数之间插入一个空格，并在最后追加一个 newline
+
+
+Sscan(str string, a ..interface{}) (n int, err error)
+扫描参数字符串，并逐次将空格分隔的值，按照指定的格式写入后续的参数中
+newline 被认作为一个空格
+将返回成功扫描的项目的数量
+若数量少于传入的参数，err 会返回原因
+
+
+Sscanf(str string, format string, a ..interface{}) (n int, err error)
+扫描参数字符串，并逐次将空格分隔的值，按照指定的格式写入后续的参数中
+将返回成功解析的项目的数量
+若数量少于传入的参数，err 会返回原因
+输入中的 newline 必须和 格式化字符串中的 newline 相匹配
+
+Sscanln(str string, format string, a ...interface{}) (n int, err error)
+Sscanln 和 Sscan 类似
+但当扫描至 newline 时停止
+且在最后一个项目之后，必须有一个 newline 或者一个 EOF
+
+
+
+Formatter interface 类型
+
+一个具有自定义的 formatter 的值所满足的接口
+Format 的实现可以通过调用 Sprint(d) 或者 Fprint(f) 等来产生输出
+
+type Formatter interface {
+	Format(f State, c rune)
+}
+
+
+
+GoStringer interface 类型
+
+任何具有 GoString 方法的值都实现了该接口，也定义的该值的 Go 语法下的表现
+GoString 方法用于打印作为 %#v 格式的操作数的值
+
+type GoStringer interface {
+	GoString() string
+}
