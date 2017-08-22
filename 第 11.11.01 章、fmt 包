@@ -440,3 +440,96 @@ GoString 方法用于打印作为 %#v 格式的操作数的值
 type GoStringer interface {
 	GoString() string
 }
+
+
+
+ScanState interface 类型
+
+表示传入自定义 scanner 的 scanner 的 state
+scanner 可以执行 一次一个 rune 的扫描，
+也可以询问 ScanState 来发现下一个 空格分隔的 token
+
+type ScanState interface {
+
+	// 从输入读取下一个 rune（Unicode 码点）
+	// 若在 Scanln Fscaln Sscaln 中被调用， ReadRune() 将
+	// 在返回第一个 '\n' 之后返回 EOF
+	// 或在读取超过指定的宽度之后返回 EOF
+	ReadRune() (r rune, size int, err error)
+
+	// 导致下一次调用 ReadRune 时，返回相同的 rune
+	UnreadRune() error
+
+	// 跳过输入的空格
+	// newline 将会针对当前的操作做正确的处理
+	// 查看包文档来获取更多信息
+	SkipSpace()
+
+	// 若 skipSpace 为真，则跳过输入的空格，接着返回满足 f(c) 的 Unicode 码点序列 c
+	// 若 f 为 nil
+	// !unicode.IsSpace(c) 将会被使用
+	// 也就是， token 将持有非空白字符
+	// newline 将会针对当前的操作做正确的处理
+	// 查看包文档来获取更多信息
+	// 返回的 slice 所指向的共享数据可能会被下一次调用 Token 时所覆写
+	// 一个次调用 Scan 函数，会使用 ScanState 作为输入，或者当 所调用的 Scan 方法返回的时候
+	Token(skipSpace bool, f func(rune) bool) (token []byte, err error)
+
+	// 返回 width 的值，以及它是否被卑职
+	// 单位是 Unicode 码点数
+	Width() (wid int, ok bool)
+
+	// Because ReadRune is implemented by the interface, Read should never be
+	// called by the scanning routines and a valid implementation of
+	// ScanState may choose always to return an error from Read.
+	// 由于 ReadRune 已经被该接口实现， Read 应该永远不被 扫描 routine 所调用
+	// 且一个合法的 ScanState 的实现可能会选择永远从 Read 返回一个错误
+	Read(buf []byte) (n int, err error)
+}
+
+
+
+Scanner interface 类型
+
+任何具有 Scan 方法的值都实现了该接口，
+其扫描输入，并解析出值的表示，且将结果存入接受者中
+为了起效，接受者必须是一个 pointer
+Scan 方法将在任何实现了该接口的值，被 Scan Scanf 或者 Scanln 当做参数传入时，所调用
+
+type Scanner interface {
+	Scan(state ScanState, verb rune) error
+}
+
+
+
+State interface 类型
+表示传入自定义 formatter 的 printer 的 state
+它提供了 获取 io.Writer 接口 加上 获取对于操作数的格式化定义的 flag 和 option 的信息
+
+type State interface {
+
+	// 调用时该函数时，触发格式化之后的输出的打印
+	Write(b []byte) (n int, err error)
+
+	// 返回值的 width 选项的值，以及它是否被设置
+	Width() (wid int, ok bool)
+
+	// 返回值的 precision 选项的值，以及它是否被设置
+	Precision() (prec int, ok bool)
+
+	// 报告 flag c，一个单字符，是否被设置
+	Flag(c int) bool
+}
+
+
+
+Stringer interface 类型
+
+任何具有 String 方法的值都满足了该接口，也定义了该值的 “原生”格式化 表示
+String 方法用于打印值，
+该值作为接受字符串作为格式化操作的操作数，
+或者作为 不进行格式化的 printer 的操作数（比如 Print）
+
+Stringer interface {
+	String() string
+}
