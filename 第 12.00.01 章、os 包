@@ -1,0 +1,110 @@
+总览
+
+os 包通过平了一个平台无关的接口，来操作系统功能
+设计风格是 Unix-like 的，但错误处理时 Go-like 的；失败返回的是 error 类型的值，而非错误号
+大部分时候，使用 error 可以包含更多信息
+举例来说，若一个调用产生了 文件名失败，比如在 Open 或者 Stat 中，
+那么在打印时， error 就会包含失败的文件名，
+在 error 中，就会具有 *PathError 类型的值，在解包后可以提供更多的信息
+
+os 接口意在再跨所有操作系统来提供统一的接口
+在系统特定的 syscall 包中提供的特性，并不会出现在这个包中
+
+
+下面就是一个简单的例子，
+
+file, err := os.Open("file.go") // For read access.
+if err != nil {
+	log.Fatal(err)
+}
+
+若操作失败，则错误字符串将自解释，例如
+
+open file.go: no such file or directory
+
+接着文件数据就可以被读入 []byte 中
+Read 和 Write 都从参数 slice 的长度来获取 byte 计数
+
+data := make([]byte, 100)
+count, err := file.Read(data)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("read %d bytes: %q\n", count, data[:count])
+
+
+
+常量
+
+OpenFile 所使用的 flag，从底层系统包装而来
+并非所有的 flag 都在给定的系统上实现了
+
+const (
+	O_RDONLY int = syscall.O_RDONLY // 只读方式打开文件
+	O_WRONLY int = syscall.O_WRONLY // 只写方式打开文件
+	O_RDWR   int = syscall.O_RDWR   // 读写方式打开文件
+	O_APPEND int = syscall.O_APPEND // 写入时，将数据追加至文件
+	O_CREATE int = syscall.O_CREAT  // 若文件不存在，则创建新文件
+	O_EXCL   int = syscall.O_EXCL   // 与 O_EXCL 连用，文件必然不存在
+	O_SYNC   int = syscall.O_SYNC   // 为同步 I/O 打开文件
+	O_TRUNC  int = syscall.O_TRUNC  // 若可行，则在打开文件时截断文件
+)
+
+注： O_TRUNC 在系统调用时的含义为：
+
+If the file already exists and is a regular file and the access mode allows writing it will be truncated to length 0
+
+也就是：
+
+若文件已经存在，且是一个普通文件，同时允许写入，则它将被截短至长度为 0
+
+
+查找值的位置
+
+废弃使用：请使用 io.SeekStart io.SeekCurrent 以及 io.SeekEnd 来替代
+
+const (
+	SEEK_SET int = 0 // seek relative to the origin of the file
+	SEEK_CUR int = 1 // seek relative to the current offset
+	SEEK_END int = 2 // seek relative to the end
+)
+
+const (
+	PathSeparator     = '/' // 系统特定的路径隔断符
+	PathListSeparator = ':' // 系统特定的路径列表隔断符
+)
+
+DevNull 操作系统 “null device” 的名字
+在 Unix-like 系统上，它是 "/dev/null"；在 Windows 上，它是 “NUL”
+
+const DevNull = "/dev/null"
+
+
+
+变量
+
+一些可移植的等同的通用系统调用错误
+
+var (
+	ErrInvalid    = errors.New("invalid argument") // 当接受者为 nil 时，针对 File 的方法将返回的错误
+	ErrPermission = errors.New("permission denied")
+	ErrExist      = errors.New("file already exists")
+	ErrNotExist   = errors.New("file does not exist")
+	ErrClosed     = errors.New("file already closed")
+)
+
+
+Stdin Stdout Stderr 是 指向 标准输入、标准输出、标准错误 文件描述符 的 打开的 File
+
+注意， Go 运行时 会使用 标准错误 来写入 panic 和 crash
+关闭 Stderr 会导致这些信息写入其他地方，有可能是其后打开的某个文件中
+
+var (
+        Stdin  = NewFile(uintptr(syscall.Stdin), "/dev/stdin")
+        Stdout = NewFile(uintptr(syscall.Stdout), "/dev/stdout")
+        Stderr = NewFile(uintptr(syscall.Stderr), "/dev/stderr")
+)
+
+Args 持有命令行参数，第一元素是程序名
+
+var Args []string
