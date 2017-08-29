@@ -108,3 +108,134 @@ var (
 Args 持有命令行参数，第一元素是程序名
 
 var Args []string
+
+
+
+Chdir(dir string) error
+修改当前工作路径至指定目录
+若有一个错误，则类型为 *PathError
+
+
+Chmod(name string, mode FileMode) error
+修改文件名的 mode 至 指定的 mode
+若文件是符号链接，则修改链接指向的文件的 mode
+若有一个错误，则类型为 *PathError
+
+依据系统的不同，将使用不同的 mode bit 的子集
+
+在 Unix 上，使用 permission bits, ModeSetuid, ModeSetgid, ModeSticky
+
+在 Windows 上，mode 必须非 0，或者仅为 0200（所有者可写）
+它控制了一个文件只读属性是否被设置
+其他的 bit 当前未使用
+使用 0400 来只读一个文件
+或者 0600 来表示可读写文件
+
+在 Plan9 上，使用 permission bits, ModeAppend, ModeExclusive, ModeTemporary
+
+
+Chown(name string, uid, gid int) error
+修改文件的 以数字形式表示的 UID 和 GID
+若文件是符号链接，则修改链接指向的文件的 mode
+若有一个错误，则类型为 *PathError
+
+在 Windows 上，它永远返回 syscall.EWINDOWS 错误，包裹在 *PathError 中
+
+
+Chtimes(name string, atime time.Time, mtime time.Time) error
+修改文件的 获取时间 和 修改时间，与 Unix 的 utime() 和 utimes() 函数类似
+
+底层的文件系统可能会截断或者四舍五入该值至一个不那么精确的时间单位
+若有一个错误，则类型为 *PathError
+
+
+Clearenv()
+删除全部的全局变量
+
+
+Environ() []string
+返回字符串表示的环境变量，以 “key=value” 的形式表示
+
+
+Executable() (string, error)
+返回启动当前进程的克制文件的路径
+它并不保证路径依旧指向正确的可执行文件
+若一个符号链接用于启动进程，那么抑郁操作系统的不同，结果可能是符号链接本身或者其指向的文件
+若一个需要一个稳定的结果，则 path/filepath.EvalSymlinks 可能有所帮助
+
+本函数返回一个绝对路径，除非遇到一个错误
+主要使用的情况是，寻找与可执行文件路径具有相对路径的资源
+
+本函数在 nacl 上不被支持
+
+
+Exit(code int)
+导致当前程序退出，并给出一个退出状态号
+惯例来说，0 表示成功，非 0 值表示一个错误
+程序会立刻终止，被 defer 的函数不会运行
+
+
+Expand(s string, mapping func(string) string) string
+通过 mapping 函数，替换 字符串 中的 ${var} 或者 $var
+举例来说，os.ExpandEnv(s) 等价于 os.Expand(s, os.GetEnv)
+
+
+ExpandEnv(s string) string
+根据当前环境变量的值，替换字符串中的 ${var} 或者 $var
+参考至未定义的值被替换为空字符串
+
+EG.
+fmt.Println(os.ExpandEnv("$USER lives in ${HOME}."))
+
+
+Getegid() int
+返回用数字表示的调用者的 effective group
+在 Windows 上，返回 -1
+
+
+Getenv(key string) string
+检索名字为 key 的环境变量的值
+若变量没有出现，则返回空值
+想区分 空值 和 未设置 的值，使用 LookupEnv
+
+
+Geteuid() int
+返回用数字表示的调用者的 effective uid
+在 Windows 上，返回 -1
+
+
+Getgid() int
+返回用数字表示的调用者的 gid
+在 Windows 上，返回 -1
+
+
+Getgroups() ([]int, error)
+返回用数字表示的调用者所在的 group
+在 Windows 上，返回 syscall.EWINDOWS
+查看 os/user 包来寻找可能的替代
+
+
+Getpagesize() int
+返回底层系统的内存页大小
+
+
+Getpid() int
+返回调用者进程的 pid
+
+
+Getppid() int
+返回调用者进程的父进程的 pid
+
+
+Getuid() int
+返回用数字表示的调用者的 uid
+在 Windows 上，返回 -1
+
+
+Getwd() (dir string, err error)
+返回当前目录相对根目录的路径
+若当前目录可以通过多种路径得到（由于符号链接的带来的），则本函数会返回其中的任意一个
+
+
+Hostname() (name string, err error)
+返回内核反馈的 hostname 信息
