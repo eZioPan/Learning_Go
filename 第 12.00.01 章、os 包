@@ -239,3 +239,190 @@ Getwd() (dir string, err error)
 
 Hostname() (name string, err error)
 返回内核反馈的 hostname 信息
+
+
+IsExist(err error) bool
+返回一个 bool 值，指示了一个错误是否报告了一个文件或者目录已经存在
+它通过 ErrExist 变量，以及一些系统调用 error 满足
+
+
+IsNotExist(err error) bool
+返回一个 bool 值，指示了一个错误是否报告了一个文件或者目录并未存在
+它通过 ErrNotExist 变量，以及一些系统调用 error 满足
+
+EG.
+
+filename := "a-nonexistent-file"
+if _, err := os.Stat(filename); os.IsNotExist(err) {
+    fmt.Printf("file does not exist")
+}
+
+返回
+
+file does not exist
+
+
+IsPathSepqrator(c uint8) bool
+报告 c 是否是一个目录分隔字符
+
+
+IsPermission(err error) bool
+返回一个 bool 值，指示了一个错误是否报告了权限受阻
+它通过 ErrPermission 变量，以及一些系统调用 error 满足
+
+
+Lchown(name string, uid, gid int) error
+修改指定文件的 uid 和 gid
+若文件是符号链接，则修改符号链接本身的 uid 和 gid
+若产生错误，则其类型是 *PathError
+
+在 Windows，它用于返回 syscall.EWINDOWS 错误，包裹在 *PathError 中
+
+
+Link(oldname, newname string) error
+用 newname 创建一个硬链接至老的文件
+若产生错误，则其类型是 *PathError
+
+
+LookupEnv(key string) (string, bool)
+检索环境变量中，指定 key 的值
+若变量存在于环境中（即便可能为空值），函数也返回这个值，且 bool 为 true
+除此之外，函数返回空值，且 bool 为 false
+
+
+Mkdir(name string, perm FileMode) error
+使用指定的名称和权限创建一个新的目录
+若产生一个错误，则其类型是 *PathError
+
+
+MkdirAll(path string, per FileMode) error
+使用指定的路径和权限创建目录，并补全该目录所需的所有父级目录，并返回 nil，或者返回错误
+权限针对该函数创建的所有目录上
+若 path 已经是一个已存在的目录，则该函数不会执行任何操作，并返回 nil
+
+
+NewSyscallErrror(syscall string, err error) error
+本函数将一个新的 SyscallError 作为 error 返回
+新的 error 包含了系统调用的名称，以及错误的详细信息
+作为惯例，若 err 是 nil，则本函数返回 nil
+
+
+Readlink(name string) (string, error)
+返回指定的符号链接所指向的目标
+若产生一个错误，则其类型是 *PathError
+
+
+Remove(name string) error
+移除指定的文件或目录
+若产生一个错误，则其类型是 *PathError
+
+
+RemoveAll(path string) error
+移除一个路径，以及它所包含的任何子对象
+它移除任何它可以移除的东西，但返回第一个遇到的错误
+若 path 不存在，本函数返回 nil（并非 error）
+
+
+Rename(oldpath, newpath string) error
+重命名（移动）旧路径至新路径
+若新路径已存在，且不是目录，本函数将替代它
+当新旧目录不相同时，系统特殊限制会出现
+
+
+SameFile(fi1, fi2 FileInfo) bool
+报告 fi1 和 fi2 是否描述了相同的文件
+举例来说，
+在 Unix 上，这意味着设备和 inode 的两个底层的构架是相同的
+在其他系统上，可能基于相同的路径名
+
+本函数仅适用于本包 Stat 函数/方法 的返回值
+在其他情况下，均返回 false
+
+
+Setenv(key, value string) error
+通过键名设置一个环境变量的值
+若有错误则返回
+
+
+Symlink(oldname, newname string) error
+创建一个指向老名称的新软链接
+若有一个错误，则其类型为 *LinkError
+
+
+TempDir() string
+返回临时文件所使用的默认目录
+
+在 Unix 系统，若 $TMPDIR 非空，则返回该值，否则返回 /tmp
+在 Windows 上，使用 syscall.GetTempPath 函数，从 %TMP%，%TEMP%，%USERPROFILE% 中返回第一个非空的值，或者 Windows 目录
+在 Plan9 上，返回 /tmp
+
+不保证目录真实存在，或者具有读写权利
+
+
+Truncate(name string, size int64) error
+修改指定文件的大小
+若文件是一个软链接，则修改其指向的目标的大小
+若有一个错误，则其类型为 *PathError
+
+
+Unsetenv(key string) error
+unset 单个环境变量
+
+
+
+File struct 类型
+
+该类型表示一个打开的文件描述符
+
+Create(name string) (*File, error)
+创建一个以 name 命名的文件，并赋予权限0666（在 umask 之前），若文件已经存在则截断它
+若成功，对返回的 File 对象使用方法可以用于 I/O，相关联的文件描述符模式为 O_RDWR
+若有一个错误，则其类型为 *PathError
+
+
+NewFile(fd uintptr, name string) *File
+返回具有给定的文件描述符和名称的 File 对象
+若 fd 不是合法的文件描述符，则返回值将为 nil
+
+
+Open(name string) (*File, error)
+打开指定的文件来读取
+若成功，则对返回的 File 对象使用的方法可以用于 读取，相关联的文件描述符模式为 O_RDONLY
+若有一个错误，则其类型为 *PathError
+
+
+OpenFile(name string, flag int, perm FileMode) (*File, error)
+通用的 打开 调用，大多数用户会使用 Open 和 Create 函数
+若可用的话，它以特定的 flag（O_RDONLY 等） 和 权限（0666 等）打开文件
+若成功，则对返回的 File 对象使用的方法可以用于 I/O
+若有一个错误，则其类型为 *PathError
+
+EG.
+
+// 若文件不存在，则创建它，否则在其后追加
+f, err := os.OpenFile("access.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+if err != nil {
+    log.Fatal(err)
+}
+if _, err := f.Write([]byte("appended some data\n")); err != nil {
+    log.Fatal(err)
+}
+if err := f.Close(); err != nil {
+    log.Fatal(err)
+}
+
+
+Pipe() (r *File, w *File, err error)
+返回一堆连接上的 File 对象
+从 r 读取，写入 w 的数据
+若有一个错误，则其类型为 *PathError
+
+
+(f *File) Chdir() error
+将当前的工作目录切换至 File 所在位置， File 必须是一个 目录
+若有一个错误，则其类型为 *PathError
+
+
+(f *File) Chmod() error
+修改文件的 mode
+若有一个错误，则其类型为 *PathError
