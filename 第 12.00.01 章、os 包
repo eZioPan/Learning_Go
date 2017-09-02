@@ -426,3 +426,71 @@ Pipe() (r *File, w *File, err error)
 (f *File) Chmod() error
 修改文件的 mode
 若有一个错误，则其类型为 *PathError
+
+
+(f *File) Chown(uid, gid int) error
+修改文件的 uid 和 gid（数字形式表示）
+若有一个错误，则其类型为 *PathError
+
+在 Windows 上，永远返回 syscall.EWINDOWS 错误，包裹在 *PathError
+
+
+(f *File) Close() error
+关闭一个文件，并使其无法做 I/O 使用
+若有错误则返回
+
+
+(f *File) Fd() uintptr
+返回一个参照代打开的文件的 Unix 文件描述符
+仅在 f.Close 被调用，或者 f 被垃圾回收前才是合法的
+
+
+(f *File) Name() string
+返回文件的名称（如同提供给 Open 函数的一样）
+
+
+(f *File) Read(b []byte) (n int, err error)
+从 File 中，读取最多 len(b) 个字节
+返回已经读取到的字节数，并返回任何遇到的错误
+
+
+(f *File) ReadAt(b []byte, off int64) (n int, err error)
+从 File 中指定的偏移字节数开始，读取最多 len(b) 个字节
+返回已经读取到的字节数，并返回任何遇到的错误
+若遇到文件尾，则返回 0, io.EOF
+
+
+(f *File) Readdir(n int) ([]FileInfo, error)
+读取文件 f 所关联的文件夹的内容，并返回一个最多包含 n 个 FileInfo 值的 slice
+就像被 Lstat 返回的那样，以目录的顺序
+其后的调用将继续返回新的 FileInfo 值
+
+若 n > 0，本方法但会最多 n 个 FileInfo 结构体
+在这种情况下，若本方法返回空 slice，它会返回一个非空错误来解释为什么
+到达目录尾部时，得到的错误时 io.EOF
+
+若 n < 0，本方法将目录下所有的内容作为单个 []FileInfo 返回
+在这种情况下，若本方法成功执行（从头读至尾部），则它返回一个 slice 和 nil error
+若在读到目录尾部前出现错误，则返回已获得的 []FileInfo，以及一个 非 nil error
+
+
+(f *File) Readdirnames(n int) (names []string, err error)
+从目录 f 中读取并返回一个 文件名 的 slice
+
+若 n > 0，本方法但会最多 n 个 文件名
+在这种情况下，若本方法返回空 slice，它会返回一个非空错误来解释为什么
+到达目录尾部时，得到的错误时 io.EOF
+
+若 n < 0，本方法将目录下所有的文件名作为单个 []string 返回
+在这种情况下，若本方法成功执行（从头读至尾部），则它返回一个 slice 和 nil error
+若在读到目录尾部前出现错误，则返回已获得的 []string，以及一个 非 nil error
+
+
+(f *File) Seek(offset int64, whence int) (ret int64, err error)
+本方法设置下一个 Read 或 Write 方法至偏移处
+参照 whence 的含义：
+	0 表示相对文件的开头
+	1 表示相对当前的偏移
+	2 表示相对文件的结尾
+返回新的偏移值，若有错误，则一同返回
+对以 O_APPEND 打开的文件，该方法的行为未定义
