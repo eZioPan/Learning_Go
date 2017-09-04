@@ -494,3 +494,216 @@ Pipe() (r *File, w *File, err error)
 	2 表示相对文件的结尾
 返回新的偏移值，若有错误，则一同返回
 对以 O_APPEND 打开的文件，该方法的行为未定义
+
+
+(f *File) Stat() (FileInfo, error)
+返回描述文件的 FileInfo 结构体
+若有一个错误，则其类型是 *PathError
+
+
+(f *File) Sync() error
+本方法提交文件的当前内容至稳定存储中
+典型地，这意味着将系统内存中最近写入的的数据刷写入磁盘
+
+
+(f *File) Truncate(size int64) error
+修改文件的大小
+它并不修改 I/O 偏移值
+若有一个错误，则其类型是 *PathError
+
+
+(f *File) Write(b []byte) (n int, err error)
+将 len(b) 字节的数据写入 File 中
+它返回写入的字节数，以及任何出现的错误
+当 n != len(b)，本方法返回一个非 nil 的 error
+
+
+(f *File) WriteString(s string) (n int, err error)
+与 Write 相似，但写入的是字符串 s 而非 []byte
+
+
+
+FileInfo interface 类型
+
+本类型描述了一个文件，本类型被 Stat 和 Lstat 函数返回
+
+type FileInfo interface {
+	Name() string		// 文件的基础名称
+	Size() int64		// 普通文件的字节长度；其它与所在系统相关
+	Mode() FileMode		// 文件的 mode bit
+	ModTime() time.time	// 修改时间
+	IsDir() bool		// Mode().IsDir() 的缩写
+	Sys() interface{}	// 底层数据源（可能返回 nil）
+}
+
+
+Lstat(name string) (FileInfo, error)
+返回一个描述文件的 FileInfo 结构体
+若文件是一个符号链接，则返回符号链接本身的 FileInfo
+Lstat 不会回溯链接
+若有一个错误，则其类型为 *PathError
+
+
+Stat(name string) (FileInfo, error)
+返回一个描述文件的 FileInfo 结构体
+若有一个错误，则其类型为 *PathError
+
+
+
+FileMode uint32 类型
+
+一个 FileMode 表示了一个文件的 mode 和 权限 bit
+由于在所有系统下，这些 bit 的定义都相同，所以文件的信息可以从一个系统移植入里另一个系统
+并非有所的 bit 都适用于所有的系统
+必须要存在的 bit 为目录的 ModeDir
+
+定义的 file mode bit 是最高位的 FileMode
+九位个最低位为标准的 Unix rwxrwxrwx 权限
+这些 bit 的值应该被考虑为 公开 API 的部分，也可能会用在 wire protocols 或者磁盘表示中：
+它们不可以被修改，但是新的 bit 可以被加入其中
+
+const (
+    // 单字母作为简写，被用于在
+    // String 方法的格式化中
+    ModeDir        FileMode = 1 << (32 - 1 - iota) // d: 是一个目录
+    ModeAppend                                     // a: 仅追加
+    ModeExclusive                                  // l: 排他用法
+    ModeTemporary                                  // T: 临时文件；仅用于 Plan 9
+    ModeSymlink                                    // L: 符号链接
+    ModeDevice                                     // D: 设备文件
+    ModeNamedPipe                                  // p: 命名的管道（FIFO）
+    ModeSocket                                     // S: Unix 域套字节
+    ModeSetuid                                     // u: setuid
+    ModeSetgid                                     // g: setgid
+    ModeCharDevice                                 // c: Unix 字符流设备，当 ModeDevice 设定时
+    ModeSticky                                     // t: sticky
+
+    // 类型的遮罩。对于普通文件，不会被设置
+    ModeType = ModeDir | ModeSymlink | ModeNamedPipe | ModeSocket | ModeDevice
+
+    ModePerm FileMode = 0777 // Unix 权限 bits
+)
+
+
+EG.
+
+fi, err := os.Lstat("some-filename")
+if err != nil {
+    log.Fatal(err)
+}
+
+switch mode := fi.Mode(); {
+case mode.IsRegular():
+    fmt.Println("regular file")
+case mode.IsDir():
+    fmt.Println("directory")
+case mode&os.ModeSymlink != 0:
+    fmt.Println("symbolic link")
+case mode&os.ModeNamedPipe != 0:
+    fmt.Println("named pipe")
+}
+
+
+(m FileMode) IsDir() bool
+报告 m 是否描述了一个目录
+也就是，测试 ModeDir 这个 bit 是否在 m 中被设置了
+
+
+(m FileMode) IsRegular() bool
+报告 m 是否描述了一个普通文件
+也就是，没有任何的 mode bit 被设置
+
+
+(m FileMode) Perm() FileMode
+返回 m 所具有的 Unix 权限 bit
+
+
+(m FileMode) String() string
+满足了 fmt.Stringer 接口
+
+
+
+LinkError struct 类型
+
+记录了一个在 链接系统调用 或者 符号链接系统调用 或者 重命名系统调用 时的错误，且包含产生该错误的路径
+
+type LinkError struct {
+	Op string
+	Old string
+	New string
+	Err error
+}
+
+
+(e *LinkError) Error() string
+满足了 error 内建接口类型
+
+
+
+PathError struct 类型
+
+记录了一个错误，以及产生这个错误的操作和文件路径
+
+type PathError struct {
+	Op string
+	Path string
+	Err error
+}
+
+
+func (e *PathError) Error() string
+满足了 error 内建借口类型
+
+
+
+ProcAttr struct 类型
+
+持有一些属性，这些属性会被运用于即将被 StartProcess 函数启动的新进程上
+
+type ProcAttr struct {
+	// 若 Dir 非空，则子进程移动至该目录中后，再创建进程
+	Dir string
+
+	// 若 Env 非 nil，则基于新进程以环境变量
+	// 该环境变量参考 Environ 函数的返回值的形式
+	Env []string
+
+	// 该字段指定新进程将要继承的打开的文件
+	// 头三个条目为 标准输入/标准输出/标准错误
+	// 鉴于不同的系统实现，会支持更多的附加条目
+	// 一个用 nil 表示的条目，意味着对应的文件在进程启动时被关闭
+	Files []*File
+
+	// 操作系统特定的进程创建属性
+	// 注意该字段的设置可能意味着你的程序在某些操作系统上，并不能正常运行，甚至正常编译
+	Sys *syscall.SysProcAttr
+}
+
+
+
+Process struct 类型
+
+该类型保存了 StartProcess 函数创建的新进程的信息
+
+type Process struct {
+	Pid int
+
+	// 包含过滤掉或未导出的字段
+}
+
+
+FindProcess(pid int) (*Process, error)
+通过 pid 查找一个运行中的进程
+
+返回的 Process 可以用于持有底层操作系统的进程的信息
+
+在 Unix 系统中，无论进程是否存在，FindProcess 总是成功，且返回给出 pid 的 Process 对象
+
+
+StartProcess(name string, argv []string, attr *ProcAttr) (*Process, error)
+启动一个新的进程，该进程的程序/参数/属性由 name argv attr 定义
+
+本函数是一个底层的接口
+os/exec 包提供了一个更高级的接口
+
+若有一个错误，则其类型为 *PathError
