@@ -707,3 +707,103 @@ StartProcess(name string, argv []string, attr *ProcAttr) (*Process, error)
 os/exec 包提供了一个更高级的接口
 
 若有一个错误，则其类型为 *PathError
+
+
+(p *Process) Kill() error
+立刻终止一个进程
+
+
+(p *Process) Release() error
+释放与 Process p 相关的任何资源，让它在未来展示为不可用状态
+本方法仅在 Wait 无法调用，或调用失败时才需使用
+
+
+(p *Process) Singnal(sig Signal) error
+向 Process中传入一个信号
+传送 Interrupt 在 Windows 上未实现
+
+
+(p *Process) Wait() (*ProcessState, error)
+等待一个 Process 退出，并返回一个描述进程状态的 ProcessState，以及任何产生的错误
+本方法会释放任何与 Process 关联的资源
+在大多数操作系统中，Process 必须是当前进程的一个子进程，否则会返回一个错误
+
+
+
+ProcessState struct 类型
+
+本类型存储了一个进程相关的信息，其被 Wait 所反馈
+
+type ProcessState struct {
+	// 包含过滤的或未导出的字段
+}
+
+
+(p *ProcessState) Exited() bool
+报告程序是否已经退出
+
+
+(p *ProcessState) Pid() int
+返回退出的进程的 pid
+
+
+(p *ProcessState) String() string
+满足了 fmt.Stringer 接口
+
+
+(p *ProcessState) Success() bool
+报告程序是否成功退出
+比如 Unix 上的 0 退出状态
+
+
+(p *ProcessState) Sys() interface{}
+返回系统相关的进程退出信息
+转换其至适当的底层类型，比如在 Unix 上的 syscall.WaitStatus，来获取其内容
+
+
+(p *ProcessState) SysUsage() interface{}
+返回系统相关的退出进程的资源使用信息
+转换其至适当的底层类型，比如在 Unix 上的 *syscall.Rusage，来获取其内容
+（在 Unix 上， *syscall.Rusage 与 getrusage(2) 帮助手册中定义的 rusage 结构所匹配）
+
+
+(p *ProcessState) SystemTime() time.Duration
+返回退出的进程和其子进程的 系统 CPU 时间
+
+
+(p *ProcessState) UserTime() time.Duration
+返回退出的进程和其子进程的 用户 CPU 时间
+
+
+
+Signal interface 类型
+
+本类型表示系统信号
+通常情况下，底层的实现是系统相关的：在 Unix 上，是 syscall.Signal
+
+type Signal interface {
+	String() string
+	Signal() // 与其他的 Stringer 有所区分
+}
+
+仅有两个信号保证在全系统上都出现：Interrupt（向进程发送一个中断）以及 Kill（强制进程退出）
+
+var (
+	Interrupt	Signal = syscall.SIGINT
+	Kill		Signal = syscall.SigKILL
+)
+
+
+
+SyscallError struct 类型
+
+本类型从特定的系统调用中记录特定的错误
+
+type SyscallError struct {
+	Syscall string
+	Err error
+}
+
+
+(e *SyscallError) Error() string
+满足了 error 内建类型接口
