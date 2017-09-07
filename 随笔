@@ -1,0 +1,55 @@
+记录一些在写代码看书中得到的小细节
+
+-------- Code 0 --------
+
+// 本来向研究 os/exec 包的，结果反过来研究 reflect 包了
+// 注意，
+//	结构体字段的名字，属于结构体类型的定义
+//	结构体字段的值，属于结构体值的定义
+
+package main
+
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"reflect"
+)
+
+func PokeStruct(refT reflect.Type, refV reflect.Value) {
+
+	defer func() {
+		recover()
+		fmt.Println("Encount filtered or unexported field ")
+	}()
+
+	for i := 0; i < refV.NumField(); i++ {
+
+		refFN := refT.Field(i).Name
+		refFV := refV.Field(i).Interface()
+		fmt.Printf("Field name: %#v, Field value: %#v\n", refFN, refFV)
+
+	}
+
+}
+
+func main() {
+	p, e := exec.LookPath("cmd")
+	if e != nil {
+		panic(e)
+	}
+
+	cmd := new(exec.Cmd)
+	cmd.Path = p
+	cmd.Args = []string{"/c", "echo", "Hello! World!"}
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	refV := reflect.ValueOf(cmd).Elem()
+	refT := reflect.TypeOf(cmd).Elem()
+
+	PokeStruct(refT, refV)
+
+	cmd.Start()
+	cmd.Wait()
+}
