@@ -207,7 +207,7 @@ type StringHeader struct {
 
 
 
-StructFiled struct 类型
+StructField struct 类型
 
 描述了一个结构体中的单一的一个字段
 
