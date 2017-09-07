@@ -1,0 +1,90 @@
+总览
+
+exec 包运行外部命令
+它包裹了 os.StartProcess  命令，让它更容易重映射 stdin 和 stdout，用管道连接 I/O，以及执行其他的调整
+
+与 C 和其他语言所调用的 “system” 库不同，
+os/exec 包有意不调用 系统 shell，也不会扩展 glob 样式，或者处理 shell 本会处理的其他的扩展/管线/重定向等
+这个包更像 C 的 “exec” 函数族
+若要扩展 glob 样式，可以直接调用 shell，来转义任何危险的输入，或者使用 path/filepath 包的 Glob 函数
+若要扩展环境变量，使用 os 包的 ExpandEnv 函数
+
+注意本包的样例假设为 Unix 系统
+它们并不会在 Windows 上运行，它们也不会在 Go Playground 上运行
+
+
+
+变量
+
+若一个路径查找未能找到一个可执行文件时，产生一个 ErrNotFound 错误
+
+var ErrNotFound = errors.New("executable file not found in $PATH")
+
+
+
+LookPath(file string) (string, error)
+从环境变量的 $PATH 中查找指定可执行文件的路径
+若 file 包含一个斜线，则直接从测试它，而不查询 PATH
+结果可能是绝对路径或者相对当前目录的路径
+
+
+
+Cmd struct 类型
+
+Cmd 表示了一个外部程序正被准备或正被执行
+一个 Cmd 在调用其 Run/Output/CombinedOutput 方法后便不能再次使用
+
+type Cmd struct {
+	// Path 是将要运行的命令的路径
+	//
+	// 这是仅有的必须被设为非零值的值
+	// 若 Path 是相对路径，则它被解算为相对 Dir 的路径
+	Path string
+
+	// Args 持有命令行参数，包含作为 Args[0] 存在的命令本身
+	// 若 Args 字段为空或 nil，则 Run 使用 {Path}
+	//
+	// 在典型的用法中， Path 和 Args 均在调用 Command 方法时被设置
+	Args []string
+
+	// Env 指定了进程的环境
+	// 每个条目都以 "key=value" 的形式出现
+	// 若 Env 是 nil，新进程使用当前进程的环境
+	// 若 Env 中包含重复的环境键，仅有 slice 中，每个重复键的最后一个值被使用
+	Env []string
+
+	// Dir 指定了命令的工作路径
+	// 若 Dir 为空字符串， Run 方法会在调用者进程的当前目录下执行
+	Dir string
+
+	// Stdin 指定了进程的标准输入
+	// 若 Stdin 是 nil，则进程从 空设备（os.DevNull）中读取
+	// 若 Stdin 是一个 *os.File，则进程的标准输入直接连接至那个文件
+	// 其他情况下，在命令执行的过程中，
+	// 一个独立的 goroutine 从 Stdin 读取数据，接着将数据通过管道运送至命令
+	// 在这种情况下， Wait 方法不会完成
+	// 直到 goroutine 停止拷贝
+	// 或者其读到了 goroutine 的末尾（EOF 或读取错误）
+	// 或者由于 写入管道返回了一个错误
+	Stdin io.Reader
+
+	// Stdout 和 Stderr 指定了进程的标准输出和标准错误
+	//
+	// 若两者的任何一个为 nil，则 Run 方法将对应的文件描述符连接至空设备
+	//
+	// 若 Stdout 和 Stderr 是同一个 writter，也具有一个可以用 == 来比较的类型
+	// 则任意时刻，最多有一个 goroutine 将调用 Write 方法
+	Stdout io.Writer
+	Stderr io.Writer
+
+	// ExtraFiles 指定了新进程会继承的附加的打开文件
+	// 它并不包含 标准输入/标准输出/标准错误
+	// 若非 nil，条目 i 会变成文件描述符 3+i
+	ExtraFile []*os.File
+
+	// SysProcAttr 持有可选的，操作系统特定的属性
+	// Run 方法将它作为 os.ProcAttr 的 Sys 字段 传入 os.StartProcess 中
+	Process *os.Process
+
+	// 包含过滤的或未导出的字段
+}
