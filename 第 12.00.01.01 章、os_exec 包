@@ -88,3 +88,213 @@ type Cmd struct {
 
 	// 包含过滤的或未导出的字段
 }
+
+
+Command(name string, arg ...string) *Cmd
+返回一个 Cmd 结构体，来执行命名的程序以及其附带的参数
+
+它仅设置返回的结构体的 Path 和 Args 字段
+
+若 name 不含路径分隔符，则 Command 使用 LookPath 来解析名称以获得可能的完整路径
+其他情况，它会直接使用 Path
+
+返回的 Cmd 的 Args 字段由 命令名 以及跟随的 参数 构成
+所以 arg 并不应该包含命令名自身
+举例来说， Command("echo", "hello") 的 Args[0] 永远是 name，并非解析出来的 Path
+
+
+CommandContext(ctx context.Context, name string, arg ...string) *Cmd
+本函数与 Command 类似，但是包含一个 context
+
+提供的 context 用于杀死进程（以调用 os.Process.Kill 的方法），若在命令自主结束之前，context 就变为完成状态
+
+EG.
+
+ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+
+defer cancel()
+
+if err := exec.CommandContext(ctx, "sleep", "5").Run(); err != nil {
+    // 在 100 毫秒之后失败。
+    // 5 秒的 sleep 命令将被打断
+}
+
+
+(c *Cmd) CombinedOutput() ([]byte, error)
+运行命令并返回混合的标准输出和标准错误
+
+EG.
+
+cmd := exec.Command("sh", "-c", "echo stdout; echo 1>&2 stderr")
+stdoutStderr, err := cmd.CombinedOutput()
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("%s\n", stdoutStderr)
+
+
+(c *Cmd) Output() ([]byte, error)
+运行命令并返回其标准输出
+任何返回的错误通常为 *ExitError 类型
+如果 c.Stderr 是 nil，本方法产生 ExitError.Stderr
+
+
+(c *Cmd) Run() error
+启动指定的命令并等待其完成
+
+当命令运行，且拷贝到 stdin stdout stderr 没有问题，且程序以状态号 0 返回， error 才是 0
+
+若命令启动但未成功结束，则错误类型为 *ExitError
+其它类型的错误会应为其它情况而返回
+
+EG.
+
+cmd := exec.Command("sleep", "1")
+log.Printf("Running command and waiting for it to finish...")
+err := cmd.Run()
+log.Printf("Command finished with error: %v", err)
+
+
+(c *Cmd) Start() error
+启动一个特定的进程但不等待其完成
+
+一旦命令退出，Wait 方法会返回退出码和与之相关的资源
+
+
+(c *Cmd) StderrPipe() (io.ReadCloser, error)
+返回一个管道，在命令开始时，会连接上命令的标准错误
+
+Wait 方法会在命令结束之后关闭管道，所以大多数调用者就不语要手动关闭它们了
+但是，一个影响就是，在完成从管道中读取所有数据之前就调用 Wait 将会时不正确的
+基于同样的道理，当使用 StderrPipe 时，使用 Run 就是不正确的
+参见 StdoutPipe 方法的案例来了解常规用法
+
+EG.
+
+cmd := exec.Command("sh", "-c", "echo stdout; echo 1>&2 stderr")
+stderr, err := cmd.StderrPipe()
+if err != nil {
+    log.Fatal(err)
+}
+
+if err := cmd.Start(); err != nil {
+    log.Fatal(err)
+}
+
+slurp, _ := ioutil.ReadAll(stderr)
+fmt.Printf("%s\n", slurp)
+
+if err := cmd.Wait(); err != nil {
+    log.Fatal(err)
+}
+
+
+(c *Cmd) StdinPipe() (io.WriterClose, error)
+返回一个管道，在命令开始时，会连接上命令的标准输入
+Wait 方法会在命令结束之后关闭管道
+调用者仅需在需要提前关闭管道的情况下调用管道的 Close 方法
+举例来说，若命令在标准输入关闭前不会退出，则调用者必须关闭管道
+
+EG.
+
+cmd := exec.Command("cat")
+stdin, err := cmd.StdinPipe()
+if err != nil {
+    log.Fatal(err)
+}
+
+go func() {
+    defer stdin.Close()
+    io.WriteString(stdin, "values written to stdin are passed to cmd's standard input")
+}()
+
+out, err := cmd.CombinedOutput()
+if err != nil {
+    log.Fatal(err)
+}
+
+fmt.Printf("%s\n", out)
+
+
+(c *Cmd) StdoutPipe() (io.ReadCloser, error)
+返回一个管道，在命令开始时，会连接上命令的标准输出
+
+Wait 方法会在命令结束之后关闭管道
+调用者仅需在需要提前关闭管道的情况下调用管道的 Close 方法
+举例来说，若命令在标准输入关闭前不会退出，则调用者必须关闭管道
+
+EG.
+
+cmd := exec.Command("echo", "-n", `{"Name": "Bob", "Age": 32}`)
+stdout, err := cmd.StdoutPipe()
+if err != nil {
+    log.Fatal(err)
+}
+if err := cmd.Start(); err != nil {
+    log.Fatal(err)
+}
+var person struct {
+    Name string
+    Age  int
+}
+if err := json.NewDecoder(stdout).Decode(&person); err != nil {
+    log.Fatal(err)
+}
+if err := cmd.Wait(); err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("%s is %d years old\n", person.Name, person.Age)
+
+
+(c *Cmd) Wait() error
+等待命令结束并等待任何拷贝至 stdout 或 stderr 的过程完成
+
+命令必须已经被 Start 方法开始
+
+若命令运行，在拷贝 stdin stdout stderr 时未产生错误，且退出号为 0 时，错误才为 nil
+
+若命令运行但未能成功完成，则错误类型为 *ExitError
+其它的错误类型可能会由于 I/O 问题而返回
+
+若 c.Stdin 并非 *os.File，本方法同样会等待从 c.Stdin 拷贝至进程的标准输入的 I/O 循环拷贝的结束
+
+Wait 会释放任何与 Cmd 相关的资源
+
+
+
+Error struct 类型
+
+本类型记录了一个执行失败的二进制文件的名称，以及其失败的原因
+
+type Error struct {
+	Name string
+	Err error
+}
+
+
+(e *Error) Error() string
+满足了 error 内建接口类型
+
+
+
+ExitError struct 类型
+
+一个 ExitError 报告了一个命令的非成功退出
+
+type ExitError strcut {
+	*op.ProcessState
+
+	// 若标准错误并未被收集
+	// 则 Stderr 字段会持有从 Cmd.Output 方法出书的标准错误的子集
+	//
+	// 若错误输出过长， Stderr 字段可能仅包含一个输出的头部和尾部
+	// 以及代表中部被省略内容的字节的数量
+	//
+	// Stderr 字段用于 debug，由于包含错误信息
+	// 有其它需求的用户应该根据需要重定向 Cmd.Stderr
+	Stderr []byte
+}
+
+
+(e *ExitError) Error() string
+满足了 error 内建接口类型
