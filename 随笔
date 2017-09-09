@@ -1,5 +1,6 @@
 记录一些在写代码看书中得到的小细节
 
+
 -------- Code 0 --------
 
 // 本来向研究 os/exec 包的，结果反过来研究 reflect 包了
@@ -52,4 +53,53 @@ func main() {
 
 	cmd.Start()
 	cmd.Wait()
+}
+
+
+-------- Code 1 --------
+
+// 有关 非 unicode 字编码与 unicode 字符编码的转换
+// go get golang.org/x/text/
+// golang.org/x/text/transform 包提供转换工具
+// golang.org/x/text/encoding/<blahblah> 包提供编码表
+
+package main
+
+import (
+	"fmt"
+	"os/exec"
+
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/transform"
+)
+
+func main() {
+	cmd1 := exec.Command("cmd", "/c", "echo", "Hello!")
+	buf, _ := cmd1.CombinedOutput()
+	utf8, _, _ := transform.Bytes(simplifiedchinese.GBK.NewDecoder(), buf)
+	fmt.Printf("%v\n", string(utf8))
+}
+
+
+-------- Code 2 --------
+
+// 在 Linux 下，子进程的 Stdin Stdout 和 Stderr 是不会连接当前进程的 os.Stdin os.Stdout os.Stderr 的
+// 也就是说，需要手动指定 exec.Cmd 的 Stdin Stdout 与 Stderr 属性值为 os.Stdin os.Stdout os.Stderr
+//
+// 最后，命令行参数 exec.Cmd.Args 遵循 [<程序名>,<参数标签1>,<参数1>,<参数标签2>,<参数2>...] 的分类标准
+// 在下面的程序中 由于 echo Hello world 都是 -c 同一个参数，所以不能分为两组写入
+
+package main
+
+import (
+        "os"
+        "os/exec"
+)
+
+func main() {
+        cmd := exec.Command("bash", "-c", "echo Hello world")
+        cmd.Stdin = os.Stdin
+        cmd.Stdout = os.Stdout
+        cmd.Stderr = os.Stderr
+        cmd.Run()
 }
