@@ -1,0 +1,98 @@
+总述
+
+signal 包实现了处理输入信号的能力
+
+信号主要用于 Unix-like 的系统上
+对于在 Windows 与 Plan9 的用户，见下方
+
+
+信号的种类
+
+SIGKILL 和 SIGSTOP 并不能被程序捕获，所以也不能被这个包处理
+
+同步信号（Synchronous signal）由在程序运行执行中的产生的错误所触发：SIGBUS/SIGFPE/SIGSEGV
+这些仅是进过考虑的，在程序执行中的同步信号，与使用 os.Process.Kill 或 kill 程序或其它类似机制的不同
+大体来说，除了下面所讨论的，Go 程序将一个同步信号转换为一个 运行时 panic
+
+剩余信号就是异步信号（asynchronous signal）了
+它们并非由程序错误所触发，而是从内核或其它程序所送出
+
+在异步信号之中，
+SIGHUP 信号在失去它的控制终端时发出
+SIGINT 信号在控制终端的用户按下了中断字符（interrupt character）—— 默认为 ^C ——时发出
+SIGQUIT 信号在控制端的用户按下了退出字符（quit character）—— 默认为 ^\ ——时触发
+大体来说，你可以简单按下 ^C 来导致程序退出，也可以按下 ^\ 来导致带栈 dump 的程序退出
+
+
+Go 程序中的信号的默认行为
+
+默认来说，同步信号被转换为运行时 panic
+SIGHUP SIGINT SIGTERM 信号导致程序退出
+SIGQUIT SIGILL SIGTRAP SIGABRT SIGSTKFLT SIGEMT SIGSYS 信号导致程序带栈 dump 退出
+SIGSTP SIGTIN SIGTOU 信号获得系统默认的行为（这些信号被 shell 用来做工作控制（job control））
+SIGPROF 信号直接被 Go 的运行时所处理，来实现 runtime.CPUProfile
+其它的信号将被捕捉，但并不会执行动作
+
+若 Go 程序在 忽略 SIGHUP 或 忽略 SIGINT 的情况下启动（信号处理器设置为 SIG_IGN），它们会保持忽视
+
+若 Go 程序在非空信号遮罩（non-empty signal mask）的情况下启动，它们通常会被兑现
+但是，有些信号是明确地不会被阻挡的：同步信号、SIGILL、SIGTRAP、SIGSTKFLT、SIGCHLD、SIGPROF，以及
+在 GUN/Linux 上，信号 32（SIGCANCEL）以及信号 33（SIGSETXID）（SIGCANCEL 和 SIGSETXID 被 glibc 内部使用）
+被 os.Exec 或者被 os/exec 启动的子进程，将继承修改后的信号遮罩
+
+
+修改 Go 程序中信号的行为
+
+这个包中的函数允许一个程序修改 Go 程序处理信号的方式
+
+Notify 函数禁用了给定的非同步信号集的默认行为，并将它们分发至一个或多个注册了的 channel 中
+准确地说，它作用于 SIGHUP SIGINT SIGQUIT SIGABRT SIGTERM
+它也作用于工作控制信号 SIGTSTP SIGTTIN SIGTTOU，这种情况下系统的默认行为不会发生
+它也作用于一些本不会产生动作的信号：
+SIGUSR1 SIGUSR2 SIGPIPE SIGALRM SIGCHLD SIGCONT SIGURG SIGXCPU SIGXFSZ
+SIGVTALRM SIGWINCH SIGIO SIGPWR SIGSYS SIGINFO SIGTHR SIGWAITING SIGLWP
+SIGFREEZE SIGTHAW SIGLOST SIGXRES SIGJVM1 SIGJVM2
+以及任何系统使用的实时信号
+注意，并非所有的信号在任何一个系统上都会有
+
+若程序在 忽略 SIGHUP 或 忽略 SIGINT 的情况下启动，
+同时 Notify 函数被其中任何一个调用了，
+那么一个对应的信号处理器会被建立，它将不会再会被忽略
+若在其后， Reset 函数或者 Ignore 函数在那个信号上调用，
+或 Stop 函数在所有与被 Notify 传递的该信号的 channel 上被调用，
+该信号将再一次被忽略
+Reset 函数会将信号重置为系统默认行为，而 Ignore 函数会导致系统完全忽略该信号
+
+若程序在非空信号遮罩下启动，一些信号将被明确的不被阻塞，正如上文所述
+若 Notify 在被阻塞的的信号上调用，它将会变为非阻塞的
+若在其后， Reset 在该信号上调用，
+Stop 函数在所有与被 Notify 传递的该信号的 channel 上被调用，
+这个信号会再一次被阻塞
+
+
+SIGPIPE
+
+当 Go 程序写入一个破碎的管道时，内核会产生一个 SIGPIPE 信号
+
+若程序并没有调用 Notify 来接受 SIGPIPE 信号，那么其行为与文件描述符的编号相关
+在文件描述符 1 或 2（标准输出和标准错误）上，向破碎的管道写入时，会导致程序以 SIGPIPE 信号退出
+在其它的文件描述符上，向破碎的管道写入时，不会对 SIGPIPE 产生动作，写入将失败，并产生一个 EPIPE 错误
+
+若程序已经调用 Notify 来接受 SIGPIPE 信号，那么文件描述符的编号将不再有用
+SIGPIPE 将被发送至 Notify 的 channel 中，同时写入将失败，并产生一个 EPIPE 错误
+
+这意味着，默认情况下，命令行程序的行为会像典型的 Unix 命令行程序，
+但其它程序不会因为 写入关闭的网络通讯而产生的 SIGPIPE 而崩溃
+
+
+使用了 Go 程序的 cgo 和 SWIG
+
+在 包含非 Go 代码的 Go 程序中，典型的是通过 cgo 或 SWIG 调用的 C/C++ 代码，Go 的启动代码通常先运行
+它会先于非 Go 启动代码运行，配置 Go 运行时所期待的信号处理器
+若 非 Go 启动的代码希望安装其自有的信号处理，它必须执行特定的步骤来保证 Go 工作正常
+这部分的文档极了了这些步骤，以及使用非 Go 代码能够使 Go 程序的信号处理的整体影响
+在极少数情况下，非 Go 代码可能会在 Go 代码前运行，这些情况将下，下面的段落也会使用
+
+若被 Go 代码调用的非 Go 代码，并未修改任何信号处理器或者遮罩，那么行为和纯 Go 程序一样
+
+若 非 Go 代码安装了任何的信号处理器，它必须使用 SA_ONSTACK 标示 with sigaction
