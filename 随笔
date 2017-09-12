@@ -103,3 +103,77 @@ func main() {
         cmd.Stderr = os.Stderr
         cmd.Run()
 }
+
+
+-------- Code 3 --------
+
+// 对于如 序数/月份/星期 等等的数据，如何进行
+// 类型定制
+// 标准格式化
+
+// <1> 新建类型，类型依托在现有类型上
+// <2> 设置全局常量，常量本身为新建的类型
+// <3> 维护 新建类型的数据的字符串化表示
+// <4> String 方法的设置
+
+package main
+
+import (
+	"fmt"
+	"os"
+	"os/signal"
+	"time"
+)
+
+type Ordinal int
+
+const (
+	Zeroth Ordinal = iota
+	First
+	Second
+	Third
+	Fourth
+	Fifth
+	Sixth
+	Seventh
+	Eighth
+	Nineth
+	Tenth
+)
+
+var ordinals = [...]string{
+	"Zeroth",
+	"First",
+	"Second",
+	"Third",
+	"Fourth",
+	"Fifth",
+	"Sixth",
+	"Seventh",
+	"Eighth",
+	"Nineth",
+	"Tenth",
+}
+
+func (n Ordinal) String() string {
+	if Zeroth <= n && n <= Tenth {
+		return ordinals[n]
+	}
+	panic("ordinal out of range")
+}
+
+func main() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	i := 0
+	for {
+		s := <-c
+		i++
+		fmt.Printf("Got signal: %v, %s time\n", s, ordinals[i])
+		if i > 6 {
+			break
+		}
+	}
+	fmt.Println("Program now will exit")
+	time.Sleep(time.Millisecond * 500)
+}
