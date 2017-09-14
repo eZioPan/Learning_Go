@@ -1,0 +1,113 @@
+总览
+
+user 包允许使用名称或者 id 查找 用户账户
+
+
+
+Group struct 类型
+
+本类型表示了一个用户组
+
+在 POSIX 系统上， Gid 包含一个十进制数表示的 group ID
+
+type Group struct {
+	Gid string	// group ID
+	Name string	// group name
+}
+
+
+LookupGroup(name string) (*Group, error)
+通过名字查找一个组
+若群组不能被找到，则返回的错误的类型是 UnknownGroupError
+
+
+LookupGroupId(gid string) (*Group, error)
+通过 GID 查找一个组
+若群组不能被找到，则返回的错误的类型是 UnknownGroupIDError
+
+
+
+UnknownGroupError string 类型
+
+当 LookupGroup 找不到群组时，返回的错误
+
+
+(e UnknownGroupError) Error() string
+
+
+
+UnknownGroupIdError string 类型
+
+当 LookupGroupId 找不到群组时，返回的错误
+
+
+(e UnknownGroupIdError) Error() string
+
+
+
+UnknownUserError string 类型
+
+当 Lookup 找不到用户时，返回的错误
+
+
+(e UnknownUserError) Error() string
+
+
+
+UnknownUserIdError int 类型
+
+当 LookupId 找不到用户时，返回的错误
+
+
+(e UnknownUserIdError) Error() string
+
+
+
+User struct 类型
+
+本类型表示一个用户账户
+
+type User struct {
+	// 本字段表示 user ID
+	// 在 POSIX 系统上，这是一个用十进制数表示的 uid
+	// 在 Windows 上，这是一个用字符串表示的 security identifier（SID）
+	// 在 Plan 9 上，这是 /dev/user 的内容
+	Uid string
+
+	// 本字段表示首要群组 ID
+	// 在 POSIX 系统上，这是一个用十进制数表示的 gid
+	// 在 Windows 上，则是一个用字符串表示的 SID
+	// 在 Plan 9 上，这是 /dev/user 的内容
+	Gid string
+
+	// 本字段时登录名
+	Username string
+
+	// 本字段时用户的真名，或者显示的名称
+	// 它也许为空
+	// 在 POSIX 系统上，这是在 GECOS 字段列表的首个（或唯一一个）条目
+	// 在 Windows 上，这是用户显示的名字
+	// 在 Plan 9 上，这是 /dev/user 的内容
+	Name string
+
+	// 本字段是用户家目录的路径（若有的话）
+	HomeDir string
+}
+
+
+Current() (*User, error)
+返回当前用户
+
+
+Lookup(username string) (*User, error)
+通过用户名查找一个用户
+若用户没有找到，则返回的错误的类型是 UnknownUserError
+
+
+LookupId(uid string) (*User, error)
+通过 UID 查找一个用户
+若用户没有找到，则返回的错误类型是 UnknownUserIdError
+
+
+(u *User) GroupIds() ([]string, error)
+返回用户所加入的所有组的 ID
