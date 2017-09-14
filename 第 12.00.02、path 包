@@ -1,0 +1,158 @@
+总览
+
+本包实现了操作斜线分隔的路径的工具
+
+本包应该仅用于被正斜线分隔的路径，比如 URL 的路径
+这个包并不能处理包含驱动器字符和反斜线的 Windows 路径
+要处理操作系统路径，使用 path/filepath 包
+
+
+
+变量
+
+ErrBadPattern 指明了一个出错的 glob pattern
+
+var ErrBadPattern = errors.New("syntax error in pattern")
+
+
+
+Base(path string) string
+返回 path 的最后一个元素
+结尾的斜线在提取最后一个元素前，会首先被移除
+若 path 为空，本函数返回 “.”
+若路径完全由斜线组成，本函数返回 “/”
+
+EG.
+
+fmt.Println(path.Base("/a/b"))
+fmt.Println(path.Base("/"))
+fmt.Println(path.Base(""))
+
+
+
+Clean(path string) string
+通过纯粹的文字处理，返回最短的，等价于 path 的路径名
+它顺次执行下面的规则，直到没有任何操作可以完成
+
+1、将多个斜线替换为一个
+2、消除每个 . 路径名元素（当前目录）
+3、消除每个内部的 .. 路径名元素（父级目录），用 非 .. 路径名放置于前
+4、消除每个以根路径为开头的 .. 元素，也就是在路径的开头处，将 “/..” 替换为 “/”
+
+仅当路径为根目录 “/” 时，才以斜线做结尾
+
+若这些步骤的结果是空字符串，则本函数返回 “.”
+
+也参看 Rob Pike 的，《Lexical File Names in Plan 9 or Getting Dot-Dot Right》
+https://9p.io/sys/doc/lexnames.html
+
+EG.
+
+paths := []string{
+    "a/c",
+    "a//c",
+    "a/c/.",
+    "a/c/b/..",
+    "/../a/c",
+    "/../a/b/../././/c",
+    "",
+}
+
+for _, p := range paths {
+    fmt.Printf("Clean(%q) = %q\n", p, path.Clean(p))
+}
+
+
+
+Dir(path string) string
+返回除了最后一个元素的 path，通常是 path 所在的目录
+在使用 Split 去除最后一个元素后，用 Clean 清理并出去末尾的斜线
+若路径为空，本函数返回 “.”
+若路径由一整个斜线组，后再接一个非斜线字节，Dir 返回单个斜线
+其他任何情况，返回的路径都不会以斜线结尾
+
+EG.
+
+fmt.Println(path.Dir("/a/b/c"))
+fmt.Println(path.Dir("a/b/c"))
+fmt.Println(path.Dir("/"))
+fmt.Println(path.Dir(""))
+
+
+
+Ext(path string) string
+返回路径使用的文件名的后缀名
+后缀名是以路径中，以斜线分隔的最后一个元素的，以最后一个点为开头的部分
+若没有点，则为空
+
+EG.
+
+fmt.Println(path.Ext("/a/b/c/bar.css"))
+fmt.Println(path.Ext("/"))
+fmt.Println(path.Ext(""))
+
+
+
+IsAbs(path string) bool
+报告该路径是否为绝对路径
+
+EG.
+
+fmt.Println(path.IsAbs("/dev/null"))
+
+
+
+Join(elem ...string) string
+将任意多的路径元素拼合为单一路径，若需要在其间加入斜线
+结果将通过 Clean
+特别地，所有空字符串都被忽略
+
+EG.
+
+fmt.Println(path.Join("a", "b", "c"))
+fmt.Println(path.Join("a", "b/c"))
+fmt.Println(path.Join("a/b", "c"))
+fmt.Println(path.Join("", ""))
+fmt.Println(path.Join("a", ""))
+fmt.Println(path.Join("", "a"))
+
+
+
+Match(pattern, name string) (matched bool, err error)
+报告 name 是否匹配一个 shell 的文件名样式
+样式语法为：
+
+pattern:
+	{ term }
+
+term:
+	'*'
+		匹配任何非 / 的字符的序列
+	'?'
+		匹配任何单独的非 / 的字符
+	'[' [ '^' ] { character-range } ']'
+		字符类（必须非空）
+	c
+		匹配字符 c （c 不为 '*' '?' '\\' '['）
+	'\\' c
+		匹配字符 c
+
+character-range:
+	c
+		匹配字符 c （c 不为 '\\' '-' ']'）
+	'\\' c
+		匹配字符 c
+	lo '-' hi
+		匹配字符 c，其中 lo <= c <= hi
+
+Split(path string) (dir, file string)
+分离路径中紧随在最后一个斜线之后的部分，将路径分为一个目录和一个文件名
+若路径中没有斜线，本函数返回一个空的 dir，同时将 file 设置为 path
+返回的值具有以下属性
+path = dir + file
+
+EG.
+
+fmt.Println(path.Split("static/myfile.css"))
+fmt.Println(path.Split("myfile.css"))
+fmt.Println(path.Split(""))
