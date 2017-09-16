@@ -1,0 +1,121 @@
+总览
+
+filepath 包实现了与目标系统文件路径相匹配的文件路径操作
+
+filepath 包使用正斜线或反斜线，取决于操作系统
+为了处理无论在任何系统上都使用正斜线的路径，比如 URL，参看 path 包
+
+
+
+变量
+
+ErrBadPattern 指明了一个出错的 glob pattern
+
+var ErrBadPattern = errors.New("syntax error in pattern")
+
+SkipDir 可以是 WalkFunc 的一个返回值，指示出传入函数的目录名被跳过了
+它不是任何函数的返回的错误
+
+var SkipDir = errors.New("skip this directory")
+
+
+
+Abs(path string) (string, error)
+返回以绝对方式表示的路径
+若路径并非绝对路径，它将接上当前的工作路径来组成一个绝对路径
+给定文件的绝对路径不保证唯一性
+本函数在结果上调用 Clean
+
+
+
+Base(path string) string
+返回 path 的最后一个元素
+结尾的路径分隔符在提取最后一个元素前，会首先被移除
+若 path 为空，本函数返回 “.”
+若路径完全由分隔符组成，本函数返回单个分隔符
+
+
+
+Clean(path string) string
+通过纯粹的文字处理，返回最短的，等价于 path 的路径名
+它顺次执行下面的规则，直到没有任何操作可以完成
+
+1、将多个分隔符元素替换为一个
+2、消除每个 . 路径名元素（当前目录）
+3、消除每个内部的 .. 路径名元素（父级目录），用 非 .. 路径名放置于前
+4、消除每个以根路径为开头的 .. 元素，也就是，假设分隔符为 “/”，在路径的开头处，将 “/..” 替换为 “/”
+
+仅当路径为根目录时，比如在 Unix 上是 “/”，在 Windows 上是 `C:\`，才以斜线做结尾
+
+接着，将所有遇到的斜线都替换为分隔符
+
+若这些步骤的结果是空字符串，则本函数返回 “.”
+
+也参看 Rob Pike 的，《Lexical File Names in Plan 9 or Getting Dot-Dot Right》
+https://9p.io/sys/doc/lexnames.html
+
+
+
+Dir(path string) string
+返回除了最后一个元素的 path，通常是 path 所在的目录
+在使用 Split 去除最后一个元素后，用 Clean 清理并出去末尾的斜线
+若路径为空，本函数返回 “.”
+若路径由一整个分隔符组，后再接一个非斜线字节，Dir 返回单个斜线
+除非是根目录，否则路径不会以分隔符作为结尾
+
+
+
+EvalSymlinks(path string) (string, error)
+返回解析任何符号链接之后的路径名
+若路径是相对路径，则结果也会相对于当前目录，除非有一个部分是绝对符号链接
+本函数会调用 Clean 来清理结果
+
+
+
+Ext(path string) string
+返回路径使用的文件名的后缀名
+后缀名是以路径中，以斜线分隔的最后一个元素的，以最后一个点为开头的部分
+若没有点，则为空
+
+
+
+FromSlash(path string) string
+返回将路径中的每个斜线（“/”）都转换为分隔符的结果
+多个斜线会被转换为多个分隔符
+
+
+
+Glob(pattern string) (match []string, err error)
+返回匹配上的文件名，若没有匹配上，则返回 nil
+pattern 的语法和 Match 函数中的一样
+样式可以描述层级名，例如 “/usr/*/bin/ed”（假设分隔符为 “/”）
+
+本函数忽略文件系统错误，比如读取文件夹时的 I/O 错误
+仅可能返回的错误为 ErrBadPattern，表示 pattern 本身的错误
+
+
+
+HasPrefix(p, prefix string) bool
+弃用的函数，仅做兼容而保留
+
+
+
+IsAbs(path string) bool
+报告该路径是否为绝对路径
+
+
+
+Join(elem ...string) string
+将任意多的路径元素拼合为单一路径，若需要在其间加入分隔符
+结果将通过 Clean
+特别地，所有空字符串都被忽略
+在 Windows 上，当且仅当路径的首个元素为 UNC 路径时，结果为 UNC 路径
+
+EG.
+
+fmt.Println("On Unix:")
+fmt.Println(filepath.Join("a", "b", "c"))
+fmt.Println(filepath.Join("a", "b/c"))
+fmt.Println(filepath.Join("a/b", "c"))
+fmt.Println(filepath.Join("a/b", "/c"))
+
