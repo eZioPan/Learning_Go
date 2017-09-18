@@ -1,33 +1,49 @@
-strings 包用于字符串的操作
-【注意包名是复数的】
+总览
 
+strings 包实现了简单的函数，来操作 UTF-8 编码的字符串
+
+关于 Go 中的 UTF-8 字符串，参见 https://blog.golang.org/strings
 
 
 -------- 第一大类 匹配与定位 --------
 
 
-strings.HasPrefix(str, pre string) bool
-strings.HasSufix(str, su string) bool
+HasPrefix(str, pre string) bool
+HasSufix(str, su string) bool
 判断一个一个字符串 str 是否以 字符串 pre/su 作为开头/结尾
 
 
-strings.Contains(str, substr string) bool
+Compare(a,b string) int
+返回一个整数，在按字典顺序比较两个字符串之后
+若 a == b，结果为 0
+若 a < b，结果为 -1
+若 b > b，结果为 1
+
+
+Contains(str, substr string) bool
 判断一个字符串 str 是否包含一个字符串 substr
 
-strings.ContainsAny(str, chars string) bool
+
+ContainsAny(str, chars string) bool
 判断一个字符串 str 是否包含字符串 chars 中的一个或多个字符
 
-strings.ConstainsRune(str string, r rune) bool
+
+ConstainsRune(str string, r rune) bool
 判断一个字符串 str 中，是否包含一个 Unicode 字符 r
 
-strings.Count(str, sep string) int
+
+Count(str, sep string) int
 判断一个字符串 str 中，出现了多少个字符串 sep
 若 seq 为空，则返回 unicode点数+1 的数据
 
 
-strings.Index(s, sep string) int
+EqualFold(s, t string) bool
+报告 s 和 t 作为 UTF-8 字符串，是否在 Unicode case-folding（转换为小写） 下等价
+
+
+Index(s, sep string) int
 string.IndexAny(s, chars string) int
-strings.IndexByte(s string, c byte) int
+IndexByte(s string, c byte) int
 string.IndexRune(s string, r rune) int
 string.IndexFunc(s string, f func(rune) bool) int
 在字符串 s 中寻找指定的 字符串 sep
@@ -35,10 +51,11 @@ string.IndexFunc(s string, f func(rune) bool) int
 若不成功则返回 -1
 具体函数作用对象与用法仿照上文函数
 
-strings.LastIndex(s, sep string) int
-strings.LastIndexAny(s, chars string) int
-strings.LastIndexByte(s string, c byte) int
-strings.LastIndexFunc(s string, f func(rune) bool) int
+
+LastIndex(s, sep string) int
+LastIndexAny(s, chars string) int
+LastIndexByte(s string, c byte) int
+LastIndexFunc(s string, f func(rune) bool) int
 同上，查找最后一个匹配上的
 注意没有 LastIndexRune 这个函数
 
@@ -47,18 +64,19 @@ strings.LastIndexFunc(s string, f func(rune) bool) int
 -------- 第二大类 字符串的切片与拼接 --------
 
 
-strings.Fields(str string) []string
+Fields(str string) []string
 通过 unicode.IsSpace 判断出的空白字符
 将文本切片为不含空白字符的 字符串 slice
 
-strings.FieldsFunc(s string, f func(rune) bool) []string
+
+FieldsFunc(s string, f func(rune) bool) []string
 自定义切片法则函数 f func(rune) bool
 将文本切片为不含 rune 字符的 字符串 slice
 
 
-strings.Split(s, sep string) []string
-strings.SplitN(s, sep string, n int) []string
-将字符串切片，与 strings.Field 不同的是，
+Split(s, sep string) []string
+SplitN(s, sep string, n int) []string
+将字符串切片，与 Field 不同的是，
 若有连续的 sep 字符串出现
 则仅将第一个 sep 省略
 其他的 sep 以空字符的形式出现在 输出的 slice 中
@@ -67,14 +85,15 @@ n = 0 表示返回的是 nil
 n > 0 表示返回 n 个切片，若 n 小于需要切片的个数，则最后一个切片为剩余所有的字符串
 n < 0 表示使用全部的切片
 
-strings.SplitAfter(s, sep string) []string
-strings.SplitAfterN(s, sep string) []string
+
+SplitAfter(s, sep string) []string
+SplitAfterN(s, sep string) []string
 向后切片
 切口的位置在 sep 与后一个字符之间
 sep 与前一个字符串一同输出为同一个字符串
 
 
-strings.Join(a []string, sep string) string
+Join(a []string, sep string) string
 用字符串 sep 作为间隔，将字符串 slice a 连接为一个字符串
 
 
@@ -82,19 +101,22 @@ strings.Join(a []string, sep string) string
 -------- 第三大类 字符的大小写转化 --------
 
 
-strings.Title(s string) string
+Title(s string) string
 将每个单词的首字母转换为标题大小写
 
-strings.ToTitle(s string) string
+
+ToTitle(s string) string
 将每个单词的每个字母转换为标题大小写
 
-strings.ToTitleSpecial(c unicode.SpecialCase, s string) string
+
+ToTitleSpecial(c unicode.SpecialCase, s string) string
 特定语言环境下的大写转换
 
-strings.ToLower(s string) string
-strings.ToLowerSpecial(c unicode.SpecialCase, s string) string
-strings.ToUpper(s string) string
-strings.ToUpperSpecial(c unicode.SpecialCase, s string) string
+
+ToLower(s string) string
+ToLowerSpecial(c unicode.SpecialCase, s string) string
+ToUpper(s string) string
+ToUpperSpecial(c unicode.SpecialCase, s string) string
 全字符转换为大写/小写
 
 
@@ -102,13 +124,15 @@ strings.ToUpperSpecial(c unicode.SpecialCase, s string) string
 ------- 第四大类 字符的替换、映射和重复 --------
 
 
-strings.Map(mapping func(rune) rune, s string) string
+Map(mapping func(rune) rune, s string) string
 定义一个映射的规则，重映射一组字符串
 
-strings.Repeat(s string, count int) string
+
+Repeat(s string, count int) string
 将一个字符串重复 count 次，并输出
 
-strings.Replace(s old, new string, n int) string
+
+Replace(s old, new string, n int) string
 将字符串中的指定字符串替换为新的字符串，且仅替换前 n 个
 若 n<0，则忽略个数的限制
 
@@ -117,22 +141,105 @@ strings.Replace(s old, new string, n int) string
 -------- 第五大类 字符的修剪 --------
 
 
-strings.Trim(s, cutset string) string
+Trim(s, cutset string) string
 若字符串 s 的首尾，含有 字符串 cutset 中的字符
 则全部移除
 
-strings.TrimFunc(s string, f func(rune) bool) string
+
+TrimFunc(s string, f func(rune) bool) string
 自定义首位字符移除判断方式
 
-strings.TrimLeft(s, cutset string) string
-strings.TrimLeftFunc(s string, f func(rune) bool) string
-strings.TrimRight(s, cutset string) string
-strings.TrimRightFunc(s string, f func(rune) bool) string
+
+TrimLeft(s, cutset string) string
+TrimLeftFunc(s string, f func(rune) bool) string
+TrimRight(s, cutset string) string
+TrimRightFunc(s string, f func(rune) bool) string
 同上，分别为 左切、自定义规则左切、右切、自定义规则右切
 
-strings.TrimSpace(s, cutset string) string
+
+TrimSpace(s, cutset string) string
 移除首尾空白字符
 
-strings.TrimPrefix(s, prefix string) string
-strings.TrimSuffix(s, prefix string) string
+
+TrimPrefix(s, prefix string) string
+TrimSuffix(s, prefix string) string
 匹配并移除首/尾指定的字符串
+
+
+
+-------- Reader struct 类型 --------
+
+
+Reader 类型实现了从字符串读取的
+io.Reader io.ReaderAt io.Seeker io.WriterTo io.ByteScanner io.RuneScanner 接口
+
+type Reader struct {
+	// 包含过滤的或未导出的字段
+}
+
+
+NewReader(s string) *Reader
+返回一个新的 Reader，将从 s 中读取
+它与 bytes.NewBufferString 类似，但更加高效，并且是只读的
+
+
+(r *Reader) Len() int
+返回字符串中还未读取的字节数量
+
+
+(r *Reader) Read(b []byte) (n int, err error)
+
+(r *Reader) ReadAt(b []byte, off int64) (n int, err error)
+
+(r *Reader) ReadByte() (byte, error)
+
+(r *Reader) ReadRune() (ch rune, size int, err error)
+
+
+(r *Reader) Reset(s string)
+将 Reader 重置为将要读取 s 的状态
+
+
+(r *Reader) Seek(offset int64, whence int) (int64, error)
+实现了 io.Seeker 接口
+
+
+(r *Reader) Size() int64
+返回底层字符串的原始长度
+本方法的返回的是 ReadAt 方法可使用的字节数量
+
+
+(r *Reader) UnreadByte() error
+
+(r *Reader) UnreadRune() error
+
+(r *Reader) WriteTo(w io.Writer) (n int64, err error)
+
+
+
+-------- Replacer struct 类型 --------
+
+将列表中的一系列字符串做替换
+它在被多 goroutine 使用时是并发安全的
+
+type Replacer struct {
+	// 包含过滤的或者未导出的字段
+}
+
+
+NewReplacer(oldnew ...string) *Replacer
+从一个 新旧字符串对的列表中，返回一个 Replacer
+替换按照顺序执行，并不会重叠匹配
+
+EG.
+
+r := strings.NewReplacer("<", "&lt;", ">", "&gt;")
+fmt.Println(r.Replace("This is <b>HTML</b>!"))
+
+
+(r *Replacer) Replace(s string) string
+返回一份字符串 s 的备份，且所有的替换都已经执行了
+
+
+(r *Replacer) WriteString(w io.Writer, s string) (n int, err error)
+将 s 写入 w 中，且执行了所有的替换
