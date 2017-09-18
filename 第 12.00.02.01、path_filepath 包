@@ -119,3 +119,131 @@ fmt.Println(filepath.Join("a", "b/c"))
 fmt.Println(filepath.Join("a/b", "c"))
 fmt.Println(filepath.Join("a/b", "/c"))
 
+
+
+Match(pattern, name string) (matched bool, err error)
+报告 name 是否匹配一个 shell 的文件名样式
+样式语法为：
+
+pattern:
+	{ term }
+
+term:
+	'*'
+		匹配任何非分隔符的字符的序列
+	'?'
+		匹配任何单独的非分隔符的字符
+	'[' [ '^' ] { character-range } ']'
+		字符类（必须非空）
+	c
+		匹配字符 c （c 不为 '*' '?' '\\' '['）
+	'\\' c
+		匹配字符 c
+
+character-range:
+	c
+		匹配字符 c （c 不为 '\\' '-' ']'）
+	'\\' c
+		匹配字符 c
+	lo '-' hi
+		匹配字符 c，其中 lo <= c <= hi
+
+本函数要求样式匹配上所有的名称，并非其子字符串
+仅可能返回的错误为 ErrBadPattern，当样式本身有错时
+
+在 Windows 上，转义被关闭
+替代的， “\\” 将作为路径分隔符
+
+
+
+Rel(basepath, targpath string) (string, error)
+返回一个相对路径，该路径与 basepath 结合，并补上可能需要的分隔符之后，在字面上与 targpath 等价
+也就是 Join(basepath, Rel(basepath, targpath)) 等价于 targpath 自身
+当成功是，返回的路径将永远相对与 basepath，即便 basepath 和 targpath 不含有任何共同的元素
+若 targpath 无法相对 basepath 建立，或者必须知道当工作目录才能执行时，本函数会返回一个错误
+本函数调用 Clean 清理结果
+
+EG.
+
+paths := []string{
+    "/a/b/c",
+    "/b/c",
+    "./b/c",
+}
+base := "/a"
+
+fmt.Println("On Unix:")
+for _, p := range paths {
+    rel, err := filepath.Rel(base, p)
+    fmt.Printf("%q: %q %v\n", p, rel, err)
+}
+
+
+
+Split(path string) (dir, file string)
+分离路径中紧随在最后一个分隔符之后的部分，将路径分为一个目录和一个文件名
+若路径中没有分隔符，本函数返回一个空的 dir，同时将 file 设置为 path
+返回的值具有以下属性
+path = dir + file
+
+EG.
+
+paths := []string{
+    "/home/arnie/amelia.jpg",
+    "/mnt/photos/",
+    "rabbit.jpg",
+    "/usr/local//go",
+}
+fmt.Println("On Unix:")
+for _, p := range paths {
+    dir, file := filepath.Split(p)
+    fmt.Printf("input: %q\n\tdir: %q\n\tfile: %q\n", p, dir, file)
+}
+
+
+
+SplitList(path string) []string
+将通过系统特定的文件列表分隔符组合起来的路径列表分离开
+文件列表分隔符 通常在 PATH 或者 GOPATH 环境变量中能发现
+与 strings.Split 不同，当传入一个空字符串时，本函数返回一个空 slice
+
+
+EG.
+
+fmt.Println("On Unix:", filepath.SplitList("/a/b/c:/usr/bin"))
+
+
+
+ToSlash(path string) string
+返回将路径中的每一个分隔符都替换为斜线
+多个分隔符会被替换为多个斜线
+
+
+
+VolumeName(path string) string
+返回前序的卷名称
+在 Windows上，给出 “C:\foo\bar” ，返回 “C:”，给出 “\\host\share\foo”，返回 “\\host\share”
+其他平台返回 “”
+
+
+
+Walk(root string, walkFn WalkFunc) error
+本函数从 root 处开始，遍历整个文件树，为文件树中，包含 root 目录在内的每个文件和目录调用 walkFn 函数
+所有在探查文件和目录时触发的错误都会被 walkFn 过滤
+文件以字符顺序遍历，这让输出变得唯一，但也意味着在非常大型的目录中，本函数可能并非高效
+本函数不会解析符号链接
+
+
+
+type WalkFunc func(path string, info os.FileInfo, err error) error 类型
+
+WalkFunc 函数类型在 Walk 函数遍历每个文件或目录时，都会调用的函数
+path 参数将用传入 Walk 函数的参数作为前缀，也就是说，若在调用 Walk 时传入了 “dir”，
+而这个目录中包含文件 a，则本函数将传入参数“dir/a”
+info 参数是文件路径的 os.FileInfo
+
+若遍历至某个路径时产生了错误，则传来的错误会描述问题，而函数则可以决定如何处理这些错误（同时 Walk 函数也不会进入那些目录）
+若一个错误被返回，那么进程就会停止
+一个特例是，当函数返回特定的值 SkipDir
+若函数在调用至一个目录时返回了 SkipDir，Walk 则跳过该目录的所有内容
+若函数在调用至一个非目录时返回了 SkipDir，Walk 则跳过该目录中剩余的文件
