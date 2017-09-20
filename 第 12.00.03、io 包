@@ -1,0 +1,317 @@
+总览
+
+io 包提供了 I/O 原语的基础界面
+它主要的工作是包裹已经存在的原语的实现，
+比如在 os 包中的内容，
+并将它们转化为函数抽象后的公共通用的界面，再加上一些其他相关的原语
+
+由于这些界面和原语用多种实现包裹了底层操作，
+除非有其他声明，客户端不应假设它们是并行安全的
+
+
+
+常量
+
+查找位置
+
+const (
+	SeekStart = 0	// 相对文件头查找
+	SeekCurrent = 1	// 相对当前位置查找
+	SeelEnd = 2		// 相对结尾处查找
+)
+
+
+
+变量
+
+EOF 是当没有更多的输入可用时， Read 返回的错误
+函数应仅在表示优雅的输入结束时才返回 EOF
+若在一个结构数据流中，遇见了不可预计的 EOF，
+恰当的错误应该是 ErrUnexpectEOF 或者其他一些能给出更详细细节的错误
+
+var EOF = errors.New("EOF")
+
+
+ErrClosedPipe 错误用于在一个关闭的管道上读或写时产生
+
+var ErrClosedPipe = errors.New("io: read/write on closed pipe")
+
+
+ErrNoProgress 被一个 io.Reader 的客户端返回，
+当很多次 Read 调用都失败地返回任何数据或错误，
+这通常预示着图个损坏的 io.Reader 实现
+
+var ErrNoProgress = errors.New("multiple Read calls return no data or error")
+
+
+ErrShortBuffer 意味着读取需要一个比当前所提供还要长的 buffer
+
+var ErrShortBuffer = errors.New("short buffer")
+
+
+ErrShortWrite 意味着写入接受的字节比需求的要短，但无法返回一个明确的错误
+
+var ErrShortWrite = errors.New("short write")
+
+
+ErrUnexpectedEOF 意味着在读取固定长度的块或数据结构的中间，遇到了 EOF
+
+var ErrUnexpectedEOF = errors.New("unexpected EOF")
+
+
+
+Copy(dst Writer, src Reader) (written int64, err error)
+从 src 向 dst 拷贝，直到遇见 src 的 EOF 或者出现了一个错误
+它返回已经拷贝的字节数，以及拷贝时遇到的第一个错误，若有的话
+
+一个成功的拷贝应该返回 err == nil，而非 err == EOF
+由于本函数被定义为从 src 读取直到 EOF，所以本函数不应该将 Read 读取的 EOF 当做错误对待
+
+若 src 实现了 WriterTo 接口，则拷贝的实现是通过调用 src.WriteTo(dst)
+其他情况下，若 dst 实现了 ReaderFrom，拷贝的实现则是通过调用 dst.ReadFrom(src)
+
+EG.
+
+r := strings.NewReader("some io.Reader stream to be read\n")
+
+if _, err := io.Copy(os.Stdout, r); err != nil {
+	log.Fatal(err)
+}
+
+
+
+CopyBuffer(dst Writer, src Reader, buf []byte) (written int64, err error)
+本函数与 Copy 函数等同，除了本函数使用提供的缓存（若需要的话），而非零时划分出的缓存
+若 buf 为 nil，则划分出一个来；其他情况下，若 buf 的长度为 0，本函数产生 panic
+
+EG.
+
+r1 := strings.NewReader("first reader\n")
+r2 := strings.NewReader("second reader\n")
+buf := make([]byte, 8)
+
+// buf 在此使用...
+if _, err := io.CopyBuffer(os.Stdout, r1, buf); err != nil {
+	log.Fatal(err)
+}
+
+// ... 在此复用，无需另外划分一个新的
+if _, err := io.CopyBuffer(os.Stdout, r2, buf); err != nil {
+	log.Fatal(err)
+}
+
+
+
+CopyN(dst Writer, src Reader, n int64) (written int64, err error)
+从 src 拷贝 n 字节（或直到遇到错误）至 dst
+它返回拷贝的字节的数量，以及拷贝过程中最早遇到的错误
+返回时，当且仅当 err == nil 时， written == n
+
+EG.
+
+r := strings.NewReader("some io.Reader stream to be read")
+
+if _, err := io.CopyN(os.Stdout, r, 5); err != nil {
+	log.Fatal(err)
+}
+
+
+
+ReadAtLeast(r Reader, buf []byte, min int) (n int, err error)
+从 r 读取至 buf 中，直到读取到了至少 min 个字节数
+返回拷贝的字节数，若少于指定的字节，则返回一个错误
+仅在没有读取到任何字节的时候返回错误 EOF
+若读取的字节数少于 min 指定的字节数，则返回 ErrUnexpectedEOF
+若 min 比 buf 长度要大，则返回错误 ErrShortBuffer
+当且仅当 err == nil 时，返回的 n >= min
+
+EG.
+
+r := strings.NewReader("some io.Reader stream to be read\n")
+
+buf := make([]byte, 33)
+if _, err := io.ReadAtLeast(r, buf, 4); err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%s\n", buf)
+
+// buffer 比 min 指定的要少
+shortBuf := make([]byte, 3)
+if _, err := io.ReadAtLeast(r, shortBuf, 4); err != nil {
+	fmt.Println("error:", err)
+}
+
+// 最小读取字节数比 io.Reader 流的要大
+longBuf := make([]byte, 64)
+if _, err := io.ReadAtLeast(r, longBuf, 64); err != nil {
+	fmt.Println("error:", err)
+}
+
+
+
+ReadFull(r Reader, buf []byte) (n int, err error)
+从 r 准确读取 len(buf) 个字节至 buf 中
+返回已拷贝的字节数，若拷贝的字节数少于原本的，则返回一个错误
+仅当没有任何字节可读取时，才返回 EOF
+若开始读取，但所读取的字节数少于指定的，本函数返回 ErrUnexpectedEOF
+当且仅当 err == nil 时， n == len(buf)
+
+EG.
+
+r := strings.NewReader("some io.Reader stream to be read\n")
+
+buf := make([]byte, 4)
+if _, err := io.ReadFull(r, buf); err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%s\n", buf)
+
+// 最小读取字节数大于 io.Reader 流
+longBuf := make([]byte, 64)
+if _, err := io.ReadFull(r, longBuf); err != nil {
+	fmt.Println("error:", err)
+}
+
+
+
+WriteString(w Writer, s string) (n int, err error)
+将字符串的内容写入 w 中，w 接受的是 []byte
+若 w 实现了 WriteString 方法，则直接调用
+其他情况下， w.Write 仅会调用一次
+
+EG.
+
+io.WriteString(os.Stdout, "Hello World")
+
+
+
+ByteReader interface 类型
+
+ByteReader 接口包裹了 ReadByte 方法
+
+ReadByte 从输入中读取并返回下字节，或者任何遇到的错误
+若 ReadByte 返回一个错误，则不会消耗输入的字节，返回的字节值将为未定义
+
+type ByteReader interface {
+	ReadByte() (byte, error)
+}
+
+
+
+ByteScanner interface 类型
+
+ByteScanner 接口为 将 UnreadByte 方法加入基础的 ReadByte 方法的接口
+
+UnreadByte 导致下一次调用 ReadByte 时，返回和上一次调用 ReadByte 时返回相同的值
+若在两次调用 UnreadByte 之间没有调用一次 ReadByte 时会是一个错误
+
+type ByteScanner interface {
+	ByteReader
+	UnreadByte() error
+}
+
+
+
+ByteWriter interface 类型
+
+ByteWriter 接口包裹了 WriteByte 方法
+
+type ByteWriter interface {
+	WriteByte(c byte) error
+}
+
+
+
+Closer interface 类型
+
+Closer 接口包裹了 Close 方法
+
+在第一次调用 Close 方法之后再次调用 Close 方法是未定义的
+若有特殊的实现，则应该为它们的行为写文档
+
+type Closer interface {
+	Close() error
+}
+
+
+
+LimitedReader struct 类型
+
+一个 LimitedReader 从 R 读取数据，但将返回的数据量限制为 N 字节
+每次调用 Read 都会更新 N 来显示新剩余的总量
+Read 返回 EOF，当 N <= 0，或者底层的 R 返回了 EOF
+
+type LimitedReader struct {
+	R Reader    // 底层的 reader
+	N int       // 最大的剩余字节
+}
+
+
+(l *LimitedReader) Read(p []byte) (n int, err error)
+
+
+
+PipeReader struct 类型
+
+PipeReader 是一个管道的读取端
+
+type PipeReader struct {
+	// 包含过滤的或未导出的字段
+}
+
+
+Pipe() (*PipeReader, *PipeWriter)
+创建一个同步的内存中管道
+它可以用来连接一个需要 io.Reader 的代码和一个需要 io.Writer 的代码
+
+在管道上 Read 方法和 Write 方法是一一对应的，一个特例是，多个 Read 需要消耗一个 Write 的内容
+也就说，每个次调用 Write 写入 PipeWriter 阻塞，直到它满足了 PipeReader 中一个或多个 Read 能完全消耗写入的数据
+数据将直接从 Write 拷贝至对应的 Read 中；并不会有内部的 buffer
+
+并行调用 Read 和 Write 或者 Close 都是安全的
+并行调用多个 Read，以及并行调用多个 Write 也是安全的：
+每个独立的调用都会按顺序过关
+
+
+(r *PipeReader) Close() error
+关闭 reader
+其后向写入端的写入操作，都会返回错误 ErrClosedPipe
+
+
+(r *PipeReader) CloseWithError(err error) error
+关闭 reader
+其后向写入端写入的操作，都会返回错误 err
+
+
+(r *PipeReader) Read(date []byte) (n int, err error)
+本方法实现了标准 Read 接口：
+它从管道中读取数据，阻塞直到 writer 到达，或者写入端被关闭
+若写入端 is closed with an error，那么那个 error 就会作为 err 返回，其他情况下 err 为 EOF
+
+
+
+PipeWriter struct 类型
+
+PipeWriter 为管道的写入端
+
+PipeWriter struct {
+	// 包含过滤的或者未导出的字段
+}
+
+
+(w *PipeWriter) Close() error
+关闭一个 writer
+其后从读取端读取的操作，都不会返回字节，且返回 EOF
+
+
+(w *PipeWriter) CloseWithError(err error) error
+关闭一个 writer
+其后从读取端的读取操作，都不会返回字节，且返回 EOF，若 err 是 nil，则返回 EOF
+
+本方法永远返回 nil
+
+
+(w *PipeWriter) Write(data []byte) (n int, err error)
+本方法实现了标准 Write 接口：
+它向管道中写入数据，阻塞直到一个活多个 reader 消耗所有的数据，或读取端被关闭
+若读取端 is closed with an error，那么那个 err 作为 err 而返回；其他情况下 err 为 ErrClosedPipe
