@@ -315,3 +315,394 @@ PipeWriter struct {
 本方法实现了标准 Write 接口：
 它向管道中写入数据，阻塞直到一个活多个 reader 消耗所有的数据，或读取端被关闭
 若读取端 is closed with an error，那么那个 err 作为 err 而返回；其他情况下 err 为 ErrClosedPipe
+
+
+
+ReadCloser interface 类型
+
+ReadCloser 是包含了基础 Read 和 Close 方法的接口类型
+
+type ReadCloser interface {
+	Reader
+	Closer
+}
+
+
+
+ReadSeeker interface 类型
+
+ReadSeeker 是包含了基础 Read 和 Seek 方法的接口类型
+
+type ReadSeeker interface {
+	Reader
+	Seeker
+}
+
+
+
+ReadWriteCloser interface 类型
+
+ReadWriteCloser 是包含了基础 Read Write 和 Close 方法的接口类型
+
+ReadWriteCloser interface {
+	Reader
+	Writer
+	Closer
+}
+
+
+
+ReadWriteSeeker interface 类型
+
+ReadWriteSeeker 是包含了基础 Read Write 和 Seek 方法的接口类型
+
+type ReadWriteSeeker interface {
+	Reader
+	Writer
+	Seeker
+}
+
+
+
+ReadWriter interface 类型
+
+ReadWriter 是包含了基础 Read 和 Write 方法的接口类型
+
+type ReadWriter interface {
+	Reader
+	Writer
+}
+
+
+
+Reader interface 类型
+
+Reader 是包裹了基本 Read 方法的接口类型
+
+Read 读取至 len(p) 字节的数据至 p 中
+它返回读取的字节数（0 <= n <= len(p)），以及任何遇到的错误
+即便 Read 返回的 n 小于 len(p)，它也可能会在被调用时，使用所有的 p 作为启动空间
+若存在数据，但长度小于 len(p) 字节，Read 通常会返回现有的，而并不会等待更多的数据
+
+当 Read 遇到一个错误，或者成功读取至少一个字节之后遇到 EOF，它都会返回已经读取的字节数
+它可能会在同一次调用中返回（非 nil 的）错误，或在下一次调用中返回错误（以及 n == 0）
+这个通常情况的一个实例就是，一个 Reader 在读取到了输入流结尾处，返回了一个非零字节数，以及一个可能是 EOF 或者 nil 的 err
+那么在下次调用 Read 时，它应该返回 0,EOF
+
+调用者应该永远优先考虑返回的 n > 0 字节，再考虑错误 err
+这样做能正确地处理在读取了一些字节之后遇到的 I/O 错误，同时也允许了 EOF 的行为
+
+Read 的实现并不鼓励返回 0 字节长度的同时返回 nil 错误，除了 len(p) == 0 的情况
+调用者应该对待返回的 0 和 nil 为指示什么事情也没有发生；特别是，它并未指示出 EOF 来
+
+实现禁止持有 p
+
+type Reader interfaec {
+	Read(p []byte) (n int, err error)
+}
+
+
+LimitReader(r Reader, n int64) Reader
+返回一个 Reader，从 r 去读数据，但在读取了 n 字节之后，以 EOF 停止
+底层的实现为一个 *LimitedReader
+
+EG.
+
+r := strings.NewReader("some io.Reader stream to be read\n")
+lr := io.LimitReader(r, 4)
+
+if _, err := io.Copy(os.Stdout, lr); err != nil {
+	log.Fatal(err)
+}
+
+
+MultiReader(reader ...Reader) Reader
+返回一个 Reader，它们是所提供的 Reader 的逻辑上的串联
+它们按顺序读取
+一旦所有的输入都返回 EOF，Read 将返回 EOF
+若任何 reader 返回了一个 非 nil 非 EOF 的错误，Read 将返回那个错误
+
+EG.
+
+r1 := strings.NewReader("first reader ")
+r2 := strings.NewReader("second reader ")
+r3 := strings.NewReader("third reader\n")
+r := io.MultiReader(r1, r2, r3)
+
+if _, err := io.Copy(os.Stdout, r); err != nil {
+	log.Fatal(err)
+}
+
+
+
+TeeReader(r Reader, w Writer) Reader
+返回一个 Reader，它将任何从 r 中读取的数据都写入 w 中
+所有通过该函数，从 r 读取的数据，都会顺次写入 w 中
+没有内部缓存——任何写入都应该在读取结束之前结束
+任何在写入时遇到的错误都会回报为读取错误
+
+EG.
+
+r := strings.NewReader("some io.Reader stream to be read\n")
+var buf bytes.Buffer
+tee := io.TeeReader(r, &buf)
+
+printall := func(r io.Reader) {
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("%s", b)
+}
+
+printall(tee)
+printall(&buf)
+
+
+
+ReaderAt interface 类型
+
+ReaderAt 是包裹了基本 ReadAt 方法的接口类型
+
+ReadAt 从底层输入源的偏移 off 处开始，读取 len(p) 字节的数据至 p 中
+它返回已读取的字节数（0 <= n <= len(p)），以及任何遇到的错误
+
+当 ReadAt 返回 n < len(p) 时，它返回一个非 nil 的错误来解释为什么没有更多的字节被返回
+在这个层面上来说，ReadAt 比 Read 更严格
+
+即便 Read 返回的 n 小于 len(p)，它也可能会在被调用时，使用所有的 p 作为启动空间
+若存在数据，但长度小于 len(p) 字节，ReadAt 会阻塞直到所有数据可用，或者遇到一个错误
+在这个层面上来说，ReadAt 与 Read 是不同的
+
+若返回的 n == len(p)，且 ReadAt 到达输入源的末尾，ReadAt 既可以返回 err == EOF，也可以返回 err == nil
+
+若 ReadAt 从具有 seek offset 的输入源读取数据，
+ReadAt 应该不去影响底层的 seek offset，也不受底层的 seek offset影响
+
+ReadAt 的客户端应该可以并行地对同一个输入源调用 ReadAt
+
+实现禁止持有 p
+
+type ReaderAt interface {
+	ReadAt(p []byte, off int64) (n int, err error)
+}
+
+
+
+ReaderFrom interface 类型
+
+ReaderFrom 是包裹了基本 ReadFrom 方法的接口类型
+
+ReadFrom 从 r 中读取数据，直到 EOF 或错误
+返回值 n 是已经读取到的数据
+在读取过程中，任何错误，除了 io.EOF，都会被返回
+
+若可用，则 Copy 函数使用改方法
+
+type ReaderFrom interface {
+	ReadFrom(r Reader) (n int64, err error)
+}
+
+
+
+RuneReader interface 类型
+
+RuneReader 是包裹了基本的 ReadRune 方法的接口类型
+
+ReadRune 从读取单个 UTF-8 编码的 Unicode 字符，并返回对应的 rune 和 它的字节大小
+若没有可用的字符，err 将被设置
+
+type RuneReader interface {
+	ReadRune() (r rune, size int, err error)
+}
+
+
+
+RuneScanner interface 类型
+
+RuneScanner 为将 UnreadRune 方法加入基本的 ReadRune 方法的接口类型
+
+UnreadRune 导致下次调用 ReadRune 时，返回和上次调用 ReadRune 相同的值
+连续两次调用 UnreadRune 之间没有调用 ReadRune 可能会产生错误
+
+type RuneScanner interface {
+	RuneReader
+	UnreadRune() error
+}
+
+
+
+SectionReader struct 类型
+
+SectionReader 在底层 ReaderAt 的某个切片上，实现了 Read Seek ReadAt
+
+type SectionReader struct {
+	// 包含过滤的或未导出的字段
+}
+
+EG.
+
+r := strings.NewReader("some io.Reader stream to be read\n")
+s := io.NewSectionReader(r, 5, 17)
+
+if _, err := io.Copy(os.Stdout, s); err != nil {
+	log.Fatal(err)
+}
+
+
+NewSectionReader(r ReaderAt, off int64, n int64) *SectionReader
+返回一个 SectionReader，其从 r 的偏移 off 开始，读取 n 字节之后，以 EOF 结束
+
+
+(s *SectionReader) Read(p []byte) (n int, err error)
+
+
+(s *SectionReader) ReadAt(p []byte, off int64) (n int, err error)
+
+EG.
+
+r := strings.NewReader("some io.Reader stream to be read\n")
+s := io.NewSectionReader(r, 5, 16)
+
+buf := make([]byte, 6)
+if _, err := s.ReadAt(buf, 10); err != nil {
+	log.Fatal(err)
+}
+
+fmt.Printf("%s\n", buf)
+
+
+(s *SectionReader) Seek(offset int64, whence int) (int64, error)
+
+EG.
+
+r := strings.NewReader("some io.Reader stream to be read\n")
+s := io.NewSectionReader(r, 5, 16)
+
+if _, err := s.Seek(10, io.SeekStart); err != nil {
+	log.Fatal(err)
+}
+
+buf := make([]byte, 6)
+if _, err := s.Read(buf); err != nil {
+	log.Fatal(err)
+}
+
+fmt.Printf("%s\n", buf)
+
+
+(s *SectionReader) Size() int64
+返回当前 Section 的大小的字节数
+
+
+
+Seeker interface 类型
+
+Seeker 是包裹了基本 Seek 方法的接口类型
+
+Seek 设置了下一次 Read 或 Write 的偏移值，根据 whence 来解读相对位置：
+SeekStart 意味着相对于文件开头，
+SeekCurrent 意味着相对当前偏移
+SeekEnd 意味着相对文件结尾
+Seek 返回新的相对于文件开头的偏移值，若有错误也一并返回
+
+查找一个位于文件起始位置前的偏移是一个错误
+查找任何正向偏移是合法的，但随后的对于底层对象的 I/O 操作的行为，则根据实现的不同而不同
+
+type Seeker interface {
+	Seek(offset int64, whence int) (int64, error)
+}
+
+
+
+WriteCloser interface 类型
+
+WriteCloser 是包裹了基本的 Write 和 Close 方法的接口类型
+
+type WriteCloser interface {
+	Writer
+	Closer
+}
+
+
+
+WriteSeeker interface 类型
+
+WriteSeeker 是包裹了基本的 Write 和 Seek 方法的接口类型
+
+type WriteSeeker interface {
+	Writer
+	Seeker
+}
+
+
+
+Writer interface 类型
+
+Writer 是包裹了基本的 Write 方法的接口类型
+
+Write 从 p 中写入 len(p) 字节的数据至底层数据流
+它返回从 p 写入的字节的数量（0 <= n <= len(p)），以及任何任何导致写入提前终止的错误
+若 n < len(p)， Write 必须返回一个非 nil 的错误
+Write 禁止修改数据切片，即便是临时的也不行
+
+实现禁止持有 p
+
+type Writer interface {
+	Write(p []byte) (n int, err error)
+}
+
+
+MultiWriter(writers ...Writer) Writer
+创建一个 writer，将其自身写入的数据拷贝至所有提供的 writer 中，与 Unix 的 tee(1) 命令类似
+
+EG.
+
+r := strings.NewReader("some io.Reader stream to be read\n")
+
+var buf1, buf2 bytes.Buffer
+w := io.MultiWriter(&buf1, &buf2)
+
+if _, err := io.Copy(w, r); err != nil {
+	log.Fatal(err)
+}
+
+fmt.Print(buf1.String())
+fmt.Print(buf2.String())
+
+
+
+WriterAt interface 类型
+
+WriterAt 是包裹了基本的 WriteAt 方法的接口类型
+
+WriteAt 在底层数据流的偏移 off 处，写入从 p 取得的中长度为 len(p) 字节的数据
+它返回从 p 写入的字节的数量（0 <= n <= len(p)），以及任何导致写入提前终止的错误
+若 n < len(p)， Write 必须返回一个非 nil 的错误
+
+若 WriteAt 写入的目标具有 seek offset，WriteAt 不应该影响底层的 seek offset，也不应该被底层的 seek offset 所影响
+
+WriteAt 的客户端可以并行运行 WriteAt 在相同的目标，只要它们的范围没有交叠
+
+实现禁止持有 p
+
+type WriterAt interface {
+	WriteAt(p []byte, off int64) (n int, err error)
+}
+
+
+
+WriterTo interface 类型
+
+WriterTo 是包裹了 WriteTo 方法的接口类型
+
+WriteTo 写入数据至 w 中，直到没有更多数据可写入，或者遇见了一个错误
+返回值 n 是写入的字节数量
+任何写入过程中遇见的错误也将一同被返回
+
+若存在，则 Copy 函数会使用 WriteTo 方法
+
+type WriterTo interface {
+	WriteTo(w Writer) (n int64, err error)
+}
