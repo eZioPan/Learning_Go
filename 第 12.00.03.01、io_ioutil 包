@@ -1,0 +1,123 @@
+总览
+
+ioutil 包实现了一些 I/O 实用函数
+
+
+
+变量
+
+Discard 是一个 io.Writer，在其中，所有的 Write 调用不执行任何事，但返回成功调用
+
+var Discard io.Writer = devNull(0)
+
+
+
+NopCloser(r io.Reader) io.ReadCloser
+返回一个 ReadCloser，其中 Close 方法不执行任何操作，而 Reader 为提供的 r
+
+
+
+ReadAll(r io.Reader) ([]byte, error)
+从 r 读取数据，直到一个错误发生或者 EOF，并返回读取的数据
+一个成功的调用返回 err == nil，而非 err == EOF
+因为本函数被定义为从 src 中读取直到 EOF，它并不会将来自 Read 的 EOF 作为错误回报
+
+EG.
+
+r := strings.NewReader("Go is a general-purpose language designed with systems programming in mind.")
+
+b, err := ioutil.ReadAll(r)
+if err != nil {
+    log.Fatal(err)
+}
+
+fmt.Printf("%s", b)
+
+
+
+ReadDir(dirname string) ([]os.FileInfo, error)
+读取 dirname 指定的目录，并返回以文件名排序的对应的目录条目
+
+EG.
+
+files, err := ioutil.ReadDir(".")
+if err != nil {
+    log.Fatal(err)
+}
+
+for _, file := range files {
+    fmt.Println(file.Name())
+}
+
+
+
+ReadFile(fielname string) ([]byte, error)
+读取 filename 指定的文件，并返回文件内容
+一次成功的调用应该返回 err == nil，而非 err == EOF
+因为本函数去读整个文件，而不将 Read 中的 EOF 作为错误回报
+
+EG.
+
+content, err := ioutil.ReadFile("testdata/hello")
+if err != nil {
+    log.Fatal(err)
+}
+
+fmt.Printf("File contents: %s", content)
+
+
+
+TempDir(dir, prefix string) (name string, err error)
+在目录 dir 中，创建一个新临时目录，其名称前缀为 prefix，并返回新目录的路径
+若 dir 为空字符串，本函数使用默认的目录作为临时文件（查看 os.TempDir）
+多个程序同时调用本函数，并不会选择相同的目录
+调用者的责任是，在该目录不需要时，移除它们
+
+EG.
+
+content := []byte("temporary file's content")
+dir, err := ioutil.TempDir("", "example")
+if err != nil {
+    log.Fatal(err)
+}
+
+defer os.RemoveAll(dir) // clean up
+
+tmpfn := filepath.Join(dir, "tmpfile")
+if err := ioutil.WriteFile(tmpfn, content, 0666); err != nil {
+    log.Fatal(err)
+}
+
+
+
+TempFile(dir, prefix string) (f *os.File, err error)
+在目录 dir 中，创建一个新的临时文件，其名称的前缀为 prefix，打开文件来读取与写入，
+返回得到的 *os.File
+若 dir 是空字符串，本函数使用默认目录为临时文件（查看 os.TempDir）
+多个程序同时调用本函数，并不会使用相同文件
+调用者可以使用 f.Name() 来找到文件的路径名
+调用者的责任是，在该文件不需要时，移除它们
+
+EG.
+
+content := []byte("temporary file's content")
+tmpfile, err := ioutil.TempFile("", "example")
+if err != nil {
+    log.Fatal(err)
+}
+
+defer os.Remove(tmpfile.Name()) // clean up
+
+if _, err := tmpfile.Write(content); err != nil {
+    log.Fatal(err)
+}
+if err := tmpfile.Close(); err != nil {
+    log.Fatal(err)
+}
+
+
+
+WriteFile(filename string, data []byte, perm os.FileMode) error
+向文件名为 filename 文件中写入数据
+若文件不存在，本函数以权限 perm 创建它
+其他情况，本函数在写入前先截断它
