@@ -1,0 +1,92 @@
+总览
+
+bufio 包实现了带缓存的 I/O
+它包裹了 io.Reader 和 io.Writer 对象，来创建另一个对象（Reader 或者 Writer），
+这个对象同样实现了该接口，但提供了缓存和字符（textual） I/O 的一些帮助功能
+
+
+
+常量
+
+const (
+	// MaxScanTokenSize 是用来缓存单个 token 最大的大小
+	// 除非用户通过 Scan.Buffer 明确指定了缓存的大小
+	// 实际的最大 token 大小应该小于缓存，
+	// 由于缓存可能需要包括，举例来说，一个 newline
+	MaxScanTokenSize = 64 * 1024
+)
+
+
+
+变量
+
+var (
+	ErrInvalidUnreadByte = errors.New("bufio: invalid use of UnreadByte")
+	ErrInvalidUnreadRune = errors.New("bufio: invalid use of UnreadRune")
+	ErrBufferFull        = errors.New("bufio: buffer full")
+	ErrNegativeCount     = errors.New("bufio: negative count")
+)
+
+
+Scanner 返回的错误
+
+var (
+    ErrTooLong         = errors.New("bufio.Scanner: token too long")
+    ErrNegativeAdvance = errors.New("bufio.Scanner: SplitFunc returns negative advance count")
+    ErrAdvanceTooFar   = errors.New("bufio.Scanner: SplitFunc returns advance count beyond input")
+)
+
+
+ErrFinalToken 是一个特殊的守卫错误值
+它的意义是，被 Split 函数返回，来指示现在发出的错误是因为，已经读到了最后一个 token，扫描操作应该在这次操作之后停止
+在 Scan 收到这个错误之后，会停止扫描，并且不会返回错误
+这个值常用于提前停止过程，或当必须要发出一个最终的空 token 时
+也可以通过一个自定义的错误达到相同的行为，但这里提供的更简洁
+查看 emptyFinalToken 例子来了解该值的使用
+
+var ErrFinalToken = errors.New("final token")
+
+
+
+ScanBytes(data []byte, atEOF bool) (advance int, token []byte, err error)
+本函数对于一个 Scanner 来说是一个分离函数，将每个字节都作为一个 token 返回
+
+
+
+ScanLines(data []byte, atEOF bool) (advance int, token []byte, err error)
+本函数对于一个 Scanner 来说是一个分离函数，返回文本的每一行，并且移除任何 EOL 标志
+返回的行可能为空
+EOL 标志是一个可选的回车符后跟随一个强制新行符
+用正则表达式，表示为 `\r?\n`
+输入的最后一个非空行将被返回，即使其没有换行符
+
+
+
+ScanRunes(data []byte, atEOF bool) (advance int, token []byte, err error)
+本函对于一个 Scanner 来说是一个分离函数，将每一个 UTF-8 编码的 rune 作为一个 token 返回
+返回的 rune 等价于，对以字符串形式呈现的输入，做一个 range 循环，
+也就说，错误的 UTF-8 编码将被替换为 U+FFFD = "\xef\xbf\xbd"
+由于 Scan 接口，客户端无法分辨这是正常编码的替代字符（replacement runes）还是编码错误导致的结果
+
+
+
+ScanWords(data []byte, atEOF bool) (advance int, token []byte, err error)
+本函对于一个 Scanner 来说是一个分离函数，返回文本中以空格间隔的每个单词，其周边的空格会被删除
+它永远不会返回一个空字符串
+空格的定义来自 unicode.IsSpace
+
+
+
+ReadWriter struct 类型
+
+ReadWriter 存储了指向一个 Reader 和一个 Writer 的指针
+它实现了 io.ReadWriter
+
+type ReadWriter struct {
+	*Reader
+	*Writer
+}
+
+
+NewReadWriter(r *Reader, w *Writer) *ReadWriter
+分配一个新的 ReadWriter 来分发至 r 和 w
