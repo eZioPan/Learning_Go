@@ -90,3 +90,118 @@ type ReadWriter struct {
 
 NewReadWriter(r *Reader, w *Writer) *ReadWriter
 分配一个新的 ReadWriter 来分发至 r 和 w
+
+
+
+Reader struct 类型
+
+Reader 实现了一个具有缓存的 io.Reader 对象
+
+type Reader struct {
+    // 包含过滤或未导出字段
+}
+
+
+NewReader(rd io.Reader) *Reader
+返回一个新的 Reader，其具有默认的缓存大小
+
+
+NewReaderSize(rd io.Reader, size int) *Reader
+返回一个新的 Reader，其大小最少有指定的 size
+若作为参数的 io.Reader 已经具有足够大的大小，它返回底层的 Reader
+
+
+(b *Reader) Buffered() int
+返回从当前的缓存中可以读取的字节数
+
+
+(b *Reader) Discard(n int) (discarded int, err error)
+跳过 n 个字节，返回掉过的字节数
+
+若本函数跳过的少于 n 字节，它同样会返回一个错误
+若 0 <= n <= b.Buffered()，本函数保证成功，而不去读取底层的 io.Reader
+
+
+(b *Reader) Peek(n int) ([]byte, error)
+返回下 n 个字节的数据，而不移动 reader（的读取位置）
+这些字节在下次读取调用前都是合法的
+若本函数返回少于 n 字节的数据，它同样会返回一个错误，解释为什么读取比较短
+若 n 比 b 的缓存空间要大，则返回错误 ErrBufferFull
+
+
+(b *Reader) Read(p []byte) (n int, err error)
+读取数据至 p 中
+它返回读取至 p 的字节数量
+字节从作用于底层 Reader 的最多一个 Read 中读取
+因此 n 可能会少于 len(p)
+在 EOF 处，计数为 0， err 为 io.EOF
+
+
+(b *Reader) ReadByte() (byte, error)
+返回单个字节
+若没有字节可用，返回一个错误
+
+
+(b *Reader) ReadBytes(delim byte) ([]byte, error)
+读取直到第一次遇到输入中的 delim，返回直到且包含 delimiter 的 []byte
+若本方法在找到一个 delimiter 之前遇见了一个错误，则它返回遇到错误之前的数据，以及错误本身（通常为 io.EOF）
+当且仅当返回的数据不以 delim 作为结尾时，本方法返回 err != nil
+就简单使用而言，一个 Scanner 可能更为方便
+
+
+(b *Reader) ReadLine() (line []byte, is Prefix bool, err error)
+本方法是一个底层的行读取原函数
+大多数调用者应该使用 ReadBytes('\n') 或者 ReadString('\n') 或者 Scanner 代替
+
+本方法尝试返回一个单行，且不包含 EOF 字节
+若行过长，超出了缓存的容量，则 isPrefix 被设置，且行的开头被返回
+该行的剩余部分会在其后的调用中返回
+当该行的最后一部分返回时，isPrefix 被设置为 false
+返回的缓存直到下次调用不问你方法时才可用
+本方法要么返回非 nil 行，要么返回一个错误，绝不会同时返回
+
+从本方法返回的文本都不包含行尾（"\r\n" 或者 "\n"）
+若输入没有以行尾作为结尾，它也不会发出指示或者报错
+在调用本方法之后，再调用 UnreadByte，将永远 unread 最后一个读取的字节（可能是属于行尾的一个字符），
+尽管那个字节并不在本函数返回的部分中
+
+
+(b *Reader) ReadRune() (r rune, size int, err error)
+读取单个 UTF-8 编码的 Unicode 字符，并返回该 rune 以及对应的字节大小
+若编码的 rune 是非法的，它消耗一个字节，并返回 unicode.ReplacementChar（U+FFFD）和 size = 1
+
+
+(b *Reader) ReadSlice(delim byte) (line []byte, err error)
+读取直到遇见输入中的第一个 delim，返回一个 slice，其指向缓存中的字节
+在下次读取前，缓存的数据都是可用的
+若本方法在找到 delimiter 之前就遇到了一个错误，它返回所有在缓存中的数据，以及错误本身（通常为 io.EOF）
+若缓存填满却不包含 delim，则本方法返回 ErrBufferFull
+由于从本方法返回的数据将被下次 I/O 覆写，大多数客户端应该使用 ReadBytes 或者 ReadString 替代
+当且仅当行不以 delim 结尾时，本函数的 err != nil
+
+
+(b *Reader) ReadString(delim byte) (string, error)
+读取直到遇到输入中的第一个 delim，返回一个字符串，包含读取的数据以及 delimiter 本身
+若本方法在找到 delimeter 之前就遇到的了一个错误，它返回所有错误之前读取的数据以及错误本身（通常为 io.EOF）
+当且仅当返回的数据不以 delim 作为结尾时，本函数的 err != nil
+就简单使用而言，一个 Scanner 可能更为方便
+
+
+(b *Reader) Reset(r io.Reader)
+取消任何缓存的数据，重置所有状态，并切换 buffered reader 来从 r 中读取
+
+
+(b *Reader) UnreadByte() error
+unread 最后一个字节
+仅有最近读取的一个字节才可以被 unread
+
+
+(b *Reader) UnreadRune() error
+unread 最后一个 rune
+若最近一次缓存的读取操作并非 ReadRune，本方法返回错误
+（在这层面它比 UnreadByte 要严格，UnreadByte 会从任何读取操作中 unread 最后一个读取的字节）
+
+
+(b *Reader) WriteTo(w io.Writer) (n int64, err error)
+本方法实现了 io.WriteTo
+这可以对底层的 Reader 多重调用 Read 方法
