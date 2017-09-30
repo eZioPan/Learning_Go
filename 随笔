@@ -92,16 +92,16 @@ func main() {
 package main
 
 import (
-        "os"
-        "os/exec"
+	"os"
+	"os/exec"
 )
 
 func main() {
-        cmd := exec.Command("bash", "-c", "echo Hello world")
-        cmd.Stdin = os.Stdin
-        cmd.Stdout = os.Stdout
-        cmd.Stderr = os.Stderr
-        cmd.Run()
+	cmd := exec.Command("bash", "-c", "echo Hello world")
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Run()
 }
 
 
@@ -176,4 +176,53 @@ func main() {
 	}
 	fmt.Println("Program now will exit")
 	time.Sleep(time.Millisecond * 500)
+}
+
+
+-------- Code 4 --------
+
+// 有关 os.Stdin /dev/pts/* 和 bufio 的一些想法
+
+// 下面的代码测试了用 bufio.NewReaderSize 函数包裹 os.Stdin，用另一个 pts 接受统计数据的方法，测试 bufio 所提供的缓存的效果
+// 在测试过程中发现了一些有趣的现象
+// <1> 对于 /dev/pts/* 设备，也就是虚拟终端机，它们自带缓存，每次提交缓存中的数据的命令是 Enter 键
+// <2> /dev/pts/* 设备是不需要 root 也可以打开的
+// <3> 即便底层为 os.Stdin 的 bufio.Reader 被充满，也不会报错，至是 br.Buffered() 的数值会被重写，数据依然会留存在 os.Stdin 的区域中
+// 这个特性应该是 bufio.NewReaderSize 在底层 buffer 大小大于其自身指定的时候，返回了底层的 Reader 导致的
+
+
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strconv"
+	"time"
+)
+
+func main() {
+	// os.Stdin 所在的设备为 /dev/pts/1
+	br := bufio.NewReaderSize(os.Stdin, 20)
+	// 手动开启 /dev/pts/0 设备文件
+	f, e := os.OpenFile("/dev/pts/0", os.O_WRONLY, 0600)
+	defer f.Close()
+	if e != nil {
+		panic(e)
+	}
+
+	// 启动新的 goroutine 防止阻塞
+	// 每两秒输出一次 br 缓存的数据量
+	go func() {
+		f.Write([]byte("\n"))
+		for {
+			time.Sleep(time.Second * 2)
+			s := []byte(strconv.Itoa(br.Buffered()) + "\n")
+			// 不要对 /dev/pts/0 这个设备使用 WriteString 方法
+			f.Write(s)
+		}
+	}()
+
+	// 用逗号作为间隔符，以检测回车的作用
+	fmt.Println(br.ReadString(','))
 }
