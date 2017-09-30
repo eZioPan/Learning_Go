@@ -205,3 +205,239 @@ unread 最后一个 rune
 (b *Reader) WriteTo(w io.Writer) (n int64, err error)
 本方法实现了 io.WriteTo
 这可以对底层的 Reader 多重调用 Read 方法
+
+
+
+Scanner struct 类型
+
+Scanner 提供了一个读取数据的便捷的接口，比如用 newline 分隔的文本文件
+顺次调用 Scan 方法将会遍历整个文件的 “token”，跳过 token 之间的字节
+token 的指定来自于类型为  SplitFunc 的分离函数
+默认的分离函数将输入切开为行，并去除行终止符
+本包中提供的分离函数用于将文件扫描分解为 行、字节、UTF-8 编码的字符、空格分隔的词
+客户端可以自定义分离函数
+
+扫描在 EOF、第一个 I/O 错误、以及 token 大小大于缓冲的情况下不可恢复的停下
+当一个扫描停下，reader可能已经提前了任意源的位置，越过了最后一个 token
+若程序需要控制错误处理、使用更大的 token，或者必须在 reader 上运行扫描，则应该使用 bufio.Reader
+
+type Scanner struct {
+	// 包含过滤或者未导出的字段
+}
+
+
+EG.【自定义】
+
+使用自定义的分离函数（通过包裹 ScanWords）的 Scanner，来验证 32 bit 十进制输入
+
+// 人造输入源
+const input = "1234 5678 1234567901234567890"
+scanner := bufio.NewScanner(strings.NewReader(input))
+// 通过包裹现有 ScanWord 函数创造的自定义分离函数
+split := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+    advance, token, err = bufio.ScanWords(data, atEOF)
+    if err == nil && token != nil {
+        _, err = strconv.ParseInt(string(token), 10, 32)
+    }
+    return
+}
+// 为扫描操作设置分离函数
+scanner.Split(split)
+// 验证输入
+for scanner.Scan() {
+    fmt.Printf("%s\n", scanner.Text())
+}
+
+if err := scanner.Err(); err != nil {
+    fmt.Printf("Invalid input: %s", err)
+}
+
+
+EG.【空的结尾Token】
+
+使用自定义的分离函数的 Scanner，解析具有空结束值的逗号分隔的列表
+
+// 逗号分隔列表，最后一项为空
+const input = "1,2,3,4,"
+scanner := bufio.NewScanner(strings.NewReader(input))
+// 定义一个逗号分隔的分离函数
+onComma := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+    for i := 0; i < len(data); i++ {
+        if data[i] == ',' {
+            return i + 1, data[:i], nil
+        }
+    }
+    // 剩余最后一个 token 待发送，其值可能为空字符串
+    // 这里返回的 bufio.ErrFinalToken 告诉 Scan 这个 token 之后没有更多 token 了
+    // 但并不要触发 Scan 自身返回一个错误
+    return 0, data, bufio.ErrFinalToken
+}
+scanner.Split(onComma)
+// 扫描
+for scanner.Scan() {
+    fmt.Printf("%q ", scanner.Text())
+}
+if err := scanner.Err(); err != nil {
+    fmt.Fprintln(os.Stderr, "reading input:", err)
+}
+
+
+EG.【行】
+
+最简单的 Scanner 用法，将标准输入解析为一些列行
+
+scanner := bufio.NewScanner(os.Stdin)
+for scanner.Scan() {
+    fmt.Println(scanner.Text()) // Println 将加回最后的 '\n'
+}
+if err := scanner.Err(); err != nil {
+    fmt.Fprintln(os.Stderr, "reading standard input:", err)
+}
+
+
+EG.【词】
+
+使用 Scanner 实现一个简单的词计数器工具，通过将输入扫描为一系列空格间隔的 token
+
+// 人工输入源
+const input = "Now is the winter of our discontent,\nMade glorious summer by this sun of York.\n"
+scanner := bufio.NewScanner(strings.NewReader(input))
+// 设置扫描操作使用的分离函数
+scanner.Split(bufio.ScanWords)
+// 词计数
+count := 0
+for scanner.Scan() {
+    count++
+}
+if err := scanner.Err(); err != nil {
+    fmt.Fprintln(os.Stderr, "reading input:", err)
+}
+fmt.Printf("%d\n", count)
+
+
+NewScanner(r io.Reader) *Scanner
+返回从 r 中读取数据的新 Scanner
+分离函数默认使用 ScanLines
+
+
+(s *Scanner) Buffer(buf []byte, max int)
+设置扫描式初始的缓存，以及扫描过程中可以分配的最大缓存大小
+最大 token 大小是 max 和 cap(buf) 的较大者
+若 max <= cap(buf)， Scan 将仅使用这个缓存，不会分配更多的缓存
+
+默认情况下，Scan 使用一个内部的缓存，并将最大 token 大小设置为 MaxScanTokenSize
+
+若扫描开始后调用本函数，本函数产生 panic
+
+
+(s *Scanner) Bytes() []byte
+返回最近一次调用 Scan 时产生的 token
+底层数组指向的数组可能会在其后调用 Scan 时被覆写
+它不会进行分配
+
+
+(s *Scanner) Err() error
+返回 Scanner 遇到的第一个非 EOF 错误的错误
+
+
+(s *Scanner) Scan() bool
+本方法移动 Scanner 至下一个 token，该 token 将通过 Bytes 或者 Text 方法变得可用
+当扫描终止时，它返回 false，这有可能是因为到达输入的尾部，或者遇见一个错误
+在本函数返回 false 之后， Err 方法将返回任何在扫描过程中遇见的错误，但，若错误是 io.EOF，则 Err 返回 nil
+若分离函数返回了 100 个空 token 而并没有在输入中前进，则本函数 panic
+这是一个对于 scanner 通用的错误模式
+
+
+(s *Scanner) Split(split SplitFunc)
+为 Scanner 设置分离函数
+默认的分离函数是 ScanLines
+
+若扫描开始后调用本函数，本函数产生 panic
+
+
+(s *Scanner) Text() string
+返回最近一次调用 Scan 产生的 token，该 token 使用新分配的字符串持有其数据
+
+
+
+SplitFunc func(data []byte, atEOF bool) (advance int, token []byte, err error) 类型
+
+SplitFunc 是用于将输入 token 化的分离函数的签名
+参数是一个仍未处理的数据的子字符串，以及一个 flag，tEOF，其报告了 Reader 是没有更多数据来提供
+返回值为输入中前移的字节数，以及返回给用户的下一个 token，以及任何产生的错误
+若数据不含有完整的 token，比如若它在扫描行中不含有 newline，
+SplitFunc 可以返回 (0, nil, nil) 来提示 Scanner 读入更多数据至 slice 中，
+并使更长的，但起始点认为输入的原位置的 slice 来重试
+
+若返回的错误非 nil，扫描停止，错误返回客户端
+
+函数调用时，永远不会使用空数据 slice，除非 atEOF 为真
+若 atEOF 为真，但，数据可能为非空，也就是说，起具有未处理的文本
+
+type SplitFunc func(data []byte, atEOF bool) (advance int, token []byte, err error)
+
+
+
+Writer struct 类型
+
+Writer 实现了对于 io.Writer 对象的缓存
+若写入 Writer 时遇到了一个错误，就不会接受更多的数据，且其后任何写入、Flush 都会返回错误
+在所有数据都写入后，客户端应该调用 Flush 方法，保证所有的数据都被传入底层的 io.Writer
+
+type Writer struct {
+	// 包含过滤或未导出的字段
+}
+
+
+EG.
+
+w := bufio.NewWriter(os.Stdout)
+fmt.Fprint(w, "Hello, ")
+fmt.Fprint(w, "world!")
+w.Flush() // 勿忘刷写
+
+
+
+NewWriter(w io.Writer) *Writer
+返回一个新的 Writer，其具有默认大小的缓存
+
+
+NewWriterSize(w io.Writer, size int) *Writer
+返回一个新的 Writer，其具有至少指定大小的缓存
+若参数 io.Writer 已经是一个足够大的 io.Writer，则返回底层的 Writer
+
+
+(b *Writer) Available() int
+返回缓存中未使用的字节数
+
+
+(b *Writer) Buffered() int
+返回已经写入缓存中的字节数
+
+
+(b *Writer) Flush() err
+将任何缓存的数据写入底层的 io.Writer
+
+
+(b *Writer) Reset(w io.Writer)
+取消任何未 flush 的缓存的数据，清除任何错误，并重置 b，将其输出写入 w 中
+
+
+(b *Writer) Write(p []byte) (nn int, err error)
+将 p 中的内容写入缓存中
+返回写入的字节数
+若 nn < len(p)，它同时返回一个错误，来解释为什么写入短了
+
+
+(b *Writer) WriteByte(c byte) error
+写入单个字节
+
+
+(b *Writer) WriteRune(r rune) (size int, err error)
+写入单个 Unicode 码点，返回写入的字节数，以及任何出现的错误
+
+
+(b *Writer) WriterString(s string) (int, error)
+写入一个字符串
+返回写入的字节数
+若 计数小于 len(p)，它同时返回一个错误，来解释为什么写入短了
