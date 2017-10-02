@@ -1,0 +1,211 @@
+总览
+
+flag 包实现了命令行 flag 解析
+
+用法：
+
+使用 flag.String(), Bool(), Int() 等定义 flag
+
+下面的代码定义了一个整型 flag， -flagname，存储在指针 ip 中，其具有类型 *int
+
+import "flag"
+var ip = flag.Int("flagname", 1234, "help message for flagname")
+
+
+如果你愿意，也可以使用 Var() 函数，将 flag 绑定至一个变量上
+
+var flagvar int
+
+func init() {
+	flag.IntVar(&flagvar, "flagname", 123, "help message for flagname")
+}
+
+
+或者也可以创建自定义的 flag，其满足 Value 接口（具有指针接收者的），并耦合它们至 flag，解析方法
+
+flag.Var(&flagVal, "name", "help message for flagname")
+
+对于这类 flag，默认值就仅为变量的初始值
+
+
+在定义好了所有的 flag 之后，调用
+
+flag.Parse()
+
+来将命令行解析为定义的 flag
+
+
+flag 接着就可以直接使用了
+若你使用 flag 本身，它们就是指针；若将它们绑定至变量，它们就是值
+
+fmt.Println("ip has value ", *ip)
+fmt.Println("flagvar has value ", flagvar)
+
+
+在解析之后，在 flag 之后跟随的参数就成为了 slice flag.Args() 的内容，或者独立的成为 flag.Arg(i) 的内容
+
+参数的索引从 0 至 flag.NArg()-1
+
+
+命令行 flag 语法：
+
+-flag
+-flag=x
+-flag x	// 仅用于非布尔 flag
+
+
+一个或两个减号均可用，它们是等价的
+最后一个样式不可用于布尔 flag，因为在命令
+
+cmd -x *
+
+中，若有一个文件叫做 0 或者 false 等，那么命令的含义就改变了
+你必须使用 -flag=false 样式来关闭一个布尔 flag
+
+flag 解析在第一个非 flag 参数（“-”是一个非 flag 参数）之前或在终止符 “--” 之后停止解析
+
+整型 flag 接受 1234，0664，0x1234，也可以是负数
+
+布尔 flag 接受：
+1, 0, t, f, T, F, true, false, TRUE, FALSE, True, False
+
+Duration flag 接受任何对 time.ParaseDuration 合法的输入
+
+默认的命令行 flag 集受到顶层函数（top-level function）的控制
+FlagSet 类型允许邓毅独立的 flag 集，比如实现一个命令行接口的子命令
+FlagSet 的方法类似于命令行 flag 集的顶层函数
+
+
+
+变量
+
+CommandLine 是命令行 flag 的默认集，从 os.Args 解析而来
+顶层函数例如 BoolVar Arg 和其他的都是包裹 CommandLine 的方法而来
+
+var CommandLine = NewFlagSet(os.Args[0], ExitOnError)
+
+
+ErrHelp 是当 -help 或者 -h flag 被调用但并没有定义该 flag 时返回的错误
+
+var ErrHelp = errors.New("flag: heko requested")
+
+Usage 将记录了所有定义命令行 flag 的用法（usage）信息打印至 StdErr
+当解析 flag 时，遇到了一个错误时被调用
+函数时一个变量，可以修改为指向某个自定函数
+默认情况下，它打印一个简单的 header，并调用 PrintDefaults；
+要了解输出的格式化情况和如何控制它，参看 PrintDefaults 的文档
+
+var Usage = func() {
+	fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
+	PrintDefaults()
+}
+
+
+
+Arg(i int) string
+返回第 i 个命令行参数
+Arg(0) 是在 flag 被处理之后，第一个剩余的参数
+若，不存在需要的函数，则本函数返回空字符串
+
+
+
+Args() []string
+返回非 flag 命令行参数
+
+
+
+Bool(name string, value bool, usage string) *bool
+定义了一个 bool flag，其具有指定的名称，默认值，以及用法（Usage）字符串
+返回的值为指向存储了 flag 的值的 bool 值
+
+
+BoolVar(p *bool, name string, value bool, usage string)
+定义了一个 bool flag，其具有指定的名称，默认值，以及用法（Usage）字符串
+参数 p 指向一个 bool 变量，其存储了 flag 的值
+
+
+#! 具有与 Bool 和 BoolVar 类似函数的类型还有：
+Duration
+Float64
+Int
+Int64
+String
+Uint
+Uint64
+
+
+
+Var(value Value, name string, usage string)
+定义了一个 flag，其具有指定的名字和用法字符串
+flag 的类型和值被第一个参数，也就是 Value 类型所表示，
+Value 这个值通常持有用户定义的 Value 的实现
+举例来说，调用者可以创建一个 flag，通过给 slice 定义 Value 的方法，将逗号分隔的字符串转换为 []string；
+就这个案例来说，Set 会将逗号分隔的字符串解码至 slice 中
+
+
+
+NArg() int
+当所有的 flag 都被处理之后，剩余的为处理参数数
+
+
+
+NFlag() int
+返回已经被设置的命令行 flag 的数量
+
+
+
+Parse()
+从 os.Args[1:] 中解析命令行 flag
+必须在所有的 flag 都定义完成，且任何 flag 被程序使用之前，调用
+
+
+
+Parsed() bool
+报告命令行 flag 是否已经被解析
+
+
+
+PrintDefaults()
+任意没有特殊的配置，则本函数将所有定义过的命令行 flag 的默认用法信息输出至 StdErr
+对于整型 flag x，默认的输出有以下的形式
+
+-x int
+		usage-message-for-x (default 7)
+
+对于除了 单字节布尔 flag 名 之外的所有用法信息，都会显示为不同的行
+对于布尔 flag，其类型被隐去，且若 flag 名仅有一个字节组成，则用法信息将在同一行显示
+若默认值是该类型的零值，则隐去多余的默认值
+所罗列的类型，在这里是 int，可以通过用反引号，截取一部分用法信息，来修改；
+第一个信息中这样的项目，会作为参数名显示在信息中，而反引号本身将在显示时被移除
+举例来说，给定
+
+flag.String("I", "", "search `directory` for include files")
+
+对应的输出为
+
+-I directory
+		Search directory for include files
+
+
+
+Set(name, value string) error
+设置名为 name 的命令行 flag 的值
+
+
+
+UnquoteUsage(flag *Flag) (name string, usage string)
+从给定 flag 的用法字符串中提取一个反引号引起的名称，并返回它以及 un-quote 的用法
+给定 "a `name` to show"，它返回（"name", "a name to show"）
+若没有反引号，则 name 为对 flag 值的类型的高等猜测，或者，若 flag 为布尔值，则为空字符串
+
+
+
+Visit(fn func(*Flag))
+以字符顺序浏览命令行 flag，并对每个 flag 调用 fn
+它仅会浏览已经被设置的 flag
+
+
+
+VisitAll(fn func(*Flag))
+以字符顺序浏览命令行 flag，并对每个 flag 调用 fn
+它会浏览所有的 flag，即便 flag 未被设置
