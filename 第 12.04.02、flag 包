@@ -77,6 +77,84 @@ FlagSet 的方法类似于命令行 flag 集的顶层函数
 
 
 
+// 下面这些内容展示了 flag 包的更加复杂的用法
+package flag_test
+
+import (
+	"errors"
+	"flag"
+	"fmt"
+	"strings"
+	"time"
+)
+
+// 例子 1：一个单字符串 flag “species” 具有默认值 “gopher”
+var species = flag.String("species", "gopher", "the species we are studying")
+
+// 例子 2：两个 flag 分享了同一个变量，所以我们可以设置简称（shorthand）
+// 初始化的顺序是未定义的，所以要保证两者都使用的相同的默认值
+// 他们必须使用 init 函数来设置
+var gopherType string
+
+func init() {
+	const (
+		defaultGopher = "pocket"
+		usage         = "the variety of gopher"
+	)
+	flag.StringVar(&gopherType, "gopher_type", defaultGopher, usage)
+	flag.StringVar(&gopherType, "g", defaultGopher, usage+" (shorthand)")
+}
+
+// 例子 3：一个用户定义的 flag 类型，一个 []time.Duration
+type interval []time.Duration
+
+// String 是格式化 flag 值的方法，也是 flag.Value 接口的一部分
+// String 方法的输出将用于诊断
+func (i *interval) String() string {
+	return fmt.Sprint(*i)
+}
+
+// Set 是设置 flag 值的方法，也是 flag.Value 接口的一部分
+// Set 的参数是一个将要被解析设置为 flag 值得字符串
+// 它是一个逗号分隔的值，所以我们要分离它
+func (i *interval) Set(value string) error {
+	// 若我们希望允许 flag 被设置多次
+	// 并累积值，我们可以删除这个 if 语句
+	// 这可以允许用法：
+	// -deltaT 10s -deltaT 15s
+	// 或者其它的用法
+	if len(*i) > 0 {
+		return errors.New("interval flag already set")
+	}
+	for _, dt := range strings.Split(value, ",") {
+		duration, err := time.ParseDuration(dt)
+		if err != nil {
+			return err
+		}
+		*i = append(*i, duration)
+	}
+	return nil
+}
+
+// 定义一个 flag 来累积 duration
+// 由于他是特殊类型，我们需要使用 Var 函数，同时在 init 过程中创建 flag
+
+var intervalFlag interval
+
+func init() {
+	// 将命令行 flag 绑定至 intervalFlag 变量，并设置一个用法信息
+	flag.Var(&intervalFlag, "deltaT", "comma-separated list of intervals to use between events")
+}
+
+func Example() {
+	// 所有有趣的部分就是上面变量的声明了，但为了保证 flag 包能看到这里定义的 flag，
+	// 一个东西必须要执行，通常它在 main 函数的起始处执行（并不是 init 函数中！）：
+	// flag.Parse()
+	// 我们并不会运行它，因为这不是一个 main 函数，而且测试套件已经解析了 flag 了
+}
+
+
+
 变量
 
 CommandLine 是命令行 flag 的默认集，从 os.Args 解析而来
@@ -209,3 +287,92 @@ Visit(fn func(*Flag))
 VisitAll(fn func(*Flag))
 以字符顺序浏览命令行 flag，并对每个 flag 调用 fn
 它会浏览所有的 flag，即便 flag 未被设置
+
+
+
+ErrorHandling int 类型
+
+ErrorHanding 定义了当解析失败时 FlagSet.Parse 应该有的行为
+
+const (
+	ContinueOnError ErrorHandling = itoa	// 返回一个描述性的 error
+	ExitOnError								// 调用 os.Exit(2)
+	PanicOnError							// 调用 panic，并附带一个描述性的 error
+)
+
+
+
+Flag struct 类型
+
+一个 Flag 代表了一个 flag 的状态
+
+type Flag struct {
+	Name string		// 在命令行显示的名称
+	Usage string	// 帮助信息
+	Value Value		// 设置的值
+	DefValue string	// 默认值（以文本的格式）；用于用法信息
+}
+
+
+Lookup(name string) *Flag
+
+返回指定名称的命令行 flag 的 Flag 结构，若不存在则返回 nil
+
+
+
+FlagSet struct 类型
+
+一个 FlagSet 表示一个定义了的 flag 的集合
+一个 FlagSet 的零值，是没有名称，且错误处理为 ContinueOnError 的值
+
+FlagSet struct {
+	// 本字段是，在解析 flag 的过程中，当一个错误发生时，所调用的函数
+	// 该字段时一个函数（而非一个方法），该函数可以被修改为指向一个自定义的错误处理器上
+	Usage func()
+	// 包含过滤或者未导出的字段
+}
+
+
+#! 由于本类型的方法是 flag 包顶层函数的超集，所以这里只展示与顶层函数不同的部分
+
+
+NewFlagSet(name string, errirHandling ErrorHandling) *FlagSet
+返回一个新的，空的 flag 集，其具有指定的名字和错误处理属性
+
+
+(f *FlagSet) Lookup(name string) *Flag
+返回指定名称的 flag 的 Flag 结构，若不存在则返回 nil
+
+
+(f *FlagSet) SetOutput(output io.Writer)
+设置用法和错误信息的目的地
+若 output 是 nil，os.Stderr 将被使用
+
+
+
+Getter interface 类型
+
+Getter 是一个接口，该接口允许 Value 的内容被取回
+它包裹了 Value 的接口，而非成为它的一部分，这是由于在 Go 1 之后出现，且需要符合兼容规则
+本包提供的所有的 Value 类型都满足 Getter 接口
+
+type Getter interface {
+	Value
+	Get() interface{}
+}
+
+
+
+Value interface 类型
+
+Value 是存储在一个 flag 中的动态值的接口（默认值以字符串表示）
+
+若一个 Value 具有 IsBoolFlag() 方法，且返回为 true，命令行解析者将 -name 等价为 -name=true，而非使用下一个命令行参数
+
+Set 会以命令行的顺序，对每个出现的 flag，调用一次
+flag 包可能会对零值接受者调用 String 方法，比如一个 nil 指针
+
+type Value interface {
+	String() string
+	Set(string) error
+}
