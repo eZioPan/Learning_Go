@@ -1,0 +1,75 @@
+###
+
+在 errors 包之前，我们先看一下内置类型 error 的定义
+
+error 是內建接口类型，它通常用于表示一个错误情况，nil 值表示没有错误
+
+type error interface {
+	Error() string
+}
+
+###
+
+
+
+总览
+
+errors 包实现了操控错误的函数
+
+
+EG.
+
+package errors_test
+
+import (
+	"fmt"
+	"time"
+)
+
+// MyError 是一个包含了时间好信息的错误的实现
+type MyError struct {
+	When time.Time
+	What string
+}
+
+func (e MyError) Error() string {
+	return fmt.Sprintf("%v: %v", e.When, e.What)
+}
+
+func oops() error {
+	return MyError{
+		time.Date(1989, 3, 15, 22, 30, 0, 0, time.UTC),
+		"the file system has gone away",
+	}
+}
+
+func Example() {
+	if err := oops(); err != nil {
+		fmt.Println(err)
+	}
+	// Output: 1989-03-15 22:30:00 +0000 UTC: the file system has gone away
+}
+
+
+
+New(text string) error
+返回一个错误，格式化为给定的文字
+
+
+EG.
+
+err := errors.New("emit macho dwarf: elf header corrupted")
+if err != nil {
+	fmt.Print(err)
+}
+
+
+EG.【Errorf】
+
+fmt 包的 Errorf 函数让我们使用该包的格式化特点来创建描述性的错误信息
+
+const name, id = "bimmler", 17
+err := fmt.Errorf("user %q (id %d) not found", name, id)
+if err != nil {
+    fmt.Print(err)
+}
