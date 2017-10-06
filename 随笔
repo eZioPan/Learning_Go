@@ -7,6 +7,10 @@
 // 注意，
 //	结构体字段的名字，属于结构体类型的定义
 //	结构体字段的值，属于结构体值的定义
+//	不可以直接对非导出字段的 reflect.Value 值使用 Interface()
+//	但可以对非导出字段的 reflect.Value 值使用 reflect.ValueOf() 后再使用 Interface()
+//	若要处理一个指针指向的对象的 reflect.Type 和 reflect.Value 请对两者都取 Elem()
+
 
 package main
 
@@ -17,21 +21,27 @@ import (
 	"reflect"
 )
 
-func PokeStruct(refT reflect.Type, refV reflect.Value) {
-
-	defer func() {
-		recover()
-		fmt.Println("Encount filtered or unexported field ")
-	}()
-
-	for i := 0; i < refV.NumField(); i++ {
-
-		refFN := refT.Field(i).Name
-		refFV := refV.Field(i).Interface()
-		fmt.Printf("Field name: %#v, Field value: %#v\n", refFN, refFV)
-
+func PokeStruct(o interface{}) {
+	refT := reflect.TypeOf(o)
+	refV := reflect.ValueOf(o)
+	if strings.Contains(refT.String(), "*") {
+		fmt.Println("Indirect pointer to struct")
+		refT = refT.Elem()
+		refV = refV.Elem()
 	}
-
+	fmt.Printf("Struct Type Name: %v\n", refT.String())
+	for i := 0; i < refV.NumField(); i++ {
+		refF := refT.Field(i)
+		refFN := refF.Name
+		refFT := refF.Type.String()
+		refFV := reflect.ValueOf(refV.Field(i)).Interface()
+		fmt.Printf(
+			"Field %d\n"+
+				"\tname:  %v\n"+
+				"\ttype:  %v\n"+
+				"\tvalue: %v\n",
+			i, refFN, refFT, refFV)
+	}
 }
 
 func main() {
@@ -46,10 +56,7 @@ func main() {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	refV := reflect.ValueOf(cmd).Elem()
-	refT := reflect.TypeOf(cmd).Elem()
-
-	PokeStruct(refT, refV)
+	PokeStruct(*cmd)
 
 	cmd.Start()
 	cmd.Wait()
