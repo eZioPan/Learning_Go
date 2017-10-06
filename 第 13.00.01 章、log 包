@@ -1,0 +1,164 @@
+总览
+
+log 包实现了简单的日志功能
+它定义了一个 Logger 类型，以及相关的格式化输出方法
+它同样有一个预定义的 “标准” Logger，
+通过帮助（helper）函数 Print[f|ln] Fatal[f|ln] Panic[f|ln] 来使用，
+它们比手动创建 Logger 要简单
+这种 logger 向 StdErr 打印数据，并打印出每个日志信息的日期域时间
+每个日志信息都在不同的行输出：若打印的信息不以 newline 作为结尾， logger 将补充一个
+Fatal 函数组在写入日志信息后调用 os.Exit(1)
+Panic 函数组在写入日志信息后调用 panic
+
+
+
+常量
+
+这些 flag 定义了那些前缀会被附着在 Logger 产生的日志条目之前
+
+const (
+	// 位或后的数字一同控制了什么被输出
+	// 没有东西控制它们出现的顺序（相对这里列举的顺序）
+	// 或者它们格式化的表现（如注释中所描述的）
+	// 仅当出现了 Llogfile 或者 Lshortfile 时，前缀之后才会跟随一个冒号
+	// 举例来说，flag Ldata | Ltime（或者 LstdFlags）产生，
+	// 2009/01/23 01:23:23 message
+	// 而 flag Ldata | Ltime | Lmicroseconds | Llogfile 产生，
+	// 2009/01/23 01:23:23.123123 /a/b/c/d.go:23: message
+	Ldate			= 1 << itoa		// 本地时区下的日期：2009/01/23
+	Ltime							// 本地时区下的时间：01:23:23
+	Lmicroseconds					// 微秒精度：01:23:23.123123 假设为 Ltime
+	Llongfile						// 完整文件名和行号：/a/b/c/d.go:23
+	Lshortfile						// 文件名末尾元素和行号：d.go:23 覆盖 Llongfile
+	LUTC							// 若设置了 Ldate 或 Ltime，使用 UTC 而非本地时间
+	LstdFlags		= Ldate | Ltime	// 标准 logger 的初始值
+)
+
+
+
+Fatal(v ...interface{})
+等价于 Print() 后调用 os.Exit(1)
+
+
+
+Fatalf(format string, v ...interface{})
+等价于 Printf() 后调用 os.Exit(1)
+
+
+
+Fatalln(v ...interface{})
+等价于 Println() 后调用 os.Exit(1)
+
+
+
+Flags() int
+返回标准 logger 的输出 flag（注：包级别 const 中的 flag）
+
+
+
+Output(calldepth int, s string) error
+为一个日志事件书写输出
+字符串 s 包含需要打印的内容，其前缀为 Logger 定义的 flag
+若最后一个字符非 newline，则补充一个 newline
+Calldepth 是当设置了 Llongfile 和 Lshortfile 之后，
+计算文件名和行数时，需要跳过的 栈帧（frame） 的个数；
+值为 1 时，将打印 Output 的调用者的详细信息
+
+
+
+Panic(v ...interface{})
+等价于 Print() 后调用 panic()
+
+
+
+Panicf(format string, v ...interface{})
+等价于 Printf() 后调用 panic()
+
+
+
+Panicln(v ...interface{})
+等价于 Paincln() 后调用 panic()
+
+
+
+Prefix() string
+返回标准 logger 的输出前缀
+
+
+
+Print(v ...interface{})
+调用 Output 打印至标准 logger
+参数以 fmt.Print 的方式处理
+
+
+
+Printf(format string, v ...interface{})
+调用 Output 打印至标准 logger
+参数以 fmt.Printf 的方式处理
+
+
+
+Println(v ...interface{})
+调用 Output 打印至标准 logger
+参数以 fmt.Println 的方式处理
+
+
+
+SetFlags(flag int)
+设置标准 logger 的输出 flag
+
+
+
+SetOutput(w io.Writer)
+设置标准 logger 的输出目标
+
+
+
+SetPrefix(prefix string)
+设置标准 logger 的输出前缀
+
+
+
+Logger struct 类型
+
+一个 Logger 表示一个活动的日志记录对象，其产生写入至 io.Writer 的输出行
+每个日志记录操作会独立调用 Writer 的 Write 方法
+一个 Logger 可以同时被多个 goroutine 使用；它保证了顺序调用 Writer
+
+type Logger struct {
+	// 包含过滤或未导出的字段
+}
+
+
+EG.
+
+var (
+	buf    bytes.Buffer
+	logger = log.New(&buf, "logger: ", log.Lshortfile)
+)
+
+logger.Print("Hello, log file!")
+
+fmt.Print(&buf)
+
+#! 由于本包的全局函数是本类型方法作用于标准 logger 的结果，这里只列出不同的部分
+
+
+(l *Logger) Output(calldepth int, s string) error
+【前序内容省略】
+callpath 用于恢复 程序计数器（program counter）,而且被设计为通用的，
+但在这里，它的值被预定义为 2
+
+EG.
+var (
+	buf    bytes.Buffer
+	logger = log.New(&buf, "INFO: ", log.Lshortfile)
+
+	infof = func(info string) {
+		logger.Output(2, info)
+	}
+)
+
+infof("Hello world")
+
+fmt.Print(&buf)
