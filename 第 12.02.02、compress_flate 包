@@ -1,0 +1,69 @@
+总览
+
+flate 包实现了 DEFLATE 压缩数据格式，在 RFC 1951 中描述
+gzip 和 zlib 包实现了存取基于 DEFALTE 的文件格式
+
+
+EG.【Dictionary】
+
+一个预设的字典可以用于提升压缩率
+使用字典的缺点就是压缩器和解压器必须提前了解使用了何种字典
+
+// 字典是一个用 byte 表示的字符串
+// 当压缩一些输入的数据时，压缩器将尝试将子字符串替换为字典中匹配上的
+// 这样来说，字典中的子字符串，应该仅为，会出现在实际数据流中的子字符串
+const dict = `<?xml version="1.0"?>` + `<book>` + `<data>` + `<meta name="` + `" content="`
+
+// 要压缩的数据应该（但不要求）频繁包含一些字符串，它们能与字典中的匹配上
+const data = `<?xml version="1.0"?>
+<book>
+    <meta name="title" content="The Go Programming Language"/>
+    <meta name="authors" content="Alan Donovan and Brian Kernighan"/>
+    <meta name="published" content="2015-10-26"/>
+    <meta name="isbn" content="978-0134190440"/>
+    <data>...</data>
+</book>
+`
+
+var b bytes.Buffer
+
+// 使用特制的字典压缩数据
+zw, err := flate.NewWriterDict(&b, flate.DefaultCompression, []byte(dict))
+if err != nil {
+    log.Fatal(err)
+}
+if _, err := io.Copy(zw, strings.NewReader(data)); err != nil {
+    log.Fatal(err)
+}
+if err := zw.Close(); err != nil {
+    log.Fatal(err)
+}
+
+// 解压器必须使用与压缩器相同的字典
+// 否则输入就会像毁坏了一样
+fmt.Println("Decompressed output using the dictionary:")
+zr := flate.NewReaderDict(bytes.NewReader(b.Bytes()), []byte(dict))
+if _, err := io.Copy(os.Stdout, zr); err != nil {
+    log.Fatal(err)
+}
+if err := zr.Close(); err != nil {
+    log.Fatal(err)
+}
+
+fmt.Println()
+
+// Substitute all of the bytes in the dictionary with a '#' to visually
+// demonstrate the approximate effectiveness of using a preset dictionary.
+// 将字典中出现的字节全部用 '#' 来代替，来可视化展现使用预设字典的大致效果
+fmt.Println("Substrings matched by the dictionary are marked with #:")
+hashDict := []byte(dict)
+for i := range hashDict {
+    hashDict[i] = '#'
+}
+zr = flate.NewReaderDict(&b, hashDict)
+if _, err := io.Copy(os.Stdout, zr); err != nil {
+    log.Fatal(err)
+}
+if err := zr.Close(); err != nil {
+    log.Fatal(err)
+}
