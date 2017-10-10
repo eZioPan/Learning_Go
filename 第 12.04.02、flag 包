@@ -69,7 +69,7 @@ flag 解析在第一个非 flag 参数（“-”是一个非 flag 参数）之�
 布尔 flag 接受：
 1, 0, t, f, T, F, true, false, TRUE, FALSE, True, False
 
-Duration flag 接受任何对 time.ParaseDuration 合法的输入
+Duration flag 接受任何对 time.ParaseDuration 有效的输入
 
 默认的命令行 flag 集受到顶层函数（top-level function）的控制
 FlagSet 类型允许邓毅独立的 flag 集，比如实现一个命令行接口的子命令

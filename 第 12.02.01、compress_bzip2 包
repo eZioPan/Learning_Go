@@ -12,7 +12,7 @@ NewReader(r io.Reader) io.Reader
 
 StructuralError string 类型
 
-当 bzip2 数据在语法上不合法时，返回一个 StructuralError
+当 bzip2 数据在语法上无效时，返回一个 StructuralError
 
 
 (s StructuralError) Error() string

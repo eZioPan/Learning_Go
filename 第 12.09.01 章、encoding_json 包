@@ -30,7 +30,7 @@ nil 指针 exception 并非严格需要，而是对 UnmarshalJSON 行为的一�
 
 浮点数、整数、 Number 值 编码为 JSON 数字
 
-字符串 编码为 JSON 字符串，并强制转换为合法 UTF-8 字符，将不合法字符传唤为 Unicode replacement rune
+字符串 编码为 JSON 字符串，并强制转换为有效 UTF-8 字符，将无效字符传唤为 Unicode replacement rune
 尖角括号 < 和 > 转义为 \u003c 和 \u003e，防止部分浏览器将 JSON 数据误认为 HTML 数据
 & 符号 转义为 \u0026，同样为了防止浏览器误认
 可以调用 Encoder 的 SetEscapeHTML(false) 方法来关闭该 Encoder 实例的转义功能
@@ -171,7 +171,7 @@ Unmarshal 会跳过该位置，并试图继续解码剩下的部分
 解码 JSON null 会将 interface/map/pointer/slice 的值变为 nil
 解码 JSON null 值其他的类型的值，将不会对它们的产生影响并且不会产生错误
 
-若解码引号引起来的字符串，出现了不合法的 UTF-8 字符或者 不合法的 UTF-16 代理对
+若解码引号引起来的字符串，出现了无效的 UTF-8 字符或者 无效的 UTF-16 代理对
 并不会触发错误，而非法字符将会被 Unicode 字符 U+FFFD 替代
 
 
@@ -188,7 +188,7 @@ NewDecoder(r io.Reader) *Decoder
 
 (dec *Decoder) Bufferd() io.Reader
 返回在 Decoder 的 buffer 中剩下的数据的一个 reader
-直到下次调用 Decode 前，这个 reader 都是合法的
+直到下次调用 Decode 前，这个 reader 都是有效的
 
 
 (dec *Decoder) Decode(v interface{}) error
@@ -268,7 +268,7 @@ type InvalidUTF8Error struct{
 
 InvalidUnmarshalError struct 类型
 
-传入和不合法的待解码参数（传入参数必须是非空指针）
+传入了无效的待解码参数（传入参数必须是非空指针）
 
 type InvalidUnmarshalError struct{
 	Type reflect.Type
@@ -281,7 +281,7 @@ type InvalidUnmarshalError struct{
 
 Marshaler interface 类型
 
-所有可以让自身类型转换为合法的 JSON 数据的类型都实现了 Marshaler 接口
+所有可以让自身类型转换为有效的 JSON 数据的类型都实现了 Marshaler 接口
 
 type Marshaler interface{
 	MarshalJSON() ([]byte, error)
@@ -413,8 +413,8 @@ type UnmarshalTypeError struct {
 
 Unmarshaler interface 类型
 
-所有可以让 JSON 数据转换为合法的自身类型都实现了 Unmarshaler 接口
-输入被假设为合法编码的 JSON 值
+所有可以让 JSON 数据转换为有效的自身类型都实现了 Unmarshaler 接口
+输入被假设为有效编码的 JSON 值
 若要在方法返回后保存原始数据，UnmarshalJSON 必须拷贝 JSON 数据
 
 为了方便贴近 Unmarshal 函数的行为， Unmarshaler 将 UnmarshalJSON([]byte("null")) 作为 不操作 的实现

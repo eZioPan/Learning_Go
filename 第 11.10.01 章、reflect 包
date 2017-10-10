@@ -84,7 +84,7 @@ const(
 Kind uint 类型
 
 表示了 Type 类型所表示的特定类型
-Kind 的零值不是一个合法的 kind
+Kind 的零值不是一个有效的 kind
 
 const (
 	Invalid Kind = iota
@@ -450,7 +450,7 @@ eg.
 	reflect.MapOf(reflect.TypeOf("1"),reflect.TypeOf(1)) 将返回
 	表示 map[string]int 的 reflect.Type 对象
 
-若键的类型并非合法类型（也就是没有满足 Go 操作符 == ）
+若键的类型并非有效类型（也就是没有满足 Go 操作符 == ）
 则 MapOf 引发 panic
 
 
@@ -811,7 +811,7 @@ v 必须是 chan func interface map pointer slice 中的一种，若不是，引
 报告 v 是否表示了一个值
 若 v 是 Value 的零值，则返回 false
 若 IsValid 返回 false，则除了 String 之外的方法都引发 panic
-大多数函数和方法从不会返回一个 不合法的值
+大多数函数和方法从不会返回一个 无效的值
 若其中一个可能产生，则它的文档中将有明确的指示
 
 

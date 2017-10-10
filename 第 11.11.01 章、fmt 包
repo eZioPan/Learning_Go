@@ -145,7 +145,7 @@ fmt 包实现了与 C 的 printf 和 scanf 函数相同的格式化 IO
 	<3> 若“动词” %v 和标示 # 连用（%#v），且所要操作的值满足了 GoStringer interface
 		则 GoString 方法会被调用
 
-	若格式化（例如 %v 之于 Println）对于字符串（%s %q %v %x %X）是合法的
+	若格式化（例如 %v 之于 Println）对于字符串（%s %q %v %x %X）是有效的
 	执行接下来的两个规则
 	<4> 若要操作的值满足了 error interface，则 Error 方法会被调用，将该对象转换为 字符串
 		并被对应的“动词”（若有的话）格式化
@@ -483,7 +483,7 @@ type ScanState interface {
 	// called by the scanning routines and a valid implementation of
 	// ScanState may choose always to return an error from Read.
 	// 由于 ReadRune 已经被该接口实现， Read 应该永远不被 扫描 routine 所调用
-	// 且一个合法的 ScanState 的实现可能会选择永远从 Read 返回一个错误
+	// 且一个有效的 ScanState 的实现可能会选择永远从 Read 返回一个错误
 	Read(buf []byte) (n int, err error)
 }
 

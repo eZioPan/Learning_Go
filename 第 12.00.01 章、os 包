@@ -382,7 +382,7 @@ Create(name string) (*File, error)
 
 NewFile(fd uintptr, name string) *File
 返回具有给定的文件描述符和名称的 File 对象
-若 fd 不是合法的文件描述符，则返回值将为 nil
+若 fd 不是有效的文件描述符，则返回值将为 nil
 
 
 Open(name string) (*File, error)

@@ -124,7 +124,7 @@ NewReaderSize(rd io.Reader, size int) *Reader
 
 (b *Reader) Peek(n int) ([]byte, error)
 返回下 n 个字节的数据，而不移动 reader（的读取位置）
-这些字节在下次读取调用前都是合法的
+这些字节在下次读取调用前都是有效的
 若本函数返回少于 n 字节的数据，它同样会返回一个错误，解释为什么读取比较短
 若 n 比 b 的缓存空间要大，则返回错误 ErrBufferFull
 
