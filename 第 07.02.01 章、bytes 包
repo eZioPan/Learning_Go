@@ -1,0 +1,167 @@
+总览
+
+bytes 包实现了操作 []byte 的函数
+它与 strings 包的构架类似
+
+
+
+常量
+
+MinRead 是调用 Buffer.ReadFrom 时传入 Read 中的最小的 slice 大小
+只要 Buffer 具有的空间超过，持有 r 的内容容量，至少 MinRead 字节的空间，
+ReadFrom 就不会增长底层的 buffer
+
+const MinRead = 512
+
+
+
+变量
+
+若无法为缓存分配子厚存储数据的内存，ErrTooLarge 就会被传入 panic 中
+
+var ErrTooLarge = errors.New("bytes.Buufer: too large")
+
+
+
+Compare(a,b []byte) int
+返回一个整数，按字典顺序比较两个 []byte
+若 a == b，则为 0
+若 a < b，则为 -1
+若 a > b，则为 +1
+一个 nil 参数等价于空字符串
+
+EG.
+
+// 将 Compare 的结果与 0 做比较，来解析结果
+var a, b []byte
+if bytes.Compare(a, b) < 0 {
+	// a 小于 b
+}
+if bytes.Compare(a, b) <= 0 {
+	// a 小于等于 b
+}
+if bytes.Compare(a, b) > 0 {
+	// a 大于 b
+}
+if bytes.Compare(a, b) >= 0 {
+	// a 大于等于 b
+}
+
+// 对于等价比较，使用 Equal 优于 Compare
+if bytes.Equal(a, b) {
+	// a 等于 b
+}
+if !bytes.Equal(a, b) {
+	// a 不等于 b
+}
+
+
+EG.【Search】
+
+// 二进制搜索已找到匹配的 []byte
+var needle []byte
+var haystack [][]byte // 假设已经排序
+i := sort.Search(len(haystack), func(i int) bool {
+	// 返回 haystack[i] >= needle.
+	return bytes.Compare(haystack[i], needle) >= 0
+})
+if i < len(haystack) && bytes.Equal(haystack[i], needle) {
+	// 找到啦！
+}
+
+
+
+Contains(b, subslice []byte) bool
+报告 b 中是否包含子切片
+
+EG.
+
+fmt.Println(bytes.Contains([]byte("seafood"), []byte("foo")))
+fmt.Println(bytes.Contains([]byte("seafood"), []byte("bar")))
+fmt.Println(bytes.Contains([]byte("seafood"), []byte("")))
+fmt.Println(bytes.Contains([]byte(""), []byte("")))
+
+
+
+ContainsAny(b []byte, chars string) bool
+报告 b 中是否包含 chars 中具有的任何 UTF-8 编码的 Unicode 码点
+
+
+
+ContainsRune(b []byte, r rune) bool
+报告 b 中是否含有 Unicode 码点 r
+
+
+
+Count(s, sep []byte) int
+计算 s 中非重叠出现的 sep
+若 sep 时空 slice，本函数返回 1 + s 中出现的 Unicode 码点数
+
+EG.
+
+fmt.Println(bytes.Count([]byte("cheese"), []byte("e")))
+fmt.Println(bytes.Count([]byte("five"), []byte(""))) // 在每个 rune 之前和之后
+
+
+
+Equal(a, b []byte) bool
+返回一个布尔值报告了 a 和 b 是否具有相同长度且具有相同的内容
+一个 nil 参数等价于一个空 slice
+
+
+
+EqualFold(s, t []byte) bool
+报告 s 和 t，解析为 UTF-8 字符串时，是否在 Unicode case-folding 的情况下等价
+
+EG.
+
+fmt.Println(bytes.EqualFold([]byte("Go"), []byte("go")))
+
+
+
+Fields(s []byte) [][]byte
+通过以一个或多个连续的 white space 字符作为分隔符，分割 s，返回获得的子 slice s，
+若 s 仅含有 white space，则返回空列表
+
+EG.
+
+fmt.Printf("Fields are: %q", bytes.Fields([]byte("  foo bar  baz   ")))
+
+
+
+FieldsFunc(s []byte, f func(rune) bool) [][]byte
+把 s 解析 UTF-8 编码的 Unicode 码点序列
+每当遇到满足 f(c) 的码点 c，本函数都在 c 处分离 slice s，并返回 s 的子 slice 所组成的 slice
+若所有 s 中的码点都满足 f(c)，或者 len(s)==0，那么返回一个空 slice
+本函数不保证它调用 f(c) 的顺序
+对于给定的 c，若 f 不能稳定返回值，则本函数可能崩溃
+
+EG.
+
+f := func(c rune) bool {
+	return !unicode.IsLetter(c) && !unicode.IsNumber(c)
+}
+fmt.Printf("Fields are: %q", bytes.FieldsFunc([]byte("  foo1;bar2,baz3..."), f))
+
+
+
+HasPrefix(s, prefix []byte) bool
+测试 slice s 是否以 prefix 开始
+
+EG.
+
+fmt.Println(bytes.HasPrefix([]byte("Gopher"), []byte("Go")))
+fmt.Println(bytes.HasPrefix([]byte("Gopher"), []byte("C")))
+fmt.Println(bytes.HasPrefix([]byte("Gopher"), []byte("")))
+
+
+
+HasSuffix(s, suffix []byte) bool
+测试 slice s 是否以 suffix 结束
+
+EG.
+
+fmt.Println(bytes.HasSuffix([]byte("Amigo"), []byte("go")))
+fmt.Println(bytes.HasSuffix([]byte("Amigo"), []byte("O")))
+fmt.Println(bytes.HasSuffix([]byte("Amigo"), []byte("Ami")))
+fmt.Println(bytes.HasSuffix([]byte("Amigo"), []byte("")))
