@@ -165,3 +165,127 @@ fmt.Println(bytes.HasSuffix([]byte("Amigo"), []byte("go")))
 fmt.Println(bytes.HasSuffix([]byte("Amigo"), []byte("O")))
 fmt.Println(bytes.HasSuffix([]byte("Amigo"), []byte("Ami")))
 fmt.Println(bytes.HasSuffix([]byte("Amigo"), []byte("")))
+
+
+
+Index(s, sep []byte) int
+返回 s 中第一个 sep 的实例的索引，若 sep 并未出现在 s 中，则返回 -1
+
+EG.
+
+fmt.Println(bytes.Index([]byte("chicken"), []byte("ken")))
+fmt.Println(bytes.Index([]byte("chicken"), []byte("dmr")))
+
+
+
+IndexAny(s []byte, chars string) int
+将 s 解析为 UTF-8 编码的 Unicode 码点序列
+返回 s 中首个出现的任何存在于 chars 中的 Unicode 码点的索引
+若 chars 为空，或者未能找到共有的码点时，返回 -1
+
+EG.
+
+fmt.Println(bytes.IndexAny([]byte("chicken"), "aeiouy"))
+fmt.Println(bytes.IndexAny([]byte("crwth"), "aeiouy"))
+
+
+
+IndexByte(s []byte, c byte) int
+IndexFunc(s []byte, f func(r rune) bool) int
+同上，但针对不同类型来进行测试和返回
+
+
+
+IndexRune(s []byte, r rune) int
+特别的，当 r 是 utf8.RuneError，它返回第一个遇到的非法 UTF-8 字节序列
+
+
+
+LastIndex(s, sep []byte) int
+LastIndexAny(s []byte, chars string) int
+LastIndexByte(s []byte, c byte) int
+LastIndexFunc(s []byte, f func(r rune) bool) int
+同上，但返回的是最后一个对应的内容的索引
+
+
+
+Join(s [][]byte, sep []byte) []byte
+将 s 的元素合并为一个新的 []byte
+分隔符将置于结果 slice 的两个元素之间
+
+
+
+Map(mapping func(r rune) rune, s []byte) []byte
+返回 slice s 的一个拷贝，其中的每个字符都经过 mapping 函数的修改
+若 mapping 返回了一个负值，字符会直接从字符串中丢弃
+s 和 输出的字符都被解析为 UTF-8 编码的码点
+
+EG.
+
+rot13 := func(r rune) rune {
+	switch {
+	case r >= 'A' && r <= 'Z':
+		return 'A' + (r-'A'+13)%26
+	case r >= 'a' && r <= 'z':
+		return 'a' + (r-'a'+13)%26
+	}
+	return r
+}
+fmt.Printf("%s", bytes.Map(rot13, []byte("'Twas brillig and the slithy gopher...")))
+
+
+
+Repeat(b []byte, count int) []byte
+返回一个新的 []byte，其中包含 count 个 b
+若 count 为负值或者 len(b) * count 溢出，则产生 panic
+
+EG.
+
+fmt.Printf("ba%s", bytes.Repeat([]byte("na"), 2))
+
+
+
+Replace(s, old, new []byte, n int) []byte
+返回 slice s 的拷贝，其中前 n 个非重叠的 old 会被替换为 new
+若 old 为空，则它匹配上 slice 的开头，以及每个 UTF-8 序列的后面，
+对于 k 字符长度的 slice，产生 k + 1 个替换
+若 n < 0，就不限制替换的数量
+
+EG.
+
+fmt.Printf("%s\n", bytes.Replace([]byte("oink oink oink"), []byte("k"), []byte("ky"), 2))
+fmt.Printf("%s\n", bytes.Replace([]byte("oink oink oink"), []byte("oink"), []byte("moo"), -1))
+
+
+
+Runes(s []byte) []rune
+返回等价于 s 的 []rune（Unicode code points）
+
+
+
+Split(s, sep []byte) [][]byte
+通过寻找 sep 来分割 slice s，并返回分隔符之间的子 slice
+若 sep 为空，本函数在每个 UTF-8 序列后分割
+本函数等价于 SplitN 的 n 值为 -1 时的情况
+
+EG.
+
+fmt.Printf("%q\n", bytes.Split([]byte("a,b,c"), []byte(",")))
+fmt.Printf("%q\n", bytes.Split([]byte("a man a plan a canal panama"), []byte("a ")))
+fmt.Printf("%q\n", bytes.Split([]byte(" xyz "), []byte("")))
+fmt.Printf("%q\n", bytes.Split([]byte(""), []byte("Bernardo O'Higgins")))
+
+
+
+SplitAfter(s, sep []byte) [][]byte
+在每个 sep 的实例之后切开 s，并返回所有的子 slice
+
+EG.
+
+fmt.Printf("%q\n", bytes.SplitAfter([]byte("a,b,c"), []byte(",")))
+
+
+
+SplitN(s, sep []byte, n int) [][]byte
+SplitAfterN(s, sep []byte, n int) [][]byte
+类比上两个函数
