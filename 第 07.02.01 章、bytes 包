@@ -289,3 +289,107 @@ fmt.Printf("%q\n", bytes.SplitAfter([]byte("a,b,c"), []byte(",")))
 SplitN(s, sep []byte, n int) [][]byte
 SplitAfterN(s, sep []byte, n int) [][]byte
 类比上两个函数
+
+
+
+
+Title(s []byte) []byte
+ToLower(s []byte) []byte
+ToLowerSpecial(c unicode.SpecialCase, s []byte) []byte
+ToTitle(s []byte) []byte
+ToTitleSpecial(c unicode,SpecialCase, s []byte) []byte
+ToUpper(s []byte) []byte
+ToUpperSpecial(c unicode.SpecialCase, s []byte) []byte
+Trim(s []byte, cutset string) []byte
+TrimFunc(s []byte, f func(r rune) bool) []byte
+TrimLeft(s []byte, cutset string) []byte
+TrimLeftFunc(s []byte, f func(r rune) bool) []byte
+TrimRight(s []byte, cutset string) []byte
+TrimRightFunc(s []byte, f func(r rune) bool) []byte
+TrimSpace(s []byte) []byte
+TrimPrefix(s, prefix []byte) []byte
+TrimSuffix(s, suffix []byte) []byte
+上述函数参见 strings 包对应的函数
+
+
+
+Buffer struct 类型
+
+一个 Buffer 是一个可变长度的字节缓存，其具有 Read 和 Write 方法
+Buffer 的零值是一个等待使用的空的缓存
+
+type Buffer struct {
+	// 包含过滤或未导出字段
+}
+
+
+EG.
+
+var b bytes.Buffer // Buffer 不需要被初始化
+b.Write([]byte("Hello "))
+fmt.Fprintf(&b, "world!")
+b.WriteTo(os.Stdout)
+
+
+EG.【Reader】
+
+// Buffer 可将字符串或 []byte 转换为 io.Reader
+buf := bytes.NewBufferString("R29waGVycyBydWxlIQ==")
+dec := base64.NewDecoder(base64.StdEncoding, buf)
+io.Copy(os.Stdout, dec)
+
+
+
+NewBuffer(buf []byte) *Buffer
+创建并初始化一个新的 Buffer，其使用 buf 作为初始值
+新的 Buffer 接管 buf 的所有权，而调用者不应该在这次调用之后再次使用 buf
+本函数意在准备好一个 Buffer 来读取已经存在的数据
+它可以用来限制写入的内部缓存的大小
+为了达到这个目的，buf 应该具有所需容量，但长度为 0
+
+大多数情况下，new(Buffer)（或直接声明一个 Buffer 变量）就足够初始化一个 Buffer
+
+
+NewBufferString(s string) *Buffer
+创建并初始化一个新的 Buffer，其使用字符串作为它的初始内容
+它意在准备好可以读取一个已经存在的字符串的的缓存
+
+大多数情况下，new(Buffer)（或直接声明一个 Buffer 变量）就足够初始化一个 Buffer
+
+
+(b *Buffer) Bytes() []byte
+返回一个长度为 b.Len() 的 slice，其持有缓存中未读出的部分
+在下一次的缓存修改之前（也就是，下一次调用如 Read、Write、Reset、Truncate 等方法之前），
+slice 都是有效的
+slice 至少在下次缓存修改之前都是缓存的别称，所以立刻修改 slice 将会影响未来读取的结果
+
+
+(b *Buffer) Cap() int
+返回缓存的底层字节 slice 的容量，也就是，为缓存数据分配的总空间
+
+
+(b *Buffer) Grow(n int)
+若需要，增长缓存的容量，来保证有空间来读取后面 n 字节的数据
+在 Grow(n) 之后，至少有 n 字节的空间可以用于写入，而不需要另外分配
+若 n 为负值， Grow 产生 panic
+若缓存不能增长，则以 ErrTooLarge 产生 panic
+
+EG.
+
+var b bytes.Buffer
+b.Grow(64)
+bb := b.Bytes()
+b.Write([]byte("64 bytes or fewer"))
+fmt.Printf("%q", bb[:b.Len()])
+
+
+(b *Buffer) Len() int
+返回缓存中未读取的字节的数量；
+b.Len() == len(b.Bytes())
+
+
+(b *Buffer) Next(n int) []byte
+从缓存中返回一个 slice，其包含了下 n 个字节的数据，
+同时移动缓存，就像数据被 Read 返回一样
+若缓存小于 n 字节，本函数返回整个缓存
+slice 仅在下次调用读或写方法前才是有效的
