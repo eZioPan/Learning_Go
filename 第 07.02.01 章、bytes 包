@@ -393,3 +393,145 @@ b.Len() == len(b.Bytes())
 同时移动缓存，就像数据被 Read 返回一样
 若缓存小于 n 字节，本函数返回整个缓存
 slice 仅在下次调用读或写方法前才是有效的
+
+
+(b *Buffer) Read(p []byte) (n int, err error)
+从缓存中读取下 len(p) 字节，或直到耗尽缓存
+返回值 n 为读取的字节数
+若缓存没有可以返回的数据，err 为 io.EOF（除非 len(p) 为 0）；
+其他情况为 nil
+
+
+(b *Buffer) ReadByte() (byte, error)
+读取并返回缓存中的下一个字节
+若没有字节可用，它返回 error io.EOF
+
+
+(b *Buffer) ReadBytes(delim byte) (line []byte, err error)
+读取直到第一次遇到输入中的 delim，返回一个 slice，包含了已经读取的数据和 delimiter
+若本函数在找到 delimiter 之前就遇到了错误，它返回错误之前的数据，以及错误本身（通常为 io.EOF）
+当且仅当数据不以 delim 作为结尾时，本函数返回 err != nil
+
+
+(b *Buffer) ReadFrom(r io.Reader) (n int64, err error)
+从 r 中读取数据，直到 EOF，并将数据追加至缓存中，若需要则增长缓存
+返回值 n 是读取的字节数
+除了 io.EOF 之外，任何读取到的错误同样会被返回
+若缓存变得太大，本函数将会以 ErrTooLarge 产生 panic
+
+
+(b *Buffer) ReadRune() (r rune, size int, err error)
+从缓存中读取并返回下一个 UTF-8 编码的 Unicode 码点
+若没有数据可用，error 返回 io.EOF
+若数据为错误的 UTF-8 编码，它消耗一个字节，并返回 U+FFFD, 1
+
+
+(b *Buffer) ReadString(delim byte) (line string, err error)
+读取直到遇到输入中的第一个 delim，返回读取到的数据，包含 delimiter 本身
+若本方法在找到一个 delimiter 之前遇到了错误，则它返回遇到错误前所读取的数据，以及错误本身（通常为 io.EOF）
+当且仅当返回值不以 delim 结尾时， err != nil
+
+
+(b *Buffer) Reset()
+将缓存重置为空，但保留底层的存储空间，以便未来写入时使用
+本方法等价于 Truncate(0)
+
+
+(b *Buffer) String() string
+将未读取的缓存的内容当做字符串返回
+若 Buffer 是 nil 指针，它返回 "<nil>"
+
+
+(b *Buffer) Truncate(n int)
+从缓存中，取消除了前 n 个字节之外所有的数据，但继续使用相同的已分配存储空间
+若 n 为负数，或者长度大于缓存大小，它 panic
+
+
+(b *Buffer) UnreadByte() error
+取消读取最后一个字节，该字节来自于，最近一次成功读取至少一个字节的读取操作，所读取的数据
+以下情况，本方法返回一个错误，
+若最后一次读取操作之后发生了写入操作，
+若最后一次读取操作返回了错误，
+若读取 操作读取的了 0 字节
+
+
+(b *Buffer) UnreadRune() error
+取消读取最后一次运行 ReadRune 所返回的 rune
+若最近一次读或写操作，并非成功的 ReadRune，本方法都返回一个错误
+（在这个层面上来说，它比 UnreadByte 要严格，UreadByte 会从任何读取操作中取消最后一字节的读取）
+
+
+(b *Buffer) Write(p []byte) (n int, err error)
+将 p 的内容追加至缓存中，若需要则增长缓存
+返回值 n 是 p 的长度，err 永远为 nil
+若缓存过大，则本方法将以 ErrTooLarge 产生 panic
+
+
+(b *Buffer) WriteByte(c byte) error
+将字节 c 追加至缓存中，若需要则增长缓存
+返回的 error 应该永远是 nil，但会匹配 bufio.Writer 的 WriteByte
+若缓存过大，则本方法将以 ErrTooLarge 产生 panic
+
+
+(b *Buffer) WriteRune(r rune) (n int, err error)
+将 UTF-8 编码的 Unicode 码点 r 追加至缓存中，返回其长度，以及任何错误，
+返回的 error 应该永远是 nil，但会匹配 bufio.Writer 的 WriteRune
+缓存会依据需要增长；若缓存过大，则本方法将以 ErrTooLarge 产生 panic
+
+
+(b *Buffer) WriteString(s string) (n int, err error)
+将 s 的内容追加至缓存中，若需要则增长缓存
+返回值 n 是 s 的长度，err 将永远为 nil
+若缓存过大，则本方法将以 ErrTooLarge 产生 panic
+
+
+(b *Buffer) WriteTo(w io.Writer) (n int64, err error)
+将数据写入 w 直到缓存耗尽或者遇到一个错误
+返回值 n 是写入的字节数；它永远在 int 的范围内，但本身是 int64 来匹配 io.WriterTo 接口
+任何在写入过程中遇到的错误也会一并返回
+
+
+
+Reader struct 类型
+
+Reader 实现了从一个 []byte 读取数据的 io.Reader io.ReadAt io.WriteTo io.Seeker io.ByteScanner io.RuneScanner 接口
+与 Buffer 不同，Reader 为仅读的，且支持搜索
+
+type Reader struct {
+	// 包含过滤或未导出的字段
+}
+
+
+NewReader(b []byte) *Reader
+返回从 b 中读取数据的新 Reader
+
+
+(r *Reader) Len() int
+以字节为单位，返回 slice 中未读取部分的长度
+
+
+(r *Reader) Read(b []byte) (n int, err error)
+(r *Reader) ReadAt(b []byte, off int64) (n int, err error)
+(r *Reader) ReadByte() (byte, error)
+(r *Reader) ReadRune() (ch rune, size int, err error)
+
+
+(r *Reader) Reset(b []byte)
+将 Reader 重置为从 b 中读取
+
+
+(r *Reader) Seek(offset int64, whence int) (int64, error)
+实现了 io.Seeker 接口
+
+
+(r *Reader) Size() int64
+返回底层 []byte 的原始长度
+本函数的返回值是，通过 ReadAt 能读取的字节数量
+返回值永远相同，并不会受到其他方法的影响
+
+
+(r *Reader) UnreadByte() error
+(r *Reader) UnreadRune() error
+
+(r *Reader) WriteTo(w io.Writer) (n int64, err error)
+实现了 io.WriterTo 接口
