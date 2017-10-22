@@ -6,7 +6,7 @@ bzip2 包实现了 bzip2 的解压
 
 NewReader(r io.Reader) io.Reader
 返回一个 io.Reader，从 r 中解压 bzip2 数据
-若 r 也并没有实现 io.ByteReader，那么解压器从 r 中读取的数据可能会比所需要的多
+若 r 没有同时实现 io.ByteReader，那么解压器从 r 中读取的数据可能会比所需要的多
 
 
 
