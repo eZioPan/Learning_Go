@@ -297,3 +297,53 @@ type WriteError struct {
 
 
 (e *WriterError) Error() string
+
+
+
+Writer struct 类型
+
+一个 Writer 取出写入的它的数据，并将压缩形式的数据写入底层的 writer（参见 NewWriter）
+
+type Writer struct {
+	// 包含过滤或未导出字段
+}
+
+
+NewWriter(w io.Writer, level int) (*Writer, error)
+返回一个新的 Writer 在给定的等级上压缩数据
+与 zlib 类似，等级从 1（BestSpeed）至 9（BestCompression）；
+等级越高，一般来说，运行地越慢，但压缩的越多
+等级 0（NoCompression）并不会做任何压缩；它仅会加上必要的 DEFLATE 帧
+等级 -1（DefaultCompression） 使用默认的压缩等级
+等级 -2（HuffmanOnly）将仅使用 Huffman 压缩，对所有类型的输入都具有非常快的压缩速度，但牺牲了可考虑的压缩有效性
+
+若等级在 [-2,9] 之间，返回的错误将为 nil
+其它情况将为非 nil
+
+
+NewWriterDict(w io.Writer, level int, dict []byte) (*Writer, error)
+与 NewWriter 类似，但使用给定的字典初始化一个新的 Writer
+返回的 Writer 的行为，就像字典已经被写入，但是没有产生任何压缩的输出
+写入 w 的压缩数据，仅能被相同字典初始化的 Reader 解压缩
+
+
+(w *Writer) Close() error
+刷写并关闭 writer
+
+
+(w *Writer) Flush() error
+刷写任何等待中的数据至底层的 writer
+它主要常用于压缩网络协议，来保证远端 reader 具有足够的数据重构一个包
+本方法不会返回，直到数据被写入
+当没有等待中的数据，却调用本方法时，依旧会导致 Writer 发送一个至少4 字节的同步标记
+若底层的 writer 返回了一个错误，本方法返回那个错误
+
+在 zlib 库的专业术语中，本函数等价于 Z_SYNC_FLUSH
+
+
+(w *Writer) Reset(dst io.Writer)
+取消一个 writer 的状态，将其等价于以 dst 和 w 的等级和字典所调用的 NewWriter 或 NewWriterDict
+
+
+(w *Writer) Write(data []byte) (n int, err error)
+将数据写入 w 中，其最终将把压缩心事的数据写入底层的 writer
