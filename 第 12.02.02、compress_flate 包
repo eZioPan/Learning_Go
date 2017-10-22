@@ -188,3 +188,112 @@ go func() {
 		log.Fatal(err)
 	}
 }()
+
+
+
+常量
+
+const (
+    NoCompression      = 0
+    BestSpeed          = 1
+    BestCompression    = 9
+    DefaultCompression = -1
+
+    // HuffmanOnly 禁用了 Lempel-Ziv 匹配搜索，仅执行 Huffman 行军编码。
+    // 这个模式常用于编码一个已经被 LZ 样式算法（eg. Snappy 或 LZ4）编码，但缺少行军编码的数据。
+    // 若输入流中某些字节比其他字节出现频率更多，则能提高压缩率
+    //
+    // 注意 HuffmanOnly 产生的压缩输出将兼容 RFC 1951。
+    // 也就是说，任何有效的 DEFLATE 加压器都将能
+    // 继续解压这个输出
+    HuffmanOnly = -2
+)
+
+
+
+NewReader(r io.Reader) io.ReadCloser
+返回一个新的 ReadClose，它可以用于读取未压缩版本的 r
+若 r 没有同时实现 io.ByteReader，解压器可能会从 r 中读取比所需的还要多的数据
+当读取结束时，调用者有责任对 ReadCloser 调用 Close
+
+本函数返回的 ReadCloser 同样实现了 Resetter
+
+
+
+NewReaderDict(r io.Reader, dict []byte) io.ReadClose
+与 NewReader 类似，但是一预设的字典初始化 reader
+返回的 Reader 的行为，就如同未压缩的，以给定的字典为开头的数据流，而字典本身已经被读取
+本函数常用于读取被 NewWriteDict 压缩的数据
+
+被 NewReaderDict 返回的 ReadCloser 同样实现了 Resetter
+
+
+
+CorruptInputError int64 类型
+
+一个 CorruptInputError 报告了输出中给定偏移上出现的错误
+
+type CorruptInputError int64
+
+
+(e CooruptInputError) Error() string
+
+
+
+InternalError string 类型
+
+一个  InternalError 报告了 flate 编码本身的一个错误
+
+type InternalError string
+
+
+(e InternalError) Error() string
+
+
+
+ReadError struct 类型
+
+一个 ReadError 报告了再读取输入时遇到的错误
+
+弃用：不再被返回
+
+type ReadError struct {
+	Offset int64 // 当错误发生时，偏移的字节数
+	Err error // 被底层 Read 返回的错误
+}
+
+
+(e *ReadError) Error() string
+
+
+
+Reader interface 类型
+
+NewReader 所需的真实的读取接口
+若传入的 io.Reader 不具有 ReadByte，NewReader 将启用它自己的缓存
+
+type Reader interface {
+	io.Reader
+	io.ByteReader
+}
+
+
+
+Resetter interface 类型
+
+重置被 NewReader 或者 NewReaderDict 返回的 ReadCloser，并切换至新的底层 Reader
+这允许重复使用一个 ReadCloser，而非重新分配一个
+
+
+
+WriteError struct 类型
+
+一个 WriteError 报告了当写入输出时所遇见的一个错误
+
+type WriteError struct {
+	Offset int64 // 当错误发生时，偏移的字节数
+	Err error // 被底层 Write 返回的错误
+}
+
+
+(e *WriterError) Error() string
