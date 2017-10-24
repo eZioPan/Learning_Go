@@ -1,0 +1,109 @@
+总览
+
+gzip 包实现了读取和写入 gzip 格式的压缩文件，如 RFC 1952 中定义的一样
+
+EG.【WriterReader】
+
+var buf bytes.Buffer
+zw := gzip.NewWriter(&buf)
+
+// 设置头（header）字段为可选项
+zw.Name = "a-new-hope.txt"
+zw.Comment = "an epic space opera by George Lucas"
+zw.ModTime = time.Date(1977, time.May, 25, 0, 0, 0, 0, time.UTC)
+
+_, err := zw.Write([]byte("A long time ago in a galaxy far, far away..."))
+if err != nil {
+	log.Fatal(err)
+}
+
+if err := zw.Close(); err != nil {
+	log.Fatal(err)
+}
+
+zr, err := gzip.NewReader(&buf)
+if err != nil {
+	log.Fatal(err)
+}
+
+fmt.Printf("Name: %s\nComment: %s\nModTime: %s\n\n", zr.Name, zr.Comment, zr.ModTime.UTC())
+
+if _, err := io.Copy(os.Stdout, zr); err != nil {
+	log.Fatal(err)
+}
+
+if err := zr.Close(); err != nil {
+	log.Fatal(err)
+}
+
+
+
+常量
+
+这些常量从 flate 包拷贝而来，这样导入 "compres/gzip" 包就不用同时导入 "compress/flate" 包了
+
+const (
+	NoCompression      = flate.NoCompression
+	BestSpeed          = flate.BestSpeed
+	BestCompression    = flate.BestCompression
+	DefaultCompression = flate.DefaultCompression
+	HuffmanOnly        = flate.HuffmanOnly
+)
+
+
+
+变量
+
+var (
+// ErrChecksum 在读取具有无效校验和的 GZIP 数据时被引发
+ErrChecksum = errors.New("gzip: invalid checksum")
+
+// ErrHeader 在读取具有无效头（header）数据
+ErrHeader = errors.New("gzip: invalid header")
+)
+
+
+
+Header struct 类型
+
+gzip 文件记录了一个存储了压缩文件的元数据的头数据
+这个头数据将会作为 Writer 和 Reader 结构体的字段被导出
+
+基于 GZIP 文件格式的限制，
+字符串必须是 UTF-8 编码，且仅能包含 U+0001 至 U+00FF 的 Unicode 码点
+
+type Header struct {
+	Comment string    // 注释
+	Extra   []byte    // “附加数据”
+	ModTime time.Time // 修改时间
+	Name    string    // 文件名
+	OS      byte      // 操作系统类型
+}
+
+
+
+Reader struct 类型
+
+一个 Reader 是一个 io.Reader，其可以从一个 gzip 格式的压缩文件中取回未压缩的数据
+
+一般来说，一个 gzip 文件可以由一系列 gzip 文件构成，每个 gzip 组分都有各自的头数据
+Reader 的 Read 会返回每个 gzip 组分的未压缩数据
+仅有第一个头数据被记录在 Reader 的字段中
+
+gzip 文件存储了未压缩数据的长度和校验和
+当 Read 读到了未压缩数据，但并非是预料中的长度或校验和时，就会返回 ErrChecksum
+客户端应该视 Read 返回的数据为位确定的，直到收到 io.EOF 标记的数据结尾
+
+type Reader struct {
+	Header // 在 NewReader 或 Reader.Reset 之后有效
+	// 包含了过滤或者未导出的字段
+}
+
+
+NewReader(r io.Reader) (*Reader, error)
+创建一个新的 Reader 从给定的 reader 读取数据
+若 r 没有同样实现 io.ByteReader，解压器也许会从 r 中读取比所需的更多的数据
+
+在完成后，是调用者的责任对 Reader 调用 Close
+
+返回的 Reader 的 Reader.Header 将是有效的
