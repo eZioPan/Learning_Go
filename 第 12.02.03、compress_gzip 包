@@ -107,3 +107,137 @@ NewReader(r io.Reader) (*Reader, error)
 在完成后，是调用者的责任对 Reader 调用 Close
 
 返回的 Reader 的 Reader.Header 将是有效的
+
+
+(z *Reader) Close() error
+关闭 Reader
+它并不会关闭底层的 io.Reader
+为了让 GZIP 校验和被验证，reader 必须王权被消耗，直到出现 io.EOF
+
+
+(z *Reader) Multistream(ok bool)
+控制 reader 是否支持多重流文件
+
+若启用（默认值），Reader 希望输入时一系列独立的 gzip 压缩过的数据流，
+每个都有自己的头数据和结尾，且以 EOF 结尾
+效果就是，gzip 压缩文件的序列的结合，等价于序列的结合的 gzip 数据
+这是 gzip 头数据的标准行为
+
+调用 Multistream(false) 禁用了这种行为；
+禁用这种行为，在读取文件格式时，区分独立 gzip 数据流或混合 gzip 数据流与其他数据流时很有效
+在这种模式下，当 Reader 遇到了数据流的结尾，Read 返回 io.EOF
+若底层的 reader 满足了 io.ByteReader，它将在 gzip 数据流之后立刻离开
+要开始另一个流，在 z.Multistream(false) 后调用 z.Reset(r)
+若没有下一个流，则 z.Reset(r) 将返回 io.EOF
+
+EG.
+
+var buf bytes.Buffer
+zw := gzip.NewWriter(&buf)
+
+var files = []struct {
+	name    string
+	comment string
+	modTime time.Time
+	data    string
+}{
+	{"file-1.txt", "file-header-1", time.Date(2006, time.February, 1, 3, 4, 5, 0, time.UTC), "Hello Gophers - 1"},
+	{"file-2.txt", "file-header-2", time.Date(2007, time.March, 2, 4, 5, 6, 1, time.UTC), "Hello Gophers - 2"},
+}
+
+for _, file := range files {
+	zw.Name = file.name
+	zw.Comment = file.comment
+	zw.ModTime = file.modTime
+
+	if _, err := zw.Write([]byte(file.data)); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := zw.Close(); err != nil {
+		log.Fatal(err)
+	}
+
+	zw.Reset(&buf)
+}
+
+zr, err := gzip.NewReader(&buf)
+if err != nil {
+	log.Fatal(err)
+}
+
+for {
+	zr.Multistream(false)
+	fmt.Printf("Name: %s\nComment: %s\nModTime: %s\n\n", zr.Name, zr.Comment, zr.ModTime.UTC())
+
+	if _, err := io.Copy(os.Stdout, zr); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Print("\n\n")
+
+	err = zr.Reset(&buf)
+	if err == io.EOF {
+		break
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+if err := zr.Close(); err != nil {
+	log.Fatal(err)
+}
+
+
+(z *Reader) Read(p []byte) (n int, err error)
+实现了 io.Reader，从底层 Reader 中读取未压缩的字节
+
+
+(z *Reader) Reset(r io.Reader) error
+取消 Reader z 的状态，让它的状态等价于从 NewReader 获得的原始状态，但从 r 读取数据
+这允许复用一个 Reader，而非重新分配一个
+
+
+
+Writer struct 类型
+
+一个 Writer 是一个 io.WriterCloser
+写入 Writer 的数据将会被压缩，并写入 w 中
+
+当完成时，对 WriteCloser 调用 Close，是调用者的责任
+直到调用 Close，写u人的数据都可能在缓存中，而没有被刷写
+
+希望设置 Writer.Header 的调用者，必须在第一次调用 Write/Flush/Close 前设置
+
+
+NewWriterLevel(w io.Writer, level int) (*Writer, error)
+与 NewWriter 类似，但指定压缩等级，而非假设为 DefaultCompression
+
+压缩等级可以为 DefaultCompression, NoCompression, HuffmanOnly，
+或任何包含在 BestSpeed 与 BestCompression 之间的整数
+若等级有效，则返回的错误为 nil
+
+
+(z *Writer) Close() error
+关闭一个 Writer，通过刷写任何未写入的数据至底层的 io.Writer，并写上 GZIP 脚标（footer）
+它并不会关闭底层的 io.Writer
+
+
+(z *Writer) Flush() error
+刷写任何等待中的数据至底层的 writer
+
+它主要常用于压缩网络协议中，来保证远程 reader 具有足够的数据重构一个包
+本方法并不会返回知道数据被写入
+若底层的 writer 返回了一个错误，本方法就返回那个错误
+
+
+(z *Writer) Reset(w io.Writer)
+取消 Writer z 的状体，让它的状态等价于从 NewWriter 或 NewWriterLevel 获得的原始状态，
+但写入 w 中
+这允许复用一个 Writer 而非重新分配一个
+
+
+(z *Writer) Write(p []byte) (int, error)
+将 p 的压缩形式写入底层的 io.Writer
+直到 Writer 关闭，压缩的数据都不是必须被刷写的
