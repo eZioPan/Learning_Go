@@ -1,0 +1,146 @@
+总览
+
+zlib 包实现了读取和写入 zlib 格式的压缩数据，如 RFC 1950 中所定义的
+
+本实现提供了过滤器，在读取时解压，在写入时压缩
+距离来说，写入压缩后的数据至缓存中：
+
+var b bytes.Buffer
+w := zlib.NewWriter(&b)
+w.Write([]byte("hello, world\n"))
+w.Close()
+
+接着取回该数据
+
+r, err := zlib.NewReader(&b)
+io.Copy(os.Stdout, r)
+r.Close()
+
+
+
+常量
+
+这些常量从 flate 包中拷贝而来，这样导入 "compress/zlib" 的代码就不同同时导入 "compress/flate" 了
+
+const (
+	NoCompression      = flate.NoCompression
+	BestSpeed          = flate.BestSpeed
+	BestCompression    = flate.BestCompression
+	DefaultCompression = flate.DefaultCompression
+	HuffmanOnly        = flate.HuffmanOnly
+)
+
+
+
+变量
+
+var (
+	// ErrCheckSum 在读取具有无效的校验和的 ZLIB 数据时被返回
+	ErrChecksum = errors.New("zlib: invalid checksum")
+	// ErrDictionary 在读取具有无效字典的 ZLIB 数据时被返回
+	ErrDictionary = errors.New("zlib: invalid dictionary")
+	// ErrHeader 在读取具有无效头数据的 ZLIB 数据时被返回
+	ErrHeader = errors.New("zlib: invalid header")
+)
+
+
+
+NewReader(r io.Reader) (io.ReadCloser, error)
+创建一个新的 ReadCloser
+从返回的 ReadCloser 中读取时，从 r 中读取并解压数据
+若 r 没有同时实现 io.ByteReader，那么解压器可能会从 r 中读取比所需的还要多的数据
+当完成时，对 ReadCloser 调用 Close 时调用者的责任
+
+被本函数返回的 ReadCloser 同样实现了 Ressetter
+
+EG.
+
+buff := []byte{120, 156, 202, 72, 205, 201, 201, 215, 81, 40, 207,
+	47, 202, 73, 225, 2, 4, 0, 0, 255, 255, 33, 231, 4, 147}
+b := bytes.NewReader(buff)
+
+r, err := zlib.NewReader(b)
+if err != nil {
+	panic(err)
+}
+io.Copy(os.Stdout, r)
+
+
+
+NewReaderDict(r io.Reader, dict []byte) (io.ReadCloser, error)
+与 NewReader 相似，但使用一个预设的字典
+若压缩的数据没有参考它，本函数将忽视该字典
+若压缩的数据参考了另一个不同的字典，本函数返回 ErrDictionary
+
+被本函数返回的 ReadCloser 同样实现了 Resetter
+
+
+
+Resetter interface 类型
+
+Resetter 重置一个被 NewReader 或者 NewReaderDict 返回的 ReadCloser，并切换至一个新的底层 Reader
+这允许复用一个 ReadCloser，而非分配一个新的
+
+type Resetter interface {
+	// 取消任何缓存的数据，并重置 Resetter，就如同与给定的 reader 新初始化的一样
+	Reset(r io.Reader, dict []byte) error
+}
+
+
+
+Writer struct 类型
+
+一个 Writer 会取得写入它的数据，并将该数据的压缩形式写入底层 writer（参见 NewWriter）
+
+type Writer struct {
+	// 包含过滤的或位导出的字段
+}
+
+
+NewWriter(w io.Writer) *Writer
+创建一个新的 Writer
+对返回的 Writer 写入数据，将使数据被压缩，并写入 w
+
+当完成时，对 WriteCloser 调用 Close 是调用者的责任
+直到 Close，写入的数据可能会被缓存，而不会被刷写
+
+EG.
+
+var b bytes.Buffer
+
+w := zlib.NewWriter(&b)
+w.Write([]byte("hello, world\n"))
+w.Close()
+fmt.Println(b.Bytes())
+
+
+NewWriterLevel(w io.Writer, level int) (*Writer, error)
+与 NewWriter 类似，但指定压缩等级，而非假设 DefaultCompression
+
+压缩等级可以为 DefaultCompression, NoCompression, HuffmanOnly，
+或其它任何在 BestSpeed 和 BestCompression 之间的整数
+若等级有效，则返回的错误为 nil
+
+
+NewWriterLevelDict(w io.Writer, level int, dict []byte) (*Writer, error)
+与 NewWriterLevel 类似，但指定所使用的压缩字典
+
+字典可以为 nil，若不是，则其内容在 Writer 关闭前都不应该被修改
+
+
+(z *Writer) Close() error
+关闭 Writer，刷写任何未写入的数据至底层的 io.Writer，但并不关闭底层的 io.Writer
+
+
+(z *Writer) Flush() error
+刷写 Writer 至其底层的 io.Writer
+
+
+(z *Writer) Reset(w io.Writer)
+清除 Writer z 的状态，使其等价于从 NewWriterLevel 或者 NewWriterLevelDict 所获得的状态，
+但将修改为写入 w 中
+
+
+(z *Writer) Writer(p []byte) (n int, err error)
+将压缩形式的 p 写入底层的 io.Writer
+直到 Writer 关闭或者明确被刷写前，压缩的数据都不保证被刷写
