@@ -1,0 +1,47 @@
+总览
+
+lzw 包实现了 Lempel-Ziv-Welch 压缩格式，
+在 T. A. Welch 的 “A Technique for High-Performance Data Compression”, Computer, 17(6) (June 1984), pp 8-19
+中所描述
+
+特别得，它实现得 LZW 是用于 GIF 和 PDF 文件格式，也就意味着长达 12 bit 的变长编码，
+且前两个非字符编码为一个 clear code 和一个 EOF code
+
+TIFF 文件格式使用相近但不兼容版本的 LZW 算法
+参见
+golang.org/x/image/tiff/lzw 包
+获取其实现
+
+
+
+NewReader(r io.Reader, order Order, litWidth int) io.ReadCloser
+创建一个新的 io.ReadCloser
+从返回的 io.ReadCloser 读取数据时，从 r 中读取并解压数据
+若 r 没有同时实现 io.ByteReader，那么解压器可能会从 r 中读取比所需的还要多的数据
+当结束读取时，对 ReadCloser 调用 Close 是调用者的责任
+用于文字编码——litWidth——的 bit 的数量，必须在 [2,8] 的范围内，而且通常为 8
+它必须与压缩时的 litWidth 相等
+
+
+
+NewWriter(w io.Writer, order Order, litWidth int) io.WriteCloser
+创建一个新的 io.WriteCloser
+向返回的 io.WriteCloser 写入数据时，将数据压缩并写入 w 中
+当结束写入时，对 WirteCloser 调用 Close 时调用者的责任
+用于文字编码——litWidth——的 bit 的数量，必须在 [2,8] 的范围内，而且通常为 8
+输入的字节必须小于 1<<litWidth
+
+
+
+Order int 类型
+
+Order 定义饿了一个 LZW 数据流的位序
+
+type Oder int
+
+cost (
+	// LSB 意味着最低有效位优先，通常用于 GIF 格式
+	LSB Order = iota
+	// MSB 意味着最高有效位优先，通常用于 TIFF 和 PDF 中
+	MSB
+)
