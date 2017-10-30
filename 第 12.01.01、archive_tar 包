@@ -1,0 +1,139 @@
+总览
+
+tar 包实现了读写 tar 存档
+它目标在于囊括大部分变种，包括 那些被 GNU 和 BSD tar 产生的存档
+
+参考：
+
+http://www.freebsd.org/cgi/man.cgi?query=tar&sektion=5
+http://www.gnu.org/software/tar/manual/html_node/Standard.html
+http://pubs.opengroup.org/onlinepubs/9699919799/utilities/pax.html
+
+EG.
+
+// 创建一个缓存来写入我们的存档
+buf := new(bytes.Buffer)
+
+// 创建一个新的 tar 存档
+tw := tar.NewWriter(buf)
+
+// 将一些文件写入存档中
+var files = []struct {
+	Name, Body string
+}{
+	{"readme.txt", "This archive contains some text files."},
+	{"gopher.txt", "Gopher names:\nGeorge\nGeoffrey\nGonzo"},
+	{"todo.txt", "Get animal handling license."},
+}
+for _, file := range files {
+	hdr := &tar.Header{
+		Name: file.Name,
+		Mode: 0600,
+		Size: int64(len(file.Body)),
+	}
+	if err := tw.WriteHeader(hdr); err != nil {
+		log.Fatalln(err)
+	}
+	if _, err := tw.Write([]byte(file.Body)); err != nil {
+		log.Fatalln(err)
+	}
+}
+// 保证在调用 Close 时检查错误
+if err := tw.Close(); err != nil {
+	log.Fatalln(err)
+}
+
+// 打开 tar 存档读来读取
+r := bytes.NewReader(buf.Bytes())
+tr := tar.NewReader(r)
+
+// 逐一读取存档中的文件
+for {
+	hdr, err := tr.Next()
+	if err == io.EOF {
+		// end of tar archive
+		break
+	}
+	if err != nil {
+		log.Fatalln(err)
+	}
+	fmt.Printf("Contents of %s:\n", hdr.Name)
+	if _, err := io.Copy(os.Stdout, tr); err != nil {
+		log.Fatalln(err)
+	}
+	fmt.Println()
+}
+
+
+
+常量
+
+头数据类型 flag
+
+const (
+	TypeReg           = '0'    // 普通文件
+	TypeRegA          = '\x00' // 普通文件
+	TypeLink          = '1'    // 硬链接
+	TypeSymlink       = '2'    // 符号链接
+	TypeChar          = '3'    // 字符设备节点
+	TypeBlock         = '4'    // 块设备节点
+	TypeDir           = '5'    // 目录
+	TypeFifo          = '6'    // 先进先出节点
+	TypeCont          = '7'    // 保留
+	TypeXHeader       = 'x'    // 扩展头数据
+	TypeXGlobalHeader = 'g'    // 全局扩展头数据
+	TypeGNULongName   = 'L'    // 下个文件具有长文件名
+	TypeGNULongLink   = 'K'    // 下个符号链接指向的文件具有长文件名
+	TypeGNUSparse     = 'S'    // 稀疏文件
+)
+
+
+
+变量
+
+var (
+	ErrWriteTooLong    = errors.New("archive/tar: write too long")
+	ErrFieldTooLong    = errors.New("archive/tar: header field too long")
+	ErrWriteAfterClose = errors.New("archive/tar: write after close")
+)
+
+var (
+	ErrHeader = errors.New("archive/tar: invalid tar header")
+)
+
+
+
+Header struct 类型
+
+一个 Header 表示了在一个 tar 存档中的单独的头数据
+一些字段可能并不会被填充
+
+type Header struct {
+    Name       string    // 头数据文件条目的名称
+    Mode       int64     // 权限和 mode bit
+    Uid        int       // 拥有者的 uid
+    Gid        int       // 拥有者的 gid
+    Size       int64     // 字节为单位的长度
+    ModTime    time.Time // 修改时间
+    Typeflag   byte      // 头数据条目的类型
+    Linkname   string    // 链接的目标名
+    Uname      string    // 拥有者的名称
+    Gname      string    // 拥有者的组名称
+    Devmajor   int64     // 字符设备或者块设备的主编号
+    Devminor   int64     // 字符设备或者块设备的次编号
+    AccessTime time.Time // 读取时间
+    ChangeTime time.Time // 状态改变时间
+    Xattrs     map[string]string
+}
+
+
+FileInfoHeader(fi os.FileInfo, link string) (*Header, error)
+从 fi 中创建一个部分填充的 Header
+若 fi 描述了一个符号链接，本函数将把链接记录链接目标
+若 fi 描述了了一个目录，则一个斜线将附加在名称后面
+因为 os.FileInfo 的 Name 方法仅会返回它所描述的文件的 base name，
+可能需要修改返回头数据的 Name 字段来提供文件的完整路径
+
+
+(h *Header) FileInfo() os.FileInfo
+为 Header 返回一个 os.FileInfo
