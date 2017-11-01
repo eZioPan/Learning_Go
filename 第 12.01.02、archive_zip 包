@@ -1,0 +1,62 @@
+总览
+
+zip 包提供了对读写 ZIP 存档的支持
+
+参见 https://www.pkware.com/appnote
+
+本包不支持磁盘跨盘（disk spanning）
+
+ZIP64 注释：
+
+为了向前兼容，FileHeader 同时具有 32 和 64 bit 的 Size 字段
+64 bit 字段将永远包含正确的值，同时对于正常的存档，两个字段将相同
+对于需要 ZIP64 格式的文件，其 32 bit 字段将为 0xffffffff，而 64 bit 字段必须被使用
+
+
+
+常量
+
+const (
+	Store   uint16 = 0
+	Deflate uint16 = 8
+)
+
+
+
+变量
+
+var (
+	ErrFormat    = errors.New("zip: not a valid zip file")
+	ErrAlgorithm = errors.New("zip: unsupported compression algorithm")
+	ErrChecksum  = errors.New("zip: checksum error")
+)
+
+
+
+RegisterCompressor(method uint16, comp Compressor)
+为特定的方法 ID 注册一个自定义的压缩器
+通用方法 Store 和 Deflate 已经内建了
+
+
+
+RegisterDecompressor(method uint16, dcomp Decompressor)
+为特定的方法 ID 注册一个自定义的解压器
+通用方法 Store 和 Deflate 已经内建了
+
+
+
+Compressor func(w io.Writer) (io,WriteCloser, error) 类型
+
+返回一个新的压缩 writer，写入 w 中
+WriteCloser 的 Close 方法必须被用于刷写等待的数据至 w 中
+本类型本身在多 goroutine 并行运行时必须安全，但每个返回的 writer 同时只能被一个 goroutine 所使用
+
+type Compressor func(w io.Writer) (io.WriteCloser, error)
+
+
+
+Decompressor func(r io.Reader) io.ReadCloser
+
+返回一个新的解压 reader，从 r 读取
+ReadCloser 的 Close 方法必须用于释放相关资源
+本类型本身在多 goroutine 并行运行时必须安全，但每个返回的 reader 同时只能被一个 goroutine 所使用
