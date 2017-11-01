@@ -137,3 +137,70 @@ FileInfoHeader(fi os.FileInfo, link string) (*Header, error)
 
 (h *Header) FileInfo() os.FileInfo
 为 Header 返回一个 os.FileInfo
+
+
+
+Reader struct 类型
+
+一个 Reader 提供了顺序读取 tar 存档的内容的方法
+一个 tar 存档包含一系列文件
+Next 方法将读取头移动至下一个存档（包含第一个），
+接着它就可以当作一个 io.Reader 来读取文件数据
+
+type Reader struct {
+	// 包含过滤或未导出的字段
+}
+
+
+NewReader(r io.Reader) *Reader
+新建一个 Reader，从 r 中读取
+
+
+(tr *Reader) Next() (*Header, error)
+移动读取头至 tar 存档的下一个条目
+在输入的末端，io.EOF 被返回
+
+
+(tr *Reader) Read(b []byte) (int, error)
+从 tar 存档的当前条目中读取
+当遇到条目尾部时，返回 0, io.EOF，直到下次调用 Next 一地哦那个至下个条目
+
+在特殊的类型上调用 Read，无论 Header.Size 是怎么定义的，会直接返回 0, io.EOF，
+这些类型包括，
+TypeLink, TypeSymlink, TypeChar, TypeBlock, TypeDir, TypeFifo
+
+
+
+Writer struct 类型
+
+一个 Writer 提供了序列写入一个 POSIX.1 格式的 tar 存档
+一个 tar 存档包含一系列文件
+调用 WriteHeader 来开始一个新文件，然后调用 Write 来提供该文件的数据，
+总共最多可以写入 hdr.Size 字节
+
+Writer struct {
+	// 包含过滤或未导出的字段
+}
+
+
+NewWriter(w io.Writer) *Writer
+创建一个新的 Writer，写入 w
+
+
+(tw *Writer) Close() error
+关闭一个 tar 存档，刷写任何未写入的数据至底层 writer
+
+
+(tw *Writer) Flush() error
+完成当前文件的写入（可选）
+
+
+(tw *Writer) Write(b []byte) (n int, err error)
+写入 tar 存档当前条目
+若在 WriteHeader 之后，写入的数据量大于 hdr.Size 字节，则返回错误 ErrWriteTooLong
+
+
+(tw *Writer) WriteHeader(hdr *Header) error
+写入 hdr，并准备接受文件内容
+若并非第一个头数据，则 WriteHeader 调用 Flush
+在 Close 之后调用本方法，将返回 ErrWriteAfterClose
