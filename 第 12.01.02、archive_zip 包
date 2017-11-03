@@ -60,3 +60,99 @@ Decompressor func(r io.Reader) io.ReadCloser
 返回一个新的解压 reader，从 r 读取
 ReadCloser 的 Close 方法必须用于释放相关资源
 本类型本身在多 goroutine 并行运行时必须安全，但每个返回的 reader 同时只能被一个 goroutine 所使用
+
+
+
+File struct 类型
+
+type File struct {
+	FileHeader
+	// 包含过滤或未导出的字段
+}
+
+
+(f *File) DataOffset() (offset int64, err error)
+返回文件的可能压缩数据的偏移，该偏移相对于 zip 文件的开头
+
+大多数调用者应该使用 Open 替代，其将明确地解压数据，并检查校验和
+
+
+(f *File) Open() (io,ReadCloser, error)
+返回一个 ReadCloser 提供读取 File 的内容
+多重文件将被并发读取
+
+
+
+FileHeader struct 类型
+
+FileHeader 描述了一个在 zip 文件之中的文件
+参看 zip 说明查找细节
+
+type FileHeader struct {
+
+	// Name 是文件的名称
+	// 它必须是一个相对路径：它必须不能以驱动器名（e.g. C:）或顶头斜线开头，
+	// 仅有正斜线被允许
+	Name string
+
+	CreatorVersion     uint16
+	ReaderVersion      uint16
+	Flags              uint16
+	Method             uint16
+	ModifiedTime       uint16 // MS-DOS 时间
+	ModifiedDate       uint16 // MS-DOS 日期
+	CRC32              uint32
+	CompressedSize     uint32 // 弃用：使用 CompressedSize64 替代
+	UncompressedSize   uint32 // 弃用：使用 UncompressedSize64 替代
+	CompressedSize64   uint64
+	UncompressedSize64 uint64
+	Extra              []byte
+	ExternalAttrs      uint32 // 依据 CreatorVersion 确定含义
+	Comment            string
+}
+
+
+
+FileInfoHeader(fi os.FileInfo) (*FileHeader, error)
+从一个 os.FielInfo 创建一个部分填充的 FileHeader
+由于 os.FileInfo 的 Name 方法仅返回它所描述文件的基名，
+为了提供文件的全名，可能需要修改返回的头数据的 Name 字段
+
+
+(h *FileHeader) FileInfo() os.FileInfo
+从 FileHeader 中返回一个 os.FileInfo
+
+
+(h *FileHeader) ModTime() time.Time
+返回以 UTC 时间标记的 修改时间
+解析度为 2s
+
+
+(h *FileHeader) Mode() (mod os.FileMode)
+从 FileHeader 返回权限和 mode bit
+
+
+(h *FileHeader) SetModTime(t time.Time)
+以 UTC 时间设置 ModifiedTime 和 ModifiedData 字段
+解析度为 2s
+
+
+(h *FileHeader) SetMode(mode os.FileMode)
+修改 FileHeader 的权限和 mode bit
+
+
+
+ReadCloser struct 类型
+
+type ReadCloser struct {
+	Reader
+	// 包含过滤或未导出的字段
+}
+
+
+OpenReader(name string) (*ReadCloser, error)
+打开指定名称的 Zip 文件，并返回一个 ReadCloser
+
+
+(rc *ReadCloser) Close() error
+关闭 Zip 文件，将其转变为不可用于 I/O 的状态
