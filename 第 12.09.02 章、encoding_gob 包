@@ -118,3 +118,87 @@
 		接口类型为了兼容性不会被查验；所有的接口类型在传输时，都被当成单个 “interface” 的成员，和 int 或 []byte 类似 —— 实际上他们都被当成 interface{} 对待。
 		接口值以字符串定义的被发送的实际类型（必须通过调用 Register 预先定义一个名称），跟随 1 字节的其后数据长度（这样，若值无法被解析，就可以被跳过了），跟随保存在接口值中的通常编码的实际（动态）值。
 		（一个 nil 接口由一个空字符串定义，且不传输任何值）在接收端，解码器会验证被解包的实际项目满足了接收变量的接口。
+
+		若一个值发送给了 Encode，且其类型并非 struct（或者是指向 struct 的指针，等等），为了简化操作，它被表示为具有单一字段的结构体。
+		仅有的可见效果就是，在这个值编码结束之后，会添加一个值为 0 的字节，如同一个已被编码的结构体的最后一个字段之后，这样解码算法就知道何时顶层值已经完成。
+
+		下面描述了类型的表示方法。
+		在一对给定的 Encoder 和 Decoder 的连接中，定义了一个类型，这个类型就会赋予一个含符号整数类型 id。
+		当 Encoder.Encode(v) 被调用时，它保证一个 id 被赋予了 v 和 其所有元素对应的类型，之后，它发送对 （typeid, encoded-v）,typeid 是 被编码的类型 v 的类型 id，encoded-v 是 gob 编码的值 v。
+
+		要定义一个类型，编码器选用一个未使用的，正整数类型 id，并发送 （-type id, encoded-type） 对，其中 encoded-type 是 gob 编码的一个 wireType 描述，从下述类型构建：
+
+		type wireType strcut {
+			ArrayT	*ArrayType
+			SliceT	*SliceType
+			StructT	*StructType
+			MapT	*MapType
+		}
+
+		type arrayType struct {
+			CommonType
+			Elem	typeId
+			Len		int
+		}
+
+		type CommonType struct {
+			Name	string		// 结构体类型的名称
+			Id		int			// 类型的 id，此处重复，这样它就会在类型内部
+		}
+
+		type sliceType struct {
+			CommonType
+			Elem	typeId
+		}
+
+		type strutType struct {
+			CommonType
+			Field	[]*fieldType	// 结构体的字段
+		}
+
+		type fieldType struct {
+			Name	string	// 字段的名称
+			Id		int		// 字段的类型 id，必须预先定义
+		}
+
+		type mapType struct {
+			CommonType
+			Key		typeId
+			Elem	typeId
+		}
+
+		若又嵌套的类型 id，所有用于定义内部类型 id 的类型必须先于顶层类型 id 描述 encoded-v 之前定义。
+
+		为了简化设置，连接被定义为了预先知道这些类型，如同基础的 gob 类型 int， uint 等等一样。这些 id 包括：
+
+		bool		1
+		int			2
+		uint		3
+		float		4
+		[]byte		5
+		string		6
+		complex		7
+		interface	8
+		// 保留 id 占位
+		WireType	16
+		ArrayType	17
+		CommonType	18
+		SliceType	19
+		StructType	20
+		FieldType	21
+		// 22 是 fieldType 的切片
+		MapType		23
+
+		最后，每个被调用 Encode 产生的信息前都会预置一个编码过后的无符号整数，记录该信息中剩余字节的数量。
+		在初始类型名之后，接口值也用相同方法包装起来；效果就是，接口值就像递归调用了 Encode 一样。
+
+		总的来说，一个 gob 数据流看起来是这样的
+
+		（字节数 （-type id, wireType 的编码）* （type id, 值编码））*
+		其中的 * 号表示零个或多个重复，且一个值的 type id 必须预先定义，或者在数据流的值之前被定义。
+
+		兼容性：任何未来对该包的修改，都将尽力维护与前序版本编码出来的数据流的兼容性。
+		也就是说，任何该包的发布版本，应该能够解码任意前序发布版本写出的数据，除非是修复安全问题。
+		参看 Go 兼容性文档来了解背景：https://golang.org/doc/go1compat
+
+		参看 “Gobs of data” 了解 gob wire format 的设计讨论： https://blog.golang.org/gobs-of-data
