@@ -202,3 +202,60 @@
 		参看 Go 兼容性文档来了解背景：https://golang.org/doc/go1compat
 
 		参看 “Gobs of data” 了解 gob wire format 的设计讨论： https://blog.golang.org/gobs-of-data
+
+	案例（基础）
+	该案例展示了该包的基础用法：创建一个编码器，传输数据，使用解码器接收它们。
+
+	package main
+
+	import (
+		"bytes"
+		"encoding/gob"
+		"fmt"
+		"log"
+	)
+
+	type P struct {
+		X, Y, Z	int
+		Name	string
+	}
+
+	type Q struct {
+		X, Y	*int32
+		Name	string
+	}
+
+	// 该案例展示了该包的基础用法：
+	// 创建一个编码器，传输数据，使用解码器接收它们。
+
+	func main() {
+		// 初始化编码器和解码器。
+		// 通常情况下， enc 和 dec 将与网络连接绑定
+		// 且编码器和解码器将在不同进程中执行
+		var network bytes.Buffer		// 假设为网络连接
+		enc := gob.NewEncoder(&network)	// 将写入网络
+		dec := gob.NewDecoder(&network)	// 将从网络读取
+
+		// 编码（发送）一些值
+		err := enc.Encode(P{3, 4, 5, "Pythagoras"})
+		if err != nil {
+			log.Fatal("encode error:", err)
+		}
+		err = enc.Encode(P{1782, 1841, 1922, "Treehouse"})
+		if err != nil {
+			log.Fatal("encode error:", err)
+		}
+
+		// 解码（接收）并打印值
+		var q Q
+		err = dec.Decode(&q)
+		if err != nil {
+			log.Fatal("decode error 1:", err)
+		}
+		fmt.Printf("%q: {%d, %d}\n", q.Name, *q.X, *q.Y)
+		err = dec.Decode(%q)
+		if err != nil {
+			log.Fatal("decode error 2:", err)
+		}
+		fmt.Printf("%q: {%d, %d}\n", q.Name, *q.X, *q.Y)
+	}
