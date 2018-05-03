@@ -259,3 +259,59 @@
 		}
 		fmt.Printf("%q: {%d, %d}\n", q.Name, *q.X, *q.Y)
 	}
+
+	案例（编码解码）
+	该案例传输了一个实现了自定义编码和解码方法的值
+
+	package main
+
+	import (
+		"bytes"
+		"encoding/gob"
+		"fmt"
+		"log"
+	)
+
+	// Vector 类型具有非导出字段，这些字段不能被本包识别。
+	// 因此我们写了一个 BinaryMarshal/BinaryUnmarshal 方法对让我们可以使用 gob 包来发送和接收该类型。
+	// 这些接口在 "encoding" 包中定义了。
+	// 我们也可以等价地使用本地定义的 GobEncoder/GobDecoder 接口。
+	type Vector struct {
+		x, y, z int
+	}
+
+	func (v Vector) MarshalBinary() ([]byte, error) {
+		// 一个简单的编码方式：纯文本编码。
+		var b bytes.Buffer
+		fmt.Fprintln(&b, v.x, v.y, v.z)
+		return b.Bytes(), nil
+	}
+
+	// UnmarshalBinary 修改了接收器，这样它必须使用一个指针接收者。
+	func (v *Vector) UnmarshalBinary(data []byte) error {
+		// 一个简单的编码方式：纯文本编码。
+		b := bytes.NewBuffer(data)
+		_, err := fmt.Fscanln(b, &v.x, &v.y, &v.z)
+		return err
+	}
+
+	// 该案例传输了一个实现了自定义编码和解码方法的值
+	func main() {
+		var network bytes.Buffer // 假设为网络连接
+
+		// 创建一个编码器并发送一个值
+		enc := gob.NewEncoder(&network)
+		err := enc.Encode(Vector{3, 4, 5})
+		if err != nil {
+			log.Fatal("encode:", err)
+		}
+
+		// 创建解码器并接收一个值
+		dec := gob.NewDecoder(&network)
+		var v Vector
+		err = dec.Decode(&v)
+		if err != nil {
+			log.Fatal("decode:", err)
+		}
+		fmt.Println(v)
+	}
