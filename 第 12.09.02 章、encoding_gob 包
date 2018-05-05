@@ -315,3 +315,78 @@
 		}
 		fmt.Println(v)
 	}
+
+	案例（接口）
+	这个案例展示了如何编码一个接口值。与普通类型的关键不同在于注册实现了该接口的实际类型。
+
+	package main
+
+	import (
+		"bytes"
+		"encoding/gob"
+		"fmt"
+		"log"
+		"math"
+	)
+
+	type Point struct {
+		X, Y int
+	}
+
+	func (p Point) Hypotenuse() float64 {
+		return math.Hypot(float64(p.X), float64(p.Y))
+	}
+
+	type Pythagoras interface {
+		Hypotenuse() float64
+	}
+
+	// 这个案例展示了如何编码一个接口值。
+	// 与普通类型的关键不同在于注册实现了该接口的实际类型。
+	func main() {
+		var network bytes.Buffer // 假设为网络连接
+
+		// 我们必须必须为编码器和解码器注册实际类型（编码器和解码器一般位于不同的机器上）。
+		// 在每一侧，着都告诉了引擎发送的是哪个实现了该接口的实际类型
+		gob.Register(Point{})
+
+		// 创建一个编码器，并发送一些值
+		enc := gov.NewEncoder(&network)
+		for i := 1; i <= 3; i++ {
+			interfaceEncode(enc, Point{3 * i, 4 *i})
+		}
+
+		// 创建一个解码器，并接收一些值
+		dec := gob.NewDecoder(&network)
+		for i := 1; i <= 3; i++ {
+			result := interfaceDecode(dec)
+			fmt.Println(result.Hypotenuse())
+		}
+	}
+
+	// interfaceEncode 将接口值编码至编码器中。
+	func interfaceEncode(enc *gob.Encoder, p Pythagoras) {
+		// 除非实际类型已经被注册，否则编码器会失败。
+		// 我们已经在调用函数中注册过它了。
+
+		// 传入指向接口的指针，这样编码器看到的（也是发送的）值就是接口类型的。
+		// 如果我们直接传入 p，它看到的就是实际类型。
+		// 参见博客， "The Laws fi Reflection" 了解背景信息。
+		err := enc.Encode(&p)
+		if err != nil {
+			log.Fatal("encode:", err)
+		}
+	}
+
+	// interfaceDecode 从数据流中解码下一个接口值，并返回它。
+	func interfaceDecode(dec *gob.Decoder) Pythagoras {
+		// 除非在线的实际类型已经被注册，否则解码器会失败。
+		// 我们已经在调用函数中注册过它了。
+		var p Pythagoras
+		err := dec.Decode(&p)
+		if err != nil {
+			log.Fatal("decode:", err)
+		}
+		return p
+	}
+
