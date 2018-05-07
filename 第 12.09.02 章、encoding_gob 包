@@ -390,3 +390,87 @@
 		return p
 	}
 
+
+func Register(value interface{})
+记录一个类型，用该类型的值定义该类型，底层记录其内部的类型名称。
+该名称将确定以接口值发送或传输的值的实际类型。
+仅有当做接口值发送和接收的类型才需要注册。
+期望仅在初始化时使用，若类型和名称之间的映射不是双射，则 panic
+
+func RegisterName(name string, value interface{})
+与 Register 类似，但使用给定的名称而非类型的默认名称
+
+type CommonType
+持有所有类型的元素。
+这是一个历史遗留内容，为了二进制兼容性而保留，且仅在为了便于包编码类型描述符时导出。
+并不期望客户端直接使用。
+
+type CommonType struct {
+	Name	string
+	Id		typeId
+}
+
+type Decoder
+用于处理读取自连接远端的的类型和数据信息。
+Decoder 仅会简单的检查被解码的输入的大小，且它的局限性不可调整。
+请在解码非可信来源的 gob 数据时加倍小心。
+
+type Decoder struct {
+	// 包含过滤或未导出的字段
+}
+
+func NewDecoder(r io.Reader) *Decoder
+返回一个新的从 io.Reader 解码信息的解码器。
+若 r 并没有实现 io.ByteReader，它会被包裹在一个 bufio.Reader 中。
+
+func (dec *Decoder) Decode(e interface{}) error
+读取输入数据流中的下一个值，用空接口保存它的数据表示。
+若 e 为 nil，则值将被忽略。
+其他情况下，e 的底层值，必须是一个指向正确类型的指针，且该底层类型必须能被下一个解码后的数据对应。
+若输入为 EOF，本函数返回 io.EOF，并且不去修改 e。
+
+func (dec *Decoder) DecodeValue(v relfect.Value) error
+从输入数据流中读取下一个值。
+若 v 是 reflect.Value 的零值（v.Kind() == Invalid），本函数跳过该值。
+其他情况下，e 的底层值，必须是一个指向正确类型的指针，且该底层类型必须能被下一个解码后的数据对应。
+若输入为 EOF，本函数返回 io.EOF，并且不去修改 e。
+
+type Encoder
+将类型和数据信息发送至连接的另一侧
+
+type Encoder struct {
+	// 包含过滤或未导出的字段
+}
+
+func NewEncoder(w io.Writer) *Encoder
+返回一个将会对 io.Writer 发送数据的编码器
+
+func (enc *Encoder) Encode(e interface{}) error
+将空接口值表示的数据发送出去，保证所有必须的信息都首先传送了。
+向本方法传入一个 nil 指针将导致 panic，因为它们不可以被 gob 传输。
+
+func (enc *Encoder) EncodeValue(value reflect.Value) error
+将反射值表示的数据发送出去，保证所有必须的信息都首先传送了。
+向本方法传入一个 nil 指针将导致 panic，因为它们不可以被 gob 传输。
+
+type GobDecoder
+描述了一个其自身被 GobEncoder 自定义编码过后的数据，该如何被解码的接口
+
+type GobDecoder interface {
+	// GobDecode 覆写了接收者，该接收者必须为一个指针，
+	// 以及用字节切片表示的值，该值由 GobEncode 产生，通常对应着相同的实际类型。
+	GobDecode([]byte) error
+}
+
+type GobEncoder
+该接口描述了数据提供了编码自身值，发送给 GobDecoder 的数据。
+一个实现了 GobEncoder 和 GobDecoder 的类型具有对表示其数据完全的控制权，
+因此可以包含私有字段、通道、函数等等，通常不会被 gob 数据流传输的内容。
+
+注意：由于 gob 可以被永久存储，一个优秀的设计必须保证被 GobEncoder 使用的编码必须在软件发展的过程中保持稳定。
+举例来说，将版本号加入 GobEncode 的编码是一个有益的设计。
+
+type GobEncoder interface {
+	// GobEncode 返回一个字节切片，该切片将会发送给某个 GobDecoder 解码，通常为相同的实际类型。
+	GobEncode() ([]byte, error)
+}
